@@ -1,0 +1,119 @@
+/* === Ocean Sunset Theme === */
+/* Colors: #001219, #005F73, #0A9396, #94D2BD, #E9D8A6, #EE9B00, #CA6702, #BB3E03, #AE2012, #9B2226 */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Georgia', serif;
+    background-color: #001219;
+    color: #E9D8A6;
+}
+
+/* --- Navigation Bar --- */
+nav {
+    background-color: #005F73;
+    padding: 16px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+nav .logo {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #94D2BD;
+    letter-spacing: 2px;
+}
+
+nav a {
+    color: #E9D8A6;
+    text-decoration: none;
+    margin-left: 24px;
+    font-size: 1rem;
+    transition: color 0.3s;
+}
+
+nav a:hover {
+    color: #EE9B00;
+}
+
+/* --- Image Section --- */
+.image {
+    text-align: center;
+    padding: 80px 20px;
+    background: linear-gradient(135deg, #005F73, #001219);
+}
+
+.image h1 {
+    font-size: 3rem;
+    color: #94D2BD;
+    margin-bottom: 16px;
+}
+
+.image p {
+    font-size: 1.2rem;
+    color: #E9D8A6;
+    max-width: 600px;
+    margin: 0 auto 32px auto;
+    line-height: 1.7;
+}
+
+.image img {
+    width: 100%;
+    max-width: 700px;
+    border-radius: 12px;
+    border: 4px solid #0A9396;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+/* --- Button --- */
+.btn {
+    display: inline-block;
+    background-color: #EE9B00;
+    color: #001219;
+    padding: 12px 28px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: bold;
+    margin-bottom: 32px;
+    transition: background-color 0.3s;
+}
+
+.btn:hover {
+    background-color: #CA6702;
+    color: #E9D8A6;
+}
+
+/* --- Content Card --- */
+.card {
+    background-color: #005F73;
+    border-left: 5px solid #EE9B00;
+    border-radius: 8px;
+    padding: 32px;
+    max-width: 700px;
+    margin: 40px auto;
+}
+
+.card h2 {
+    color: #94D2BD;
+    margin-bottom: 12px;
+}
+
+.card p {
+    line-height: 1.8;
+    color: #E9D8A6;
+}
+
+/* --- Footer --- */
+footer {
+    background-color: #001219;
+    border-top: 3px solid #BB3E03;
+    text-align: center;
+    padding: 20px;
+    color: #94D2BD;
+    font-size: 0.9rem;
+}

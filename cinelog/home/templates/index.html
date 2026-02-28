@@ -1,12 +1,39 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home</title>
-
-    <!-- Link to CSS -->
-    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <title>Our Project</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
+<body>
 
+    <nav>
+        <span class="logo">CineLog</span>
+        <div>
+            <a href="#">Home</a>
+            <a href="#">About</a>
+            <a href="#">Contact</a>
+        </div>
+    </nav>
+
+    <section class="image">
+        <h1>Welcome to Our Project</h1>
+        <p>A short description of what your group is building. Keep it punchy!</p>
+        <a href="#" class="btn">Learn More</a>
+        <br>
+        <img src="https://unsplash.com/photos/the-beatles-vinyl-record-sleeve-BQTHOGNHo08" alt="Test Image">
+    </section>
+
+    <div class="card">
+        <h2>About This Project</h2>
+        <p>Add a bit more detail here about your group, the goal of the project, 
+        or anything else you want visitors to know.</p>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 Team 7 — Dev.edu</p>
+    </footer>
+
+</body>
 </html>
