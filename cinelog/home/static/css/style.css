@@ -1,5 +1,4 @@
-/* === Ocean Sunset Theme === */
-/* Colors: #001219, #005F73, #0A9396, #94D2BD, #E9D8A6, #EE9B00, #CA6702, #BB3E03, #AE2012, #9B2226 */
+/* === Dark Ocean Theme === */
 
 * {
     margin: 0;
@@ -8,14 +7,15 @@
 }
 
 body {
-    font-family: 'Georgia', serif;
-    background-color: #001219;
-    color: #E9D8A6;
+    font-family: 'Clash Display', sans-serif;;
+    background-color: #0D0D0D;
+    color: #E8E8E0;
 }
 
 /* --- Navigation Bar --- */
 nav {
-    background-color: #005F73;
+    background-color: #1A1A1A;
+    border-bottom: 2px solid #083640;
     padding: 16px 40px;
     display: flex;
     justify-content: space-between;
@@ -25,95 +25,133 @@ nav {
 nav .logo {
     font-size: 1.5rem;
     font-weight: bold;
-    color: #94D2BD;
-    letter-spacing: 2px;
+    color: #027d96;
+    letter-spacing: 4px;
+    text-transform: uppercase;
 }
 
 nav a {
-    color: #E9D8A6;
+    color: #BFBFBF;
     text-decoration: none;
-    margin-left: 24px;
-    font-size: 1rem;
+    margin-left: 28px;
+    font-size: 0.95rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
     transition: color 0.3s;
 }
 
 nav a:hover {
-    color: #EE9B00;
+    color: #2A9BB5;
 }
 
 /* --- Image Section --- */
 .image {
     text-align: center;
-    padding: 80px 20px;
-    background: linear-gradient(135deg, #005F73, #001219);
+    padding: 90px 20px 70px;
+    background:
+    radial-gradient(ellipse at 50% 0%, rgba(14, 77, 92, 0.12) 0%, transparent 65%),
+    linear-gradient(180deg, #111111 0%, #0D0D0D 100%);
+    position: relative;
 }
 
 .image h1 {
-    font-size: 3rem;
-    color: #94D2BD;
+    font-size: 3.4rem;
+    color: #E8E8E0;
     margin-bottom: 16px;
+    letter-spacing: 2px;
+    text-shadow: 0 0 40px rgba(14, 77, 92, 0.3);
+}
+
+.image h1 span {
+    color: #0E4D5C;
 }
 
 .image p {
-    font-size: 1.2rem;
-    color: #E9D8A6;
-    max-width: 600px;
-    margin: 0 auto 32px auto;
-    line-height: 1.7;
+    font-size: 1.1rem;
+    color: #BFBFBF;
+    max-width: 560;
+    margin: 0 auto 36px auto;
+    line-height: 1.8;
+    font-weight: 400;
 }
 
 .image img {
     width: 100%;
     max-width: 700px;
     border-radius: 12px;
-    border: 4px solid #0A9396;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    border: 1px solid #2A2A2A;
+    box-shadow:
+    0 0 0 1px rgba(14, 77, 92, 0.2),
+    0 16px 60px rgba(0, 0, 0, 0.8);
+    filter: brightness(0.9) contrast(1.05);
 }
 
 /* --- Button --- */
 .btn {
     display: inline-block;
-    background-color: #EE9B00;
-    color: #001219;
-    padding: 12px 28px;
-    border-radius: 6px;
+    background-color: #0E4D5C;
+    color: #E8E8E0;
+    padding: 13px 32px;
+    border-radius: 3px;
     text-decoration: none;
-    font-weight: bold;
+    font-weight: 600;
+    font-size: 0.9rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
     margin-bottom: 32px;
     transition: background-color 0.3s;
+    box-shadow: 0 4px 20px rgba(14, 77, 92, 0.35);
 }
 
 .btn:hover {
-    background-color: #CA6702;
-    color: #E9D8A6;
+    background-color: #083640;
+    box-shadow: 0 4px 28px rgba(14, 77, 92, 0.55);
 }
 
 /* --- Content Card --- */
 .card {
-    background-color: #005F73;
-    border-left: 5px solid #EE9B00;
-    border-radius: 8px;
-    padding: 32px;
+    background-color: #1A1A1A;
+    border-left: 4px solid #2A9BB5;
+    border-radius: 4px;
+    padding: 36px;
     max-width: 700px;
     margin: 40px auto;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+    position: relative;
+    overflow: hidden;
 }
 
+.card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 120px;
+    height: 120px;
+    background: radial-gradient(circle at top right, rgba(42, 155, 181, 0.06), transparent 70%);
+    pointer-events: none;
+}
 .card h2 {
-    color: #94D2BD;
+    color: #2A9BB5;
     margin-bottom: 12px;
+    font-size: 1.4rem;
+    letter-spacing: 1px;
 }
 
 .card p {
     line-height: 1.8;
-    color: #E9D8A6;
+    color: #BFBFBF;
+    font-size: 1rem;
 }
 
 /* --- Footer --- */
 footer {
-    background-color: #001219;
-    border-top: 3px solid #BB3E03;
+    background-color: #111111;
+    border-top: 2px solid #2A2A2A;
     text-align: center;
     padding: 20px;
-    color: #94D2BD;
+    color: #555;
     font-size: 0.9rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
 }
