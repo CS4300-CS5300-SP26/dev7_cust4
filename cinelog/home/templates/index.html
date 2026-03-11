@@ -1,36 +1,21 @@
-<!DOCTYPE html>
-{% load static %}
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>CineLog</title>
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
-</head>
-<body>
 
-    <nav>
-        <span class="logo">CineLog</span>
-        <div>
-            <a href="#">Sign In</a>
-        </div>
-    </nav>
+{% extends "base.html" %}
+{% block title %} Your Booking History {% endblock %}
 
-    <section class="image">
-        <h1>Welcome to CineLog</h1>
-        <p>Track films you've watched, discover new favorites, and share reviews with friends.</p>
-        <a href="#" class="btn">Get Started</a>
-        <br>
-        <img src="https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Test Image">
-    </section>
+{% block content %}
 
-    <div class="card">
-        <h2>About CineLog</h2>
-        <p>CineLog is your personal movie companion — log what you've seen, build your watchlist, and explore recommendations tailored to your taste.</p>
-    </div>
 
-    <footer>
-        <p>&copy; 2026 Team 7 — Dev.edu</p>
-    </footer>
+<section class="image">
+    <h1>Welcome to CineLog</h1>
+    <p>Track films you've watched, discover new favorites, and share reviews with friends.</p>
+    <a href="#" class="btn">Get Started</a>
+    <br>
+    <img src="https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Test Image">
+</section>
 
-</body>
-</html>
+<div class="card">
+    <h2>About CineLog</h2>
+    <p>CineLog is your personal movie companion — log what you've seen, build your watchlist, and explore recommendations tailored to your taste.</p>
+</div>
+
+{% endblock %}
