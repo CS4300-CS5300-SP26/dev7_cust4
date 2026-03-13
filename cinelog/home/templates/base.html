@@ -18,7 +18,7 @@
     <!--Navigation bar.-->
     <nav aria-label="Global" class="flex items-center justify-between p-6 lg:px-8">
       <div class="flex lg:flex-1">
-        <a href="#" class="-m-1.5 p-1.5">
+        <a href="/" class="-m-1.5 p-1.5">
           <span class="sr-only">Cinelog</span>
             <img src="{% static 'images/logo.jpg' %}" class="h-10 w-auto" alt="logo">
           </a>
@@ -37,7 +37,7 @@
         <a href="#" class="font-semibold text-white hover:text-[#d0f0fd]">Account</a>
       </div>
       <div class="hidden lg:flex lg:flex-1 lg:justify-end">
-        <a href="#" class="font-semibold text-white hover:text-[#d0f0fd]">Log in <span aria-hidden="true">&rarr;</span></a>
+        <a href="{% url 'login' %}" class="rounded-md bg-[#d0f0fd] px-3 py-2 text-sm font-semibold text-black shadow-xs hover:bg-[#a0e0f0] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Sign In</a>
       </div>
     </nav>
     <el-dialog>
@@ -47,7 +47,7 @@
         <div tabindex="0" class="fixed inset-0 focus:outline-none">
           <el-dialog-panel class="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white p-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
             <div class="flex items-center justify-between">
-              <a href="#" class="-m-1.5 p-1.5">
+              <a href="" class="-m-1.5 p-1.5">
                 <span class="sr-only">CineLog</span>
                 <img src="{% static 'images/logo.jpg' %}" class="h-10 w-auto" alt="logo">
               </a>
