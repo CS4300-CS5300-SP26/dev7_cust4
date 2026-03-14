@@ -29,7 +29,8 @@ ALLOWED_HOSTS = [
     '.devedu.io',
     'localhost', 
     '127.0.0.1',
-    '.railway.app',
+    'PLACEHOLDER FOR DIGITAL OCEAN IP',
+    'PLACEHOLDER FOR CUSTOM DOMAIN NAME'
 ]
 
 
