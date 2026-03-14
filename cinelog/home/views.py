@@ -17,12 +17,12 @@ def landing_page(request):
     return render(request, 'landing.html')
 
 
-def signup_html(request):
+def signup_view(request):
     """
     Handles creating accounts for new users to create bookings.
 
     Args:
-        request (HTTP request): Containsinformation about the request.
+        request (HTTP request): Contains information about the request.
 
     Returns:
         HTTP Response: Contains the signup form or redirects user to home page if they successfully created an account.
@@ -37,6 +37,7 @@ def signup_html(request):
     # Display form.
     else:
         form = UserCreationForm()
+
     carousel_imgs = CarouselImage.objects.all()
     return render(request, "signup.html", {"form": form, "carousel_imgs": carousel_imgs})
 
@@ -46,13 +47,14 @@ class CustomLoginView(LoginView):
     Changes Django's LoginView to edit the context that is passed to the login page.
     """
     template_name = "registration/login.html"
+    redirect_autheticated_user = True
 
     def get_context_data(self, **kwargs):
         """
         Changes Django's login view and adds the carousel images to the context.
 
         Returns:
-            context (HTTPResponse): Contains the login context along with the carousel
+            context (HTTP Response): Contains the login context along with the carousel
                 images.
         """
         context = super().get_context_data(**kwargs)
