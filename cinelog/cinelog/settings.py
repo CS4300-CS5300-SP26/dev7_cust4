@@ -29,7 +29,7 @@ ALLOWED_HOSTS = [
     '.devedu.io',
     'localhost', 
     '127.0.0.1',
-    'PLACEHOLDER FOR DIGITAL OCEAN IP',
+    'cinelog-service-production.up.railway.app',
     'PLACEHOLDER FOR CUSTOM DOMAIN NAME'
 ]
 
