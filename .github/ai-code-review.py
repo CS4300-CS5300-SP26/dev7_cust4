@@ -1,7 +1,7 @@
 """
 AI code review script that reads the diff, sends prompt to openAI, and gives feedback
 """
-
+#removed unsupported instruction
 #!/usr/bin/env python3
 """
 AI Code Review Script for GitHub Actions
@@ -76,7 +76,7 @@ Format your response in Markdown."""
                 {"role": "system", "content": "You are an expert code reviewer."},
                 {"role": "user", "content": prompt}
             ],
-            temperature=0.3,
+            
             max_output_tokens=2000
         )
 
