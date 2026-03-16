@@ -1,6 +1,8 @@
 name: AI Code Review
 
 on:
+  push:
+  
   pull_request:
     types: [opened, synchronize, reopened]
 
@@ -36,7 +38,7 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          python ai-code-review.py
+          python .github/ai-code-review.py
 
       - name: Upload Review Artifact
         uses: actions/upload-artifact@v4
