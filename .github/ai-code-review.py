@@ -62,7 +62,7 @@ Format your response in Markdown."""
     try:
         print("Sending to OpenAI for review...")
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-5.1-codex-mini",
             messages=[
                 {"role": "system", "content": "You are an expert code reviewer."},
                 {"role": "user", "content": prompt}
