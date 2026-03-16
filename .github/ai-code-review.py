@@ -80,7 +80,7 @@ Format your response in Markdown."""
             max_output_tokens=2000
         )
 
-        review = response.choices[0].message.content
+        review = response.output_text
         print("Received review from OpenAI")
 
     except Exception as e:
