@@ -76,7 +76,7 @@ Format your response in Markdown."""
                 {"role": "system", "content": "You are an expert code reviewer."},
                 {"role": "user", "content": prompt}
             ],
-            temperature=0.3,
+            
             max_output_tokens=2000
         )
 
