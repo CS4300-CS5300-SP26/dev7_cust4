@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+<!-- Link to the movies stylesheet -->
+<link href="{% static 'css/movies.css' %}" rel="stylesheet">
+
+<div class="hero-container">
+
+    <!-- Decorative teal blob — top -->
+    <div aria-hidden="true" class="hero-blob hero-blob--top">
+        <div class="hero-blob__shape hero-blob__shape--top"></div>
+    </div>
+
+    <!-- Hero content -->
+    <div class="hero-content">
+        <div class="hero-text">
+            <h1 class="hero-heading">Explore Movies</h1>
+
+        </div>
+    </div>
+
+    <!-- Decorative teal bottom -->
+    <div aria-hidden="true" class="hero-blob hero-blob--bottom">
+        <div class="hero-blob__shape hero-blob__shape--bottom"></div>
+    </div>
+</div>
+<!-- MOVIE ROW -->
+<div class="movie-row-container">
+
+    <h2 class="row-title">New Releases</h2>
+
+    <!-- Left Arrow -->
+    <button class="scroll-btn left" onclick="scrollRow(-1)">❮</button>
+
+    <!-- Movie Row -->
+    <div class="movie-row" id="movieRow">
+        {% for movie in movies %}
+        <a href="{% url 'movie_detail' movie.id %}" class="movie-card-link">
+            <div class="movie-card">
+
+                {% if movie.poster_path %}
+                <img src="https://image.tmdb.org/t/p/w500{{ movie.poster_path }}" alt="{{ movie.title }}">
+                {% else %}
+                <div class="no-poster">No Image</div>
+                {% endif %}
+
+                <div class="movie-info">
+                    <h3>{{ movie.title }}</h3>
+                    <p>{{ movie.release_date }}</p>
+                    <p>⭐ {{ movie.vote_average }}</p>
+                </div>
+
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+
+    <!-- Right Arrow -->
+    <button class="scroll-btn right" onclick="scrollRow(1)">❯</button>
+
+</div>
+
+<!-- JS -->
+<script>
+    function scrollRow(direction) {
+        const container = document.getElementById("movieRow");
+        const scrollAmount = 400;
+
+        container.scrollBy({
+            left: direction * scrollAmount,
+            behavior: "smooth"
+        });
+    }
+</script>
+
+{% endblock %}
