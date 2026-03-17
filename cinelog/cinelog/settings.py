@@ -20,15 +20,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-bd*mrkv-p!rdl6^0dfeb=na9nxd3a1u!l%3og+w$3tlx2)#5w8'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-bd*mrkv-p!rdl6^0dfeb=na9nxd3a1u!l%3og+w$3tlx2)#5w8')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = [
     '.devedu.io',
     'localhost', 
-    '127.0.0.1'
+    '127.0.0.1',
+    'cinelog-service-production.up.railway.app',
+    'PLACEHOLDER FOR CUSTOM DOMAIN NAME'
 ]
 
 CSRF_TRUSTED_ORIGINS = [
@@ -51,6 +53,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -124,6 +127,8 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'home', 'static'),

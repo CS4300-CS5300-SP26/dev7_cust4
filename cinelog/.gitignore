@@ -1,4 +1,6 @@
 /node_modules/
+staticfiles/
+__pycache__/
+*.pyc
 /.coverage/
 /db.sqlite3/
-/home/__pycache__/
