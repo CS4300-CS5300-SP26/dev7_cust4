@@ -26,4 +26,9 @@ def movie_detail_view(request, movie_id):
     response = requests.get(url)
     movie = response.json()
 
-    return render(request, "movie_detail.html", {"movie": movie})
+    runtime = movie.get("runtime", 0)
+    hours = runtime // 60
+    minutes = runtime % 60
+    formatted_runtime = f"{hours}h {minutes}m"
+
+    return render(request, "movie_detail.html", {"movie": movie, "runtime": formatted_runtime})
