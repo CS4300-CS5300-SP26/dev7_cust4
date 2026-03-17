@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "watch": "tailwindcss -i ./home/static/css/input.css -o ./home/static/css/output.css --watch"
+    "watch": "tailwindcss -i ./home/static/css/input.css -o ./home/static/css/output.css --watch",
+    "start": "python manage.py collectstatic --noinput && gunicorn cinelog.wsgi --bind 0.0.0.0:$PORT"
   },
   "keywords": [],
   "author": "",
