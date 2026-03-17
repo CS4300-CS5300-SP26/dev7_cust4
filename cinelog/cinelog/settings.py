@@ -11,17 +11,17 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 from django.core.exceptions import ImproperlyConfigured
 from pathlib import Path
+from decouple import config, Config, RepositoryEnv
+
 from dotenv import load_dotenv
 import os
-
-load_dotenv()
-
-TMDB_API_KEY = os.getenv("TMDB_API_KEY")
-OMDB_API_KEY = os.getenv("OMDB_API_KEY")
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+config = Config(RepositoryEnv(BASE_DIR / ".env"))
+
+TMDB_API_KEY = config("TMDB_API_KEY")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
