@@ -157,8 +157,4 @@ if DEBUG:
 else:
     AWS_STORAGE_BUCKET_NAME = os.environ.get("S3_SUPABASE_BUCKET_NAME")
     SUPABASE_URL = os.environ.get("SUPABASE_URL")
-
-    if not AWS_STORAGE_BUCKET_NAME or SUPABASE_URL:
-        raise ImproperlyConfigured("Must have environemnt variables set for 'S3_SUPABASE_BUCKET_NAME' and 'SUPABASE_URL'")
-
     MEDIA_URL = f"{SUPABASE_URL}/storage/v1/object/public/{AWS_STORAGE_BUCKET_NAME}/"
