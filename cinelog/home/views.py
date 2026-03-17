@@ -27,7 +27,7 @@ def movies_view(request):
     return render(request, "movies.html", {
         "movies": fetch_movies("popular"),
         "top_rated_movies": fetch_movies("top_rated"),
-        "upcoming_movies": fetch_movies("upcoming"),
+        "now_playing_movies": fetch_movies("now_playing"),
     })
 
 def movie_detail_view(request, movie_id):
