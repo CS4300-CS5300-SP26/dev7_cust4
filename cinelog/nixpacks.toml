@@ -1,0 +1,5 @@
+[phases.setup]
+nixPkgs = ["python3"]
+
+[start]
+cmd = "python manage.py collectstatic --noinput && gunicorn cinelog.wsgi --bind 0.0.0.0:$PORT"

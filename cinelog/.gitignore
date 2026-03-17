@@ -1,5 +1,7 @@
 /node_modules/
 .env 
+staticfiles/
 __pycache__/
 *.pyc
+/.coverage/
 db.sqlite3

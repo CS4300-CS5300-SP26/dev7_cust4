@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
-
+from django.core.exceptions import ImproperlyConfigured
 from pathlib import Path
 from dotenv import load_dotenv
 import os
@@ -27,17 +27,21 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-bd*mrkv-p!rdl6^0dfeb=na9nxd3a1u!l%3og+w$3tlx2)#5w8'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-bd*mrkv-p!rdl6^0dfeb=na9nxd3a1u!l%3og+w$3tlx2)#5w8')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = [
     '.devedu.io',
     'localhost', 
-    '127.0.0.1'
+    '127.0.0.1',
+    'cinelog-service-production.up.railway.app',
+    'PLACEHOLDER FOR CUSTOM DOMAIN NAME'
 ]
 
+CSRF_TRUSTED_ORIGINS = [
+]
 
 # Application definition
 
@@ -50,10 +54,12 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'home',
+    'behave_django'
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -128,13 +134,34 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'home', 'static'),
 ]
 
 STATIC_URL = 'static/'
 
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+
+LOGIN_REDIRECT_URL = "landing"
+LOGOUT_REDIRECT_URL = "landing"
+
+# Media for movie posters that are uploaded by admin.
+if DEBUG:
+    MEDIA_URL = "/media/"
+    MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+
+# If hosting on a platform, must have environment variables set for 
+# "S3_SUPABASE_BUCKET_NAME" and "SUPABASE_URL".
+else:
+    AWS_STORAGE_BUCKET_NAME = os.environ.get("S3_SUPABASE_BUCKET_NAME")
+    SUPABASE_URL = os.environ.get("SUPABASE_URL")
+    MEDIA_URL = f"{SUPABASE_URL}/storage/v1/object/public/{AWS_STORAGE_BUCKET_NAME}/"
