@@ -1,41 +1,40 @@
 {% extends "base.html" %}
 {% load static %}
-
 {% block content %}
 <link href="{% static 'css/movie_detail.css' %}" rel="stylesheet">
 
 <!-- Backdrop Banner -->
-<div class="detail-banner" style="background-image: url('https://image.tmdb.org/t/p/original{{ movie.backdrop_path }}');">
+<div class="detail-banner"
+    style="background-image: url('https://image.tmdb.org/t/p/original{{ movie.backdrop_path }}');">
     <div class="detail-banner-overlay"></div>
 
     <div class="detail-content">
         <!-- Poster -->
-        <img class="detail-poster" 
-            src="https://image.tmdb.org/t/p/w500{{ movie.poster_path }}" 
-            alt="{{ movie.title }}">
+        <img class="detail-poster" src="https://image.tmdb.org/t/p/w500{{ movie.poster_path }}" alt="{{ movie.title }}">
 
         <!-- Info -->
         <div class="detail-info">
             <h1 class="detail-title">
-                {{ movie.title }} 
+                {{ movie.title }}
                 <span class="detail-year">({{ movie.release_date|slice:":4" }})</span>
             </h1>
 
             <p class="detail-meta">
                 {{ movie.release_date }} &bull;
                 {% for genre in movie.genres %}
-                    {{ genre.name }}{% if not forloop.last %}, {% endif %}
+                {{ genre.name }}{% if not forloop.last %}, {% endif %}
                 {% endfor %} &bull;
-                {{ runtime }}
+                {{ runtime }} <!-- formatted runtime passed from view -->
             </p>
 
             <p class="detail-rating">⭐ {{ movie.vote_average|floatformat:1 }}</p>
             <p class="detail-overview">{{ movie.overview }}</p>
 
+            <!-- show different button depending on user's login status -->
             {% if user.is_authenticated %}
-                <button class="btn-add-log">+ Add to Log</button>
+            <button class="btn-add-log">+ Add to List</button>
             {% else %}
-                <a href="{% url 'login' %}" class="btn-login-prompt">Login to Add</a>
+            <a href="{% url 'login' %}" class="btn-login-prompt">Login to Add</a>
             {% endif %}
         </div>
     </div>
