@@ -8,7 +8,6 @@ cucumber-expressions==19.0.0
 cucumber-tag-expressions==9.1.0
 Django==4.2.11
 djangorestframework==3.16.1
-gyp==0.1
 parse==1.21.1
 parse_type==0.6.6
 pillow==12.1.1
