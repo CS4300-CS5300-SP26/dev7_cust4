@@ -6,7 +6,7 @@ Feature: User Authentication
         And I fill in the "Password" field with "password.5678"
         And I submit the form
         Then I should be logged in
-        And I should be on the "Landing" page
+        And I should be on the "movies" page
 
     Scenario: Create an account using signup form.
         Given I am on the "Sign up" page
@@ -15,7 +15,7 @@ Feature: User Authentication
         And I fill in the "Confirm Password" field with "password.5678"
         And I submit the signup form
         Then I should be logged in
-        And I should be on the "Landing" page
+        And I should be on the "movies" page
 
     Scenario: Login with invalid credentials
         Given I have an account with user5678 and password.5678

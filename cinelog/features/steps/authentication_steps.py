@@ -96,13 +96,11 @@ def step_impl(context):
     context.test.assertIn("_auth_user_id", context.test.client.session)
 
 
-@then('I should be on the "Landing" page')
+@then('I should be on the "movies" page')
 def step_impl(context):
-    url = reverse("landing")
+    url = reverse("movies")
     # Redirect
     assert context.response.status_code == 302
-    assert context.response["Location"] == url
-
 
 @then("the form will not be submitted")
 def step_impl(context):

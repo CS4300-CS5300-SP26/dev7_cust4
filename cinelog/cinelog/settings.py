@@ -158,14 +158,5 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 LOGIN_REDIRECT_URL = "landing"
 LOGOUT_REDIRECT_URL = "landing"
 
-# Media for movie posters that are uploaded by admin.
-if DEBUG:
-    MEDIA_URL = "/media/"
-    MEDIA_ROOT = os.path.join(BASE_DIR, "media")
-
-# If hosting on a platform, must have environment variables set for 
-# "S3_SUPABASE_BUCKET_NAME" and "SUPABASE_URL".
-else:
-    AWS_STORAGE_BUCKET_NAME = os.environ.get("S3_SUPABASE_BUCKET_NAME")
-    SUPABASE_URL = os.environ.get("SUPABASE_URL")
-    MEDIA_URL = f"{SUPABASE_URL}/storage/v1/object/public/{AWS_STORAGE_BUCKET_NAME}/"
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")

@@ -89,13 +89,13 @@
             <div class="max-lg:mt-2 lg:ml-35">
                 <div id="carouselExampleAutoplaying" class="carousel slide" data-bs-ride="carousel">
                     <div class="carousel-inner">
-                        {% for img in carousel_imgs %}
+                        {% for movie in movies %}
                         {% if forloop.first %}
                             <div class="carousel-item active">
                         {% else %}
                             <div class="carousel-item">
                         {% endif %}
-                                <img src="{{ img.image.url }}" class="d-block mx-auto w-full object-cover img-fluid rounded shadow" alt="{{ img.title }}">
+                        <img src="https://image.tmdb.org/t/p/w500{{ movie.poster_path }}" class="d-block mx-auto w-full object-cover img-fluid rounded shadow" alt="{{ movie.title }}">
                             </div>
 
                         {% endfor %}

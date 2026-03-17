@@ -18,16 +18,6 @@ class CustomLogInViewTest(TestCase):
             image='carousel/img.jpg'
         )
     
-
-    def test_login_responds_with_carousel_images(self):
-        """
-        Test that the login function returns the movies for a carousel.
-        """
-        response = self.client.get(reverse('login'))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'registration/login.html')
-        self.assertIn("carousel_imgs", response.context)
-
     def test_login_valid_account(self):
         """
         Test that a user with an account can login.
@@ -91,7 +81,7 @@ class SignupTest(TestCase):
 
         response = self.client.post(reverse("signup"), data=self.data)
 
-        self.assertRedirects(response, reverse("landing"))
+        self.assertRedirects(response, reverse("movies"))
         self.assertEqual(User.objects.count(), initial_user_count + 1)
         self.assertTrue(User.objects.filter(username="user2").exists())
         self.assertIn("_auth_user_id", self.client.session)

@@ -64,13 +64,13 @@ def signup_view(request):
         if form.is_valid():
             user = form.save()
             login(request, user)
-            return redirect("landing")
+            return redirect("movies")
     # Display form.
     else:
         form = UserCreationForm()
 
     carousel_imgs = CarouselImage.objects.all()
-    return render(request, "signup.html", {"form": form, "carousel_imgs": carousel_imgs})
+    return render(request, "signup.html", {"form": form, "movies": fetch_movies("popular")})
 
 class CustomLoginView(LoginView):
     """
@@ -88,7 +88,6 @@ class CustomLoginView(LoginView):
                 images.
         """
         context = super().get_context_data(**kwargs)
-        carousel_imgs = CarouselImage.objects.all()
-        context["carousel_imgs"] = carousel_imgs
+        context["movies"] = fetch_movies("popular")
         return context
     
