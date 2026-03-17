@@ -131,8 +131,6 @@ STATICFILES_DIRS = [
 
 STATIC_URL = 'static/'
 
-# Add path for carousel images.
-STATIC_CAROUSEL_IMGS = os.path.join(STATICFILES_DIRS[0], 'images', 'carousel')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
