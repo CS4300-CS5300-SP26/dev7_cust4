@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+<!-- Link to the movies stylesheet -->
+<link href="{% static 'css/movies.css' %}" rel="stylesheet">
+
+<div class="hero-container">
+
+    <!-- Decorative teal blob — (just for design) -->
+    <div aria-hidden="true" class="hero-blob hero-blob--top">
+        <div class="hero-blob__shape hero-blob__shape--top"></div>
+    </div>
+
+    <div class="hero-content">
+        <div class="hero-text">
+            <h1 class="hero-heading">Explore Movies</h1>
+        </div>
+    </div>
+
+    <div aria-hidden="true" class="hero-blob hero-blob--bottom">
+        <div class="hero-blob__shape hero-blob__shape--bottom"></div>
+    </div>
+</div>
+
+<!-- POPULAR ROW section-->
+<div class="movie-row-container">
+    <h2 class="row-title">Popular Movies</h2>
+    <button class="scroll-btn left" onclick="scrollRow('popularRow', -1)">❮</button>
+    <div class="movie-row" id="popularRow">
+        {% for movie in movies %}
+            <a href="{% url 'movie_detail' movie.id %}" class="movie-card-link">
+                <div class="movie-card">
+                    {% if movie.poster_path %}
+                        <img src="https://image.tmdb.org/t/p/w500{{ movie.poster_path }}" alt="{{ movie.title }}">
+                    {% else %}
+                        <div class="no-poster">No Image</div>
+                    {% endif %}
+                    <div class="movie-info">
+                        <h3>{{ movie.title }}</h3>
+                        <p>★ {{ movie.vote_average|floatformat:1 }}</p>
+                    </div>
+                </div>
+            </a>
+        {% endfor %}
+    </div>
+    <button class="scroll-btn right" onclick="scrollRow('popularRow', 1)">❯</button>
+</div>
+
+<!-- TOP RATED ROW -->
+<div class="movie-row-container">
+    <h2 class="row-title">Top Rated</h2>
+    <button class="scroll-btn left" onclick="scrollRow('topRatedRow', -1)">❮</button>
+    <div class="movie-row" id="topRatedRow">
+        {% for movie in top_rated_movies %}
+            <a href="{% url 'movie_detail' movie.id %}" class="movie-card-link">
+                <div class="movie-card">
+                    {% if movie.poster_path %}
+                        <img src="https://image.tmdb.org/t/p/w500{{ movie.poster_path }}" alt="{{ movie.title }}">
+                    {% else %}
+                        <div class="no-poster">No Image</div>
+                    {% endif %}
+                    <div class="movie-info">
+                        <h3>{{ movie.title }}</h3>
+                        <p>★ {{ movie.vote_average|floatformat:1 }}</p>
+                    </div>
+                </div>
+            </a>
+        {% endfor %}
+    </div>
+    <button class="scroll-btn right" onclick="scrollRow('topRatedRow', 1)">❯</button>
+</div>
+
+<!-- NOWPLAYING ROW -->
+<div class="movie-row-container">
+    <h2 class="row-title">Now Playing</h2>
+    <button class="scroll-btn left" onclick="scrollRow('nowPlayingRow', -1)">❮</button>
+    <div class="movie-row" id="nowPlayingRow">
+        {% for movie in now_playing_movies %}
+            <a href="{% url 'movie_detail' movie.id %}" class="movie-card-link">
+                <div class="movie-card">
+                    {% if movie.poster_path %}
+                        <img src="https://image.tmdb.org/t/p/w500{{ movie.poster_path }}" alt="{{ movie.title }}">
+                    {% else %}
+                        <div class="no-poster">No Image</div>
+                    {% endif %}
+                    <div class="movie-info">
+                        <h3>{{ movie.title }}</h3>
+                        <p>★ {{ movie.vote_average|floatformat:1 }}</p>
+                    </div>
+                </div>
+            </a>
+        {% endfor %}
+    </div>
+    <button class="scroll-btn right" onclick="scrollRow('nowPlayingRow', 1)">❯</button>
+</div>
+
+<!-- JS (for horizontal scrolling)-->
+<script>
+    function scrollRow(rowID, direction) {
+        const container = document.getElementById(rowID);
+        const scrollAmount = 400;
+
+        container.scrollBy({
+            left: direction * scrollAmount,
+            behavior: "smooth"
+        });
+    }
+</script>
+
+
+
+{% endblock %}
