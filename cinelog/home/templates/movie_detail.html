@@ -23,9 +23,9 @@
             <p class="detail-meta">
                 {{ movie.release_date }} &bull;
                 {% for genre in movie.genres %}
-                    {{ genre.name }}{% if not forloop.last %}, {% endif %}
+                {{ genre.name }}{% if not forloop.last %}, {% endif %}
                 {% endfor %} &bull;
-                {{ movie.formatted_runtime }}   <!-- formatted runtime passed from view -->
+                {{ movie.formatted_runtime }} <!-- formatted runtime passed from view -->
             </p>
 
             <p class="detail-rating">⭐ {{ movie.vote_average|floatformat:1 }}</p>
@@ -35,7 +35,7 @@
             {% if user.is_authenticated %}
             <button class="btn-add-log">+ Add to List</button>
             {% else %}
-            <a href="{% url 'login' %}" class="btn-login-prompt">Login to Add</a>
+            <a href="{% url 'login' %}" class="btn-login-prompt">Add to List</a>
             {% endif %}
         </div>
     </div>
