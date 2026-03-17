@@ -1,0 +1,120 @@
+.detail-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    gap: 2rem;
+    padding: 8rem 8rem 5rem;  
+    align-items: flex-start;
+    justify-content: center;  
+    max-width: 900px;         
+    margin: 0 auto;           
+    
+}
+
+.detail-banner {
+    position: relative;
+    width: 100%;
+    min-height: 600px;
+    background-size: cover;
+    background-position: center top;
+    background-repeat: no-repeat;
+    display: flex;
+    align-items: center;
+    justify-content: center;  
+    margin-top: 80px;         
+
+}
+
+/* add dark overlay so details are readable over banner */
+.detail-banner-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        to right,
+        rgba(0, 0, 0, 0.85) 40%,
+        rgba(0, 0, 0, 0.4) 100%
+    );
+}
+
+/* --- Poster --- */
+.detail-poster {
+    width: 220px;
+    border-radius: 0.5rem;
+    flex-shrink: 0;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+/* --- Info Block --- */
+.detail-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    color: #fff;
+    max-width: 600px;
+}
+
+.detail-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.detail-year {
+    font-weight: 400;
+    color: #d1d5db;
+}
+
+.detail-meta {
+    font-size: 0.9rem;
+    color: #d1d5db;
+    margin: 0;
+}
+
+.detail-rating {
+    font-size: 1rem;
+    margin: 0;
+}
+
+.detail-overview {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #e5e7eb;
+    margin: 0;
+}
+
+/* --- Buttons --- */
+.btn-add-log {
+    margin-top: 0.5rem;
+    padding: 0.5rem 1.25rem;
+    background-color: #027d96;
+    color: #fff;
+    border: none;
+    border-radius: 0.375rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    width: fit-content;
+    transition: background-color 0.2s ease;
+}
+
+.btn-add-log:hover {
+    background-color: #025f73;
+}
+
+.btn-login-prompt {
+    margin-top: 0.5rem;
+    padding: 0.5rem 1.25rem;
+    border: 1px solid #fff;
+    color: #fff;
+    border-radius: 0.375rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    width: fit-content;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.btn-login-prompt:hover {
+    background-color: #fff;
+    color: #000;
+}
