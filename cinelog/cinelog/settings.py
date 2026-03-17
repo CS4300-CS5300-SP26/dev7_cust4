@@ -12,8 +12,6 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 from django.core.exceptions import ImproperlyConfigured
 from pathlib import Path
 from decouple import config, Config, RepositoryEnv
-
-from dotenv import load_dotenv
 import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
