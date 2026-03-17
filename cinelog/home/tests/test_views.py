@@ -34,14 +34,18 @@ class CustomLogInViewTest(TestCase):
         """
 
         data = {
-            "username": "user123",
+            "username": "user1",
             "password": "Test.1234!!",
         }
         initial_user_count = User.objects.count()
-        User.objects.create_user(username="user123", password="Test.1234!!")
+        user, created = User.objects.get_or_create(username="user1")
+        if created:
+            user.set_password("Test.1234!!")
+            user.save()
 
         response = self.client.post(reverse("login"), data=data)
         self.assertEqual(User.objects.count(), initial_user_count + 1)
+        self.assertTrue(User.objects.filter(username=data["username"]).exists())
         self.assertEqual(response.status_code, 302)
         self.assertIn("_auth_user_id", self.client.session)
 
@@ -51,7 +55,7 @@ class CustomLogInViewTest(TestCase):
         """
 
         data = {
-            "username": "user123",
+            "username": "user1",
             "password": "Test.1234!!",
         }
         initial_user_count = User.objects.count()
@@ -65,11 +69,10 @@ class CustomLogInViewTest(TestCase):
 class SignupTest(TestCase):
     def setUp(self):
         self.data = {
-            "username": "user123",
+            "username": "user2",
             "password1": "Test.1234!!",
             "password2": "Test.1234!!",
         }
-        User = get_user_model()
 
     def test_signup_view_valid(self):
         """
@@ -90,17 +93,27 @@ class SignupTest(TestCase):
 
         self.assertRedirects(response, reverse("landing"))
         self.assertEqual(User.objects.count(), initial_user_count + 1)
-        self.assertTrue(User.objects.filter(username="user123").exists())
+        self.assertTrue(User.objects.filter(username="user2").exists())
         self.assertIn("_auth_user_id", self.client.session)
 
     def test_signup_unsuccessful(self):
         """
         Test that user cannot sign up if username is same as another user or already have an account.
         """
-        User.objects.create_user(username="user123", password="Test.1234!!")
+        # Create user with same username.
+        same_data = {
+            "username": "user3",
+            "password1": "password.5678",
+            "password2": "password.5678"
+        }
+
+        # Create user with same username if one does not already exist.
+        if not User.objects.filter(username=same_data["username"]).exists():
+            User.objects.create_user(username=same_data["username"], password="Test.1234!!")
         initial_user_count = User.objects.count()
 
-        response = self.client.post(reverse("signup"), data=self.data)
+        # Try to sign up with the same data.
+        response = self.client.post(reverse("signup"), data=same_data)
         self.assertEqual(User.objects.count(), initial_user_count)
         self.assertEqual(response.status_code, 200)
         self.assertFalse(response.context["form"].is_valid())
@@ -144,7 +157,7 @@ class SignupTest(TestCase):
         Test that user cannot sign up if they provide a weak password.
         """
         no_username_data = {
-            "username": "user123",
+            "username": "user12345",
             "password1": "hello",
             "password2": "hello",
         }
