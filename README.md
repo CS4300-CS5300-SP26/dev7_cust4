@@ -50,10 +50,10 @@ pythonALLOWED_HOSTS = ['.railway.app', 'your-url.railway.app']
 
 CSRF_TRUSTED_ORIGINS = ['https://your-url.railway.app']
 
-###Deploy:
+### Deploy:
 
 npx railway up
 
-###Run migrations after first deploy:
+### Run migrations after first deploy:
 
 npx railway run python manage.py migrate
