@@ -17,7 +17,13 @@ import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-config = Config(RepositoryEnv(BASE_DIR / ".env"))
+env_file = BASE_DIR / ".env"
+
+# use .env file if it exists (local), otherwise fall back to environment variables (CI/production)
+if env_file.exists():
+    config = Config(RepositoryEnv(env_file))
+else:
+    config = AutoConfig()
 
 TMDB_API_KEY = config("TMDB_API_KEY")
 
