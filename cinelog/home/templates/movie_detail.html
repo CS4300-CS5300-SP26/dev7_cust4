@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 {% block content %}
+
 <link href="{% static 'css/movie_detail.css' %}" rel="stylesheet">
 
 <!-- Backdrop Banner -->
@@ -22,9 +23,9 @@
             <p class="detail-meta">
                 {{ movie.release_date }} &bull;
                 {% for genre in movie.genres %}
-                {{ genre.name }}{% if not forloop.last %}, {% endif %}
+                    {{ genre.name }}{% if not forloop.last %}, {% endif %}
                 {% endfor %} &bull;
-                {{ runtime }} <!-- formatted runtime passed from view -->
+                {{ movie.formatted_runtime }}   <!-- formatted runtime passed from view -->
             </p>
 
             <p class="detail-rating">⭐ {{ movie.vote_average|floatformat:1 }}</p>
