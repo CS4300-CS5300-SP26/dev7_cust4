@@ -11,10 +11,21 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 from django.core.exceptions import ImproperlyConfigured
 from pathlib import Path
+from decouple import config, Config, RepositoryEnv, AutoConfig
 import os
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+env_file = BASE_DIR / ".env"
+
+# use .env file if it exists (local), otherwise fall back to environment variables (CI/production)
+if env_file.exists():
+    config = Config(RepositoryEnv(env_file))
+else:
+    config = AutoConfig()
+
+TMDB_API_KEY = config("TMDB_API_KEY", default="")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/

@@ -1,9 +1,12 @@
-from django.contrib.auth.views import LoginView
-from django.contrib.auth import login
 from django.shortcuts import render, redirect
 from django.conf import settings
+import requests
+from django.http import HttpResponse
+from django.contrib.auth.views import LoginView
+from django.contrib.auth import login
 from .models import CarouselImage
 from django.contrib.auth.forms import UserCreationForm
+from .services.tmdb import fetch_movies, fetch_movie_detail, get_cast, get_director
 
 def landing_page(request):
     """
@@ -16,6 +19,34 @@ def landing_page(request):
     """
     return render(request, 'landing.html')
 
+# anyone can see this (no login required)
+def movies_view(request):
+    """
+    Render the movies page with separate TMDB categories.
+    """
+    return render(request, "movies.html", {
+        "movies": fetch_movies("popular"),
+        "top_rated_movies": fetch_movies("top_rated"),
+        "now_playing_movies": fetch_movies("now_playing"),
+    })
+
+def movie_detail_view(request, movie_id):
+    """
+    Render the detail page for a single movie.
+    """
+    movie = fetch_movie_detail(movie_id)
+
+    # convert runtime to hours&mins for better readability
+    runtime = movie.get("runtime")
+    if runtime:
+        hours = runtime // 60
+        minutes = runtime % 60
+        movie["formatted_runtime"] = f"{hours}h {minutes}m"
+    else:
+        movie["formatted_runtime"] = "N/A"
+
+    return render(request, "movie_detail.html", 
+    {"movie": movie, "cast": get_cast(movie), "director": get_director(movie),})
 
 def signup_view(request):
     """
@@ -41,7 +72,6 @@ def signup_view(request):
     carousel_imgs = CarouselImage.objects.all()
     return render(request, "signup.html", {"form": form, "carousel_imgs": carousel_imgs})
 
-    
 class CustomLoginView(LoginView):
     """
     Changes Django's LoginView to edit the context that is passed to the login page.

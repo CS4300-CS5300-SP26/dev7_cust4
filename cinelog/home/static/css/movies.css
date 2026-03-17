@@ -1,0 +1,208 @@
+/* --- Layout Container --- */
+.hero-container {
+  position: relative;
+  isolation: isolate;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  padding-top: 3.5rem;
+}
+
+@media (min-width: 1024px) {
+  .hero-container {
+    padding-left: 2rem;
+    /* lg:px-8 */
+    padding-right: 2rem;
+  }
+}
+
+.hero-blob {
+  position: absolute;
+  inset: 0 0 auto 0;
+  z-index: -10;
+  overflow: hidden;
+  transform: translateZ(0);
+  filter: blur(48px);
+}
+
+.hero-blob--top {
+  top: -10rem;
+}
+
+@media (min-width: 640px) {
+  .hero-blob--top {
+    top: -20rem;
+  }
+}
+
+.hero-blob--bottom {
+  top: calc(100% - 13rem);
+}
+
+@media (min-width: 640px) {
+  .hero-blob--bottom {
+    top: calc(100% - 30rem);
+  }
+}
+
+/* --- Decorative Blob Inner Shape --- */
+.hero-blob__shape {
+  position: relative;
+  aspect-ratio: 1155 / 678;
+  width: 36.125rem;
+  background-image: linear-gradient(to top right, #027d96, #5bd3e6);
+  opacity: 0.3;
+}
+
+/* Top blob shape */
+.hero-blob__shape--top {
+  left: calc(50% - 11rem);
+  transform: translateX(-50%) rotate(30deg);
+  clip-path: polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%,
+      80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%,
+      47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%,
+      17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%);
+}
+
+@media (min-width: 640px) {
+  .hero-blob__shape--top {
+    left: calc(50% - 30rem);
+    width: 72.1875rem;
+  }
+}
+
+/* Bottom blob shape */
+.hero-blob__shape--bottom {
+  left: calc(50% + 3rem);
+  transform: translateX(-50%);
+  clip-path: polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%,
+      80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%,
+      47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%,
+      17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%);
+}
+
+@media (min-width: 640px) {
+  .hero-blob__shape--bottom {
+    left: calc(50% + 36rem);
+    width: 72.1875rem;
+  }
+}
+
+/* --- Hero Content Area --- */
+.hero-content {
+  max-width: 42rem;
+  padding-top: 3rem;
+  padding-bottom: 2rem;
+}
+
+/* --- Text Block --- */
+.hero-text {
+  padding-left: 2rem;
+}
+
+/* --- Heading --- */
+.hero-heading {
+  font-size: 2rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+  color: #fcfcfc;
+  margin: 0;
+}
+
+/* Container */
+.movie-row-container {
+  position: relative;
+  padding: 40px 80px;
+}
+
+/* Title */
+.row-title {
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+/* HORIZONTAL ROW */
+.movie-row {
+  display: flex;
+  overflow-x: auto;
+  gap: 16px;
+  scroll-behavior: smooth;
+}
+
+/* Hide scrollbar */
+.movie-row::-webkit-scrollbar {
+  display: none;
+}
+
+/* MOVIE CARD */
+.movie-card {
+  flex: 0 0 auto;
+  width: 180px;
+  transition: transform 0.2s ease;
+}
+
+/* movie cards hover with cursor */
+.movie-card:hover {
+  transform: scale(1.08);
+}
+
+/* IMAGE */
+.movie-card img {
+  width: 100%;
+  height: 270px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+/* INFO */
+.movie-info {
+  margin-top: 8px;
+  font-size: 14px;
+}
+
+.movie-info h3 {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.movie-info p {
+  color: #aaa;
+  font-size: 13px;
+}
+
+.no-poster {
+  width: 100%;
+  height: 270px;
+  background: #222;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+}
+
+/* ARROWS */
+.scroll-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.6);
+  border: none;
+  color: white;
+  font-size: 28px;
+  padding: 10px;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.scroll-btn.left {
+  left: 20px;
+}
+
+.scroll-btn.right {
+  right: 20px;
+}
+
+.movie-card-link {
+  text-decoration: none;
+  color: inherit;
+}
