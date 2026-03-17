@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
-
+from django.core.exceptions import ImproperlyConfigured
 from pathlib import Path
 import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -23,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-bd*mrkv-p!rdl6^0dfeb=na9nxd3a1u!l%3og+w$3tlx2)#5w8')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = [
     '.devedu.io',
@@ -152,8 +152,13 @@ if DEBUG:
     MEDIA_URL = "/media/"
     MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
+# If hosting on a platform, must have environment variables set for 
+# "S3_SUPABASE_BUCKET_NAME" and "SUPABASE_URL".
 else:
-    # INSTALLED_APPS += ["storages"]
     AWS_STORAGE_BUCKET_NAME = os.environ.get("S3_SUPABASE_BUCKET_NAME")
     SUPABASE_URL = os.environ.get("SUPABASE_URL")
+
+    if not AWS_STORAGE_BUCKET_NAME or SUPABASE_URL:
+        raise ImproperlyConfigured("Must have environemnt variables set for 'S3_SUPABASE_BUCKET_NAME' and 'SUPABASE_URL'")
+
     MEDIA_URL = f"{SUPABASE_URL}/storage/v1/object/public/{AWS_STORAGE_BUCKET_NAME}/"
