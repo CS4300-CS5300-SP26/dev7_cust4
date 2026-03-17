@@ -25,7 +25,7 @@ if env_file.exists():
 else:
     config = AutoConfig()
 
-TMDB_API_KEY = config("TMDB_API_KEY")
+TMDB_API_KEY = config("TMDB_API_KEY", default="")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
