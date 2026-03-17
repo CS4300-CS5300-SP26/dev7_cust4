@@ -6,9 +6,7 @@ from django.contrib.auth.views import LoginView
 from django.contrib.auth import login
 from .models import CarouselImage
 from django.contrib.auth.forms import UserCreationForm
-
-TMDB_API_KEY = settings.TMDB_API_KEY
-OMDB_API_KEY = settings.OMDB_API_KEY
+from .services.tmdb import fetch_movies, fetch_movie_detail
 
 def landing_page(request):
     """
@@ -23,26 +21,33 @@ def landing_page(request):
 
 # anyone can see this (no login required)
 def movies_view(request):
-
-    url = f"https://api.themoviedb.org/3/movie/popular?api_key={TMDB_API_KEY}&language=en-US&page=1"
-    response = requests.get(url)
-    movies = response.json().get("results", [])
-
-    return render(request, "movies.html", {"movies": movies})
+    """
+    Render the movies page with separate TMDB categories.
+    """
+    return render(request, "movies.html", {
+        "movies": fetch_movies("popular"),
+        "top_rated_movies": fetch_movies("top_rated"),
+        "upcoming_movies": fetch_movies("upcoming"),
+    })
 
 def movie_detail_view(request, movie_id):
+    """
+    Render the detail page for a single movie.
+    """
+    movie = fetch_movie_detail(movie_id)
 
-    # fetch full movie details by ID
-    url = f"https://api.themoviedb.org/3/movie/{movie_id}?api_key={TMDB_API_KEY}&append_to_response=credits,videos"
-    response = requests.get(url)
-    movie = response.json()
+    # convert runtime to hours&mins for better readability
+    runtime = movie.get("runtime")
+    if runtime:
+        hours = runtime // 60
+        minutes = runtime % 60
+        movie["formatted_runtime"] = f"{hours}h {minutes}m"
+    else:
+        movie["formatted_runtime"] = "N/A"
 
-    runtime = movie.get("runtime", 0)
-    hours = runtime // 60
-    minutes = runtime % 60
-    formatted_runtime = f"{hours}h {minutes}m"
+    return render(request, "movie_detail.html", {"movie": movie})
 
-    return render(request, "movie_detail.html", {"movie": movie, "runtime": formatted_runtime})
+
 def signup_view(request):
     """
     Handles creating accounts for new users to create bookings.
