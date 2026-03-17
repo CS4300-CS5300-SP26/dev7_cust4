@@ -1,7 +1,7 @@
 """
 AI code review script that reads the diff, sends prompt to openAI, and gives feedback
 """
-
+#removed unsupported instruction
 #!/usr/bin/env python3
 """
 AI Code Review Script for GitHub Actions
