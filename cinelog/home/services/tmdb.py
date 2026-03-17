@@ -55,3 +55,24 @@ def fetch_movie_detail(movie_id):
         return response.json()
     except requests.RequestException:
         return {}
+        
+def get_cast(movie, limit=10):
+    """
+    Extract cast members from an already-fetched movie dict.
+
+    Returns:
+        list: A list of cast member dicts.
+    """
+    credits = movie.get("credits", {})
+    return credits.get("cast", [])[:limit]
+
+
+def get_director(movie):
+    """
+    Extract the director from an already-fetched movie dict.
+
+    Returns:
+        dict or None: Director crew member dict or None.
+    """
+    crew = movie.get("credits", {}).get("crew", [])
+    return next((member for member in crew if member["job"] == "Director"), None)

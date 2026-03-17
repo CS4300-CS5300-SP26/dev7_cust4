@@ -6,7 +6,7 @@ from django.contrib.auth.views import LoginView
 from django.contrib.auth import login
 from .models import CarouselImage
 from django.contrib.auth.forms import UserCreationForm
-from .services.tmdb import fetch_movies, fetch_movie_detail
+from .services.tmdb import fetch_movies, fetch_movie_detail, get_cast, get_director
 
 def landing_page(request):
     """
@@ -45,8 +45,8 @@ def movie_detail_view(request, movie_id):
     else:
         movie["formatted_runtime"] = "N/A"
 
-    return render(request, "movie_detail.html", {"movie": movie})
-
+    return render(request, "movie_detail.html", 
+    {"movie": movie, "cast": get_cast(movie), "director": get_director(movie),})
 
 def signup_view(request):
     """
@@ -72,7 +72,6 @@ def signup_view(request):
     carousel_imgs = CarouselImage.objects.all()
     return render(request, "signup.html", {"form": form, "carousel_imgs": carousel_imgs})
 
-    
 class CustomLoginView(LoginView):
     """
     Changes Django's LoginView to edit the context that is passed to the login page.

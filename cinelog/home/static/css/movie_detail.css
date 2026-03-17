@@ -3,12 +3,12 @@
     z-index: 1;
     display: flex;
     gap: 2rem;
-    padding: 8rem 8rem 5rem;  
+    padding: 8rem 8rem 5rem;
     align-items: flex-start;
-    justify-content: center;  
-    max-width: 900px;         
-    margin: 0 auto;           
-    
+    justify-content: center;
+    max-width: 900px;
+    margin: 0 auto;
+
 }
 
 .detail-banner {
@@ -20,8 +20,8 @@
     background-repeat: no-repeat;
     display: flex;
     align-items: center;
-    justify-content: center;  
-    margin-top: 80px;         
+    justify-content: center;
+    margin-top: 80px;
 
 }
 
@@ -29,11 +29,9 @@
 .detail-banner-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(
-        to right,
-        rgba(0, 0, 0, 0.85) 40%,
-        rgba(0, 0, 0, 0.4) 100%
-    );
+    background: linear-gradient(to right,
+            rgba(0, 0, 0, 0.85) 40%,
+            rgba(0, 0, 0, 0.4) 100%);
 }
 
 /* --- Poster --- */
@@ -117,4 +115,56 @@
 .btn-login-prompt:hover {
     background-color: #fff;
     color: #000;
+}
+
+/* --- Credits Section --- */
+.detail-credits {
+    padding: 2rem 4rem;
+    color: #fff;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.detail-director {
+    margin-bottom: 2rem;
+}
+
+.detail-director h3,
+.detail-cast h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #fff;
+    border-bottom: 1px solid #2a2a2a;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.detail-director p {
+    font-size: 0.95rem;
+    color: #d1d5db;
+    margin: 0;
+}
+
+/* --- Organize cast into grid --- */
+.cast-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 0.75rem;
+}
+
+.cast-card {
+    padding: 0.25rem 0;
+}
+
+.cast-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #fff;
+    margin: 0 0 0.1rem 0;
+}
+
+.cast-character {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    margin: 0;
 }

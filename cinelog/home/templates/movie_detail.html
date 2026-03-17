@@ -41,4 +41,30 @@
     </div>
 </div>
 
+<!-- CREDITS section -->
+<div class="detail-credits">
+
+    {% if director %}
+    <div class="detail-director">
+        <h3>Director</h3>
+        <p>{{ director.name }}</p>
+    </div>
+    {% endif %}
+
+    {% if cast %}
+    <div class="detail-cast">
+        <h3>Cast</h3>
+        <div class="cast-list">
+            {% for member in cast %}
+            <div class="cast-card">
+                <p class="cast-name">{{ member.name }}</p>
+                <p class="cast-character">{{ member.character }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
 {% endblock %}
