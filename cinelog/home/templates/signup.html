@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %} Log in {% endblock %}
+{% block title %} Signup {% endblock %}
 {% block content %}
 
 <!--Adjust some of the bootstrap elements.-->
@@ -25,7 +25,7 @@
 <div class="min-h-screen flex justify-center">
     <div class="py-6 px-4">
         <!--Grid to have login next to carousel.-->
-        <div class="grid md:grid-cols-2 items-center gap-6 w-full max-w-6xl">
+        <div class="grid md:grid-cols-2 items-center gap-6 max-w-6xl w-full">
             <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
                 <div class="d-flex justify-content-center mb-4">
                     <!-- Display any errors with form if needed. -->
@@ -35,7 +35,7 @@
                                 {{ error }}
                                 <br>
                             {% endfor %}
-                
+                            
                             {% for errorType in form %}
                                 {% for error in errorType.errors %}
                                     {{ error }}
@@ -50,7 +50,7 @@
                 <!--Login information.-->
                 <div class="border border-slate-300 rounded-lg p-6 max-w-md shadow-[10px_10px_40px_-4px_rgba(2,125,150,0.8)] max-lg:mx-auto">
                     <div class="mb-12">
-                        <h1 class="text-white text-3xl font-semibold">Sign in</h1>
+                        <h1 class="text-white text-3xl font-semibold">Sign Up</h1>
                     </div>
 
                     <form method="POST" class="space-y-6">
@@ -68,19 +68,29 @@
                             </div>
                             
                             <div class="mt-2">
-                                <input id="password" type="password" name="password" required autocomplete="current-password" class="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-[#027d96] sm:text-sm/6" />
+                                <input id="password1" type="password" name="password1" required autocomplete="current-password" class="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-[#027d96] sm:text-sm/6" />
                             </div>
                         </div>
 
                         <div>
-                            <button type="submit" class="flex w-full justify-center rounded-md bg-[#027d96] px-3 py-1.5 text-sm/6 font-semibold text-white hover:bg-[#7699A9] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#027d96]">Sign in</button>
+                            <div class="flex items-center justify-between">
+                                <label for="password" class="block text-sm/6 font-medium text-gray-100">Confirm Password</label>
+                            </div>
+                            
+                            <div class="mt-2">
+                                <input id="password2" type="password" name="password2" required autocomplete="current-password" class="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-[#027d96] sm:text-sm/6" />
+                            </div>
+                        </div>
+
+                        <div>
+                            <button type="submit" class="flex w-full justify-center rounded-md bg-[#027d96] px-3 py-1.5 text-sm/6 font-semibold text-white hover:bg-[#7699A9] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#027d96]">Sign up</button>
                         </div>
                     </form>
 
                                 
                     <p class="mt-10 text-center text-sm/6 text-gray-400">
-                        Don't have an account?
-                        <a href="{% url 'signup' %}" class="font-semibold text-[#027d96] hover:text-[#7699A9]">Sign Up</a>
+                        Already have an account?
+                        <a href="{% url 'login' %}" class="font-semibold text-[#027d96] hover:text-[#7699A9]">Sign In</a>
                     </p>
                 </div>
             </div>

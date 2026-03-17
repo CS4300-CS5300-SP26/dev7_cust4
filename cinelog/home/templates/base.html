@@ -2,23 +2,34 @@
 {% load static %}
 <html lang="en" data-bs-theme="dark">
 <head>
+    <title>CineLog</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta charset="utf-8">
-    <title>CineLog</title>
     <link href="{% static 'css/base.css' %}" rel="stylesheet">
     <link href="{% static 'css/output.css' %}" rel="stylesheet">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
 </head>
-<body class="bg-black text-white">
-  <header class="absolute inset-x-0 top-0 z-50">
+
+<style>
+/* --- Footer --- */
+.site-footer {
+    background-color: #111111;
+    border-top: 2px solid #2A2A2A;
+    text-align: center;
+    padding: 20px;
+    color: #555;
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+</style>
+
+<body class="bg-black text-white min-h-screen flex flex-col">
+  <header class="relative inset-x-0 top-0 z-50">
     
     <!--Navigation bar.-->
     <nav aria-label="Global" class="flex items-center justify-between p-6 lg:px-8">
       <div class="flex lg:flex-1">
-        <a href="#" class="-m-1.5 p-1.5">
+        <a href="/" class="-m-1.5 p-1.5">
           <span class="sr-only">Cinelog</span>
             <img src="{% static 'images/logo.jpg' %}" class="h-10 w-auto" alt="logo">
           </a>
@@ -37,7 +48,18 @@
         <a href="#" class="font-semibold text-white hover:text-[#d0f0fd]">Account</a>
       </div>
       <div class="hidden lg:flex lg:flex-1 lg:justify-end">
-        <a href="#" class="font-semibold text-white hover:text-[#d0f0fd]">Log in <span aria-hidden="true">&rarr;</span></a>
+        {% if user.is_authenticated %}
+          <!-- Logout Button -->
+          <form action="{% url 'logout' %}"
+                method="POST"
+                class="m-0">
+                {% csrf_token %}
+              <button type="submit" class="rounded-md bg-[#027d96] px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-[#7699A9] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Logout</button>
+          </form>
+        {% else %}
+          <!-- Login Button -->
+          <a href="{% url 'login' %}" class="rounded-md bg-[#027d96] !px-3 !py-2 text-sm font-semibold text-white shadow-xs hover:bg-[#7699A9] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Sign In</a>
+        {% endif %}
       </div>
     </nav>
     <el-dialog>
@@ -47,7 +69,7 @@
         <div tabindex="0" class="fixed inset-0 focus:outline-none">
           <el-dialog-panel class="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white p-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
             <div class="flex items-center justify-between">
-              <a href="#" class="-m-1.5 p-1.5">
+              <a href="" class="-m-1.5 p-1.5">
                 <span class="sr-only">CineLog</span>
                 <img src="{% static 'images/logo.jpg' %}" class="h-10 w-auto" alt="logo">
               </a>
@@ -66,7 +88,18 @@
                   <a href="#" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">Account</a>
                 </div>
                 <div class="py-6">
-                  <a href="#" class="-mx-3 block rounded-lg px-3 py-2.5 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">Log in</a>
+                  {% if user.is_authenticated %}
+                    <!-- Logout Button -->
+                    <form action="{% url 'logout' %}"
+                          method="POST"
+                          class="m-0">
+                          {% csrf_token %}
+                        <button type="submit" class="-mx-3 block rounded-lg px-3 py-2.5 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">Log out</button>
+                    </form>
+                  {% else %}
+                  <!-- Login Button -->
+                  <a href="{% url 'login' %}" class="-mx-3 block rounded-lg px-3 py-2.5 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">Log in</a>
+                  {% endif %}
                 </div>
               </div>
             </div>
@@ -77,7 +110,7 @@
   </header>
 
   <!--Content for other pages.-->
-  <main class="overflow-hidden">
+  <main class="flex-grow">
     {% block content %}
 
     {% endblock %}
