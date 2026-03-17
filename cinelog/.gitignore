@@ -3,4 +3,4 @@ staticfiles/
 __pycache__/
 *.pyc
 /.coverage/
-/db.sqlite3/
+db.sqlite3
