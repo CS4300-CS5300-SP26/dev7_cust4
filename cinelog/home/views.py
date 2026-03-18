@@ -4,7 +4,6 @@ import requests
 from django.http import HttpResponse
 from django.contrib.auth.views import LoginView
 from django.contrib.auth import login
-from .models import CarouselImage
 from django.contrib.auth.forms import UserCreationForm
 from .services.tmdb import fetch_movies, fetch_movie_detail, get_cast, get_director
 
@@ -69,7 +68,6 @@ def signup_view(request):
     else:
         form = UserCreationForm()
 
-    carousel_imgs = CarouselImage.objects.all()
     return render(request, "signup.html", {"form": form, "movies": fetch_movies("popular")})
 
 class CustomLoginView(LoginView):

@@ -35,7 +35,7 @@ TMDB_API_KEY = config("TMDB_API_KEY", default="")
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-bd*mrkv-p!rdl6^0dfeb=na9nxd3a1u!l%3og+w$3tlx2)#5w8')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = [
     '.devedu.io',
@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'home',
+    'behave_django',
 ]
 
 MIDDLEWARE = [
@@ -107,7 +108,7 @@ LOGGING = {
     'loggers': {
         'django': {
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': 'INFO',
             'propagate': True,
         },
     },
