@@ -1,23 +1,10 @@
 from django.test import TestCase
-from home.models import CarouselImage
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
 class CustomLogInViewTest(TestCase):
-    """
-    Tests that the carousel images are passed to the login page.
-    """
-    def setUp(self):       
-        """
-        Set up a valid carousel image that can be used by the tests.
-        """
-        self.carousel_img = CarouselImage.objects.create(
-            title='test123', 
-            image='carousel/img.jpg'
-        )
-    
     def test_login_valid_account(self):
         """
         Test that a user with an account can login.
