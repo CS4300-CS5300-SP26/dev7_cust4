@@ -5,9 +5,10 @@ Group project repo — dev7 → cust4
 
 ## AI Usage: 
 
-Claude was used on production deployment for debug help as well as asking questions and doing research on potential solutions
-
-
+Claude was used on production deployment for debug help as well as asking questions and doing research on potential solutions.
+Claude was used for creating unit testing for movies_view and movie_detail_view.
+ChatGPT was used to explain how to use git pull request, resolve conflicts, and merge and explain any errors. Also used to debug. 
+PardotAI was used to help assist with AI code review. 
 ## Railway setup information:
 
 ### Install Railway CLI:
