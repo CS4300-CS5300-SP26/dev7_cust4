@@ -28,6 +28,9 @@ else:
 
 TMDB_API_KEY = config("TMDB_API_KEY", default="")
 
+SUPABASE_URL = config("SUPABASE_URL", default="")
+SUPABASE_KEY = config("SUPABASE_KEY", default="")
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
@@ -35,17 +38,19 @@ TMDB_API_KEY = config("TMDB_API_KEY", default="")
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-bd*mrkv-p!rdl6^0dfeb=na9nxd3a1u!l%3og+w$3tlx2)#5w8')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = [
     '.devedu.io',
     'localhost', 
     '127.0.0.1',
     'cinelog-service-production.up.railway.app',
-    'PLACEHOLDER FOR CUSTOM DOMAIN NAME'
+    'PLACEHOLDER FOR CUSTOM DOMAIN NAME',
 ]
 
 CSRF_TRUSTED_ORIGINS = [
+    'https://cinelog-service-production.up.railway.app',
+    'https://app-lkarsanb-21.devedu.io',
 ]
 
 # Application definition
@@ -133,10 +138,6 @@ else:
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
-
-CSRF_TRUSTED_ORIGINS = [
-    'https://cinelog-service-production.up.railway.app',
-]
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators

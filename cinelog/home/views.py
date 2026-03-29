@@ -6,6 +6,9 @@ from django.contrib.auth.views import LoginView
 from django.contrib.auth import login
 from django.contrib.auth.forms import UserCreationForm
 from .services.tmdb import fetch_movies, fetch_movie_detail, get_cast, get_director
+from .services.supabase import send_magic_link_login, reached_limit_magic_login
+from django.contrib import messages
+
 
 def landing_page(request):
     """
@@ -89,3 +92,32 @@ class CustomLoginView(LoginView):
         context["movies"] = fetch_movies("popular")
         return context
     
+
+def magic_login(request):
+    """
+    Renders magic login page and handles logging user in through a magic link.
+
+    Args:
+        request (HTTP request): Contains information about the request.
+
+    Returns:
+        HTTP Response: Contains the login form or redirects user if they successfully logged in.
+    """
+    # If form has been submitted, create the user if form is valid. Using the django UserCreationForm to handle creating accounts.
+    if request.method == "POST":
+        email = request.POST.get("email")
+
+        if reached_limit_magic_login(email):
+            messages.error(request, "Reached max limit of magic logins for the hour. Try later or login with password.")
+            return redirect("magic_login")
+
+        # User must enter an email. If not, display error.
+        if not email:
+            messages.error(request, "Please enter your email.")
+            return redirect("magic_login")
+
+        # User supabase to send magic link in email.
+        send_magic_link_login(request, email)
+        return redirect("magic_login")
+
+    return render(request, "magic_link_login.html", {"movies": fetch_movies("popular")})
