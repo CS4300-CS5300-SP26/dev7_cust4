@@ -3,6 +3,9 @@ from supabase import create_client, Client
 from django.conf import settings
 from django.contrib import messages
 from django.core.cache import cache
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
+
 
 # Set a max for number of links user can recieve.
 MAX_EMAILS_1_HOUR = 4
@@ -10,6 +13,49 @@ MAX_EMAILS_1_HOUR = 4
 url: str = settings.SUPABASE_URL
 key: str = settings.SUPABASE_KEY
 supabase: Client = create_client(url, key)
+
+def supabase_sign_up(request, username, email, password):
+    try:
+        data = supabase.auth.sign_up({
+            'email': email,
+            'password': password,
+            'options': {
+                'data': {
+                    "username": username
+                }
+            }
+        })
+
+    except Exception as e:
+        messages.error(request, f"Error: {e}")
+
+def supabase_log_in(request, email, password):
+    try:
+        response = supabase.auth.sign_in_with_password(
+            {
+                "email": email,
+                "password": password,
+            }
+        )
+
+        if response.user:
+            request.session["supabase_access_token"] = response.session.supabase_access_token
+            request.session["supabase_user_email"] = email
+
+        messages.success(request, "Logged in.")
+        return True
+        
+    except Exception as e:
+        messages.error(request, f"Error: {e}")
+        return False
+
+def is_valid_email(request, email):
+    try:
+        validate_email(email)
+        return True
+    except ValidationError:
+        messages.error(request, "Please enter a valid email address.")
+        return False
 
 
 def send_magic_link_login(request, email):
@@ -53,3 +99,8 @@ def reached_limit_magic_login(email):
 
     cache.set(cache_key, num_requests + 1, timeout=3600)
     return False
+
+def is_authenticated(request):
+    return {
+        "user_authenticated": "supabase_a"
+    }

@@ -29,13 +29,24 @@
             <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
                 <div class="d-flex justify-content-center mb-4">
                     <!-- Display any errors with form if needed. -->
+                    {% if messages %}
+                        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                            {% for message in messages %}
+                                {{ message }}
+                                <br>
+                            {% endfor %}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endif %}
+
+                    <!-- Display any errors with form if needed. -->
                     {% if form.errors %}
                         <div class="alert alert-warning alert-dismissible fade show" role="alert">
                             {% for error in form.non_field_errors %}
                                 {{ error }}
                                 <br>
                             {% endfor %}
-                            
+                
                             {% for errorType in form %}
                                 {% for error in errorType.errors %}
                                     {{ error }}
@@ -56,9 +67,16 @@
                     <form method="POST" class="space-y-6">
                         {% csrf_token %}
                         <div>
-                            <label for="email" class="block text-sm/6 font-medium text-gray-100">Username</label>
+                            <label for="username" class="block text-sm/6 font-medium text-gray-100">Username</label>
                             <div class="mt-2">
                                 <input id="username" type="text" name="username" required autocomplete="username" class="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-[#027d96] sm:text-sm/6" />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="email" class="block text-sm/6 font-medium text-gray-100">Email</label>
+                            <div class="mt-2">
+                                <input id="email" type="text" name="email" required autocomplete="email" class="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-[#027d96] sm:text-sm/6" />
                             </div>
                         </div>
         
