@@ -47,7 +47,7 @@
         <a href="#" class="font-semibold text-white hover:text-[#d0f0fd]">Account</a>
       </div>
       <div class="hidden lg:flex lg:flex-1 lg:justify-end">
-        {% if user.is_authenticated %}
+        {% if is_authenticated %}
           <!-- Logout Button -->
           <form action="{% url 'logout' %}"
                 method="POST"
@@ -87,7 +87,7 @@
                   <a href="#" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">Account</a>
                 </div>
                 <div class="py-6">
-                  {% if user.is_authenticated %}
+                  {% if is_authenticated %}
                     <!-- Logout Button -->
                     <form action="{% url 'logout' %}"
                           method="POST"

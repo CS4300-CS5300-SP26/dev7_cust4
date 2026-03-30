@@ -6,6 +6,8 @@ urlpatterns = [
     path('login/', views.login_view, name='login'),
     path('signup/', views.signup_view, name='signup'),
     path('magiclogin/', views.magic_login, name='magic_login'),
-    path("movies/", views.movies_view, name="movies"),
+    path('callback/', views.magic_callback, name='callback'),
+    path('logout', views.logout_view, name='logout'),
+    path('movies/', views.movies_view, name='movies'),
     path('movies/<int:movie_id>/', views.movie_detail_view, name='movie_detail'),
 ]

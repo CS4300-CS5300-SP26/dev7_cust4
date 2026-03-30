@@ -14,7 +14,29 @@ url: str = settings.SUPABASE_URL
 key: str = settings.SUPABASE_KEY
 supabase: Client = create_client(url, key)
 
+def create_session(request, response, email, access_token):
+    """
+    Save information about the user to the session to be used.
+
+    Args:
+        request (HTTP request): Contains information about the request.
+        response (Response Object): Contains information returned by Supabase.
+        email (str): Email submitted in form by user.
+    """
+    request.session["access_token"] = access_token
+    request.session["supabase_user_email"] = email
+    request.session["supabase_username"] = response.user.user_metadata.get("username")
+
 def supabase_sign_up(request, username, email, password):
+    """
+    Sign the user up through Supabase.
+
+    Args:
+        request (HTTP request): Contains information about the request.
+        username (str): Username entered by the user.
+        email (str): Email entered by the user.
+        password (str): Password entered by the user.
+    """
     try:
         data = supabase.auth.sign_up({
             'email': email,
@@ -25,11 +47,27 @@ def supabase_sign_up(request, username, email, password):
                 }
             }
         })
+        
+        # Log user in too.
+        if not supabase_log_in(request, email, password):
+            messages.error(request, "Account created. Please login to account.")
 
     except Exception as e:
         messages.error(request, f"Error: {e}")
 
+
 def supabase_log_in(request, email, password):
+    """
+    Log the user in through Supabase.
+
+    Args:
+        request (HTTP request): Contains information about the request.
+        email (str): Email entered by the user.
+        password (str): Password entered by the user.
+
+    Returns:
+        boolean: Represents if user was logged in or not.
+    """
     try:
         response = supabase.auth.sign_in_with_password(
             {
@@ -38,11 +76,9 @@ def supabase_log_in(request, email, password):
             }
         )
 
-        if response.user:
-            request.session["supabase_access_token"] = response.session.supabase_access_token
-            request.session["supabase_user_email"] = email
-
-        messages.success(request, "Logged in.")
+        if response.session:
+            create_session(request, response, email, response.session.access_token)
+        
         return True
         
     except Exception as e:
@@ -50,6 +86,16 @@ def supabase_log_in(request, email, password):
         return False
 
 def is_valid_email(request, email):
+    """
+    Uses Django's validation to validate an entered email.
+
+    Args:
+        request (HTTP request): Contains information about the request.
+        email (str): Email entered by the user.
+
+    Returns:
+        boolean: Represents if the entered email is valid or not.
+    """
     try:
         validate_email(email)
         return True
@@ -63,14 +109,15 @@ def send_magic_link_login(request, email):
     Use Supabase and Google SMTP to send magic link to login to user.
 
     Args:
+        request (HTTP request): Contains information about the request.
         email (str): Email submitted in form by user.
     """
-    redirect_url = request.build_absolute_uri("/movies/")
+    redirect_url = request.build_absolute_uri("/callback/?useFragment=false")
     try:
         response = supabase.auth.sign_in_with_otp({
             'email': email,
             'options': {
-                'should_create_user': True, # User must have an account.
+                'should_create_user': False, # User must have an account.
                 'email_redirect_to': redirect_url,
             },
         })
@@ -100,7 +147,85 @@ def reached_limit_magic_login(email):
     cache.set(cache_key, num_requests + 1, timeout=3600)
     return False
 
+
 def is_authenticated(request):
-    return {
-        "user_authenticated": "supabase_a"
-    }
+    """
+    Determines if a user is logged in.
+
+    Args:
+        request (HTTP request): Contains information about the request.
+
+    Returns:
+        boolean: Represents if user is logged in or not.
+    """
+    access_token = request.session.get("access_token")
+    
+    try:
+        user = supabase.auth.get_user(access_token)
+        return user is not None
+    
+    except Exception:
+        return False
+
+def get_user_magic_link(request):
+    """
+    Use the token hash in url from when user clicks magic link to authenticate the user.
+
+    Args:
+        request (HTTP request): Contains information about the request.
+
+    Returns:
+        boolean: Represents if token hash sucessfully signed user in.
+    """
+    # Get the token hash from request.
+    token_hash = request.GET.get("token_hash")
+    if not token_hash:
+        messages.error(request, "Please try again or login with password.")
+        return False
+
+    try:
+        # Use token hash to authenticate the user.
+        response = supabase.auth.verify_otp({
+            "token_hash": token_hash,
+            "type": "email",
+        })
+        access_token = response.session.access_token
+        user = response.user
+
+        if user:
+            email = user.email
+            # Save user data to session.
+            create_session(request, response, email, access_token)
+            return True
+
+        else:
+            messages.error(request, "Login failed. Please try again or login with password.")
+            return False
+
+    except Exception as e:
+        messages.error(request, f"Error: {e}")
+        return False
+            
+
+def logout(request):   
+    """
+    Log the user out through Supabase.
+
+    Args:
+        request (HTTP request): Contains information about the request.
+        email (str): Email entered by the user.
+        password (str): Password entered by the user.
+
+    Returns:
+        boolean: Represents if user was logged in or not.
+    """
+    access_token = request.session.get("access_token")
+
+    try:
+        if access_token:
+            supabase.auth.sign_out()
+    
+    except Exception as e:
+        messages.error(request, f"Error: {e}")
+    
+    request.session.flush()

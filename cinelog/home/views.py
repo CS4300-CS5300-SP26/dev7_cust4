@@ -52,7 +52,7 @@ def movie_detail_view(request, movie_id):
 
 def signup_view(request):
     """
-    Handles creating accounts for new users to create bookings.
+    Handles creating accounts for new users.
 
     Args:
         request (HTTP request): Contains information about the request.
@@ -62,12 +62,16 @@ def signup_view(request):
     """
     # If form has been submitted, create the user if form is valid. Using the django UserCreationForm to handle creating accounts.
     if request.method == "POST":
+        # Get the email and username from the form.
         email = request.POST.get("email")
+        username = request.POST.get("username")
         form = UserCreationForm(request.POST)
-
+        
+        # Check if email is a valid email.
         if not supabase.is_valid_email(request, email):
             return redirect("signup")
 
+        # User Django to validate other fields and ensure they meet requirements.
         if form.is_valid():
             password = request.POST.get("password1")
             supabase.supabase_sign_up(request, username, email, password)
@@ -80,6 +84,15 @@ def signup_view(request):
     return render(request, "signup.html", {"form": form, "movies": fetch_movies("popular")})
 
 def login_view(request):
+    """
+    Handles logging a user into their account through supabase.
+
+    Args:
+        request (HTTP request): Contains information about the request.
+
+    Returns:
+        HTTP Response: Contains the login form or redirects user to movies page if they successfully logged in.
+    """
     # If form has been submitted, create the user if form is valid. Using the django UserCreationForm to handle creating accounts.
     if request.method == "POST":
         email = request.POST.get("email")
@@ -92,30 +105,11 @@ def login_view(request):
             messages.error(request, "Please enter fill in each field.")
             return redirect("login")
         
-        if supabase.supabase_sign_up(request, email, password):
+        if supabase.supabase_log_in(request, email, password):
             return redirect("movies")
 
     return render(request, "login.html", {"movies": fetch_movies("popular")})
 
-# class CustomLoginView(LoginView):
-#     """
-#     Changes Django's LoginView to edit the context that is passed to the login page.
-#     """
-#     template_name = "registration/login.html"
-#     redirect_autheticated_user = True
-
-#     def get_context_data(self, **kwargs):
-#         """
-#         Changes Django's login view and adds the carousel images to the context.
-
-#         Returns:
-#             context (HTTP Response): Contains the login context along with the carousel
-#                 images.
-#         """
-#         context = super().get_context_data(**kwargs)
-#         context["movies"] = fetch_movies("popular")
-#         return context
-    
 
 def magic_login(request):
     """
@@ -145,3 +139,32 @@ def magic_login(request):
         return redirect("magic_login")
 
     return render(request, "magic_link_login.html", {"movies": fetch_movies("popular")})
+
+
+def magic_callback(request):
+    """
+    Redirects user after they have been authenticated or not by the magic link.
+
+    Args:
+        request (HTTP request): Contains information about the request.
+
+    Returns:
+        HTTP Response: Contains the login form or redirects user if they successfully logged in.
+    """
+    if supabase.get_user_magic_link(request):
+        return redirect("movies")
+    return redirect("magic_login")
+
+
+def logout_view(request):
+    """
+    Logs the user out of supabase and redirects them.
+
+    Args:
+        request (HTTP request): Contains information about the request.
+
+    Returns:
+        HTTP Response: Contains the login form or redirects user if they successfully logged in.
+    """
+    supabase.logout(request)
+    return redirect("/")
