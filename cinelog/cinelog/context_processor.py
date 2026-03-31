@@ -5,7 +5,7 @@ def supabase_context_processor(request):
     username = None
 
     if is_authenticated:
-        username = request.session["supabase_username"]
+        username = request.session.get("supabase_username")
 
     return {
         "is_authenticated": is_authenticated,

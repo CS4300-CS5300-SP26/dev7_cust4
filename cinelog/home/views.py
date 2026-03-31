@@ -74,7 +74,8 @@ def signup_view(request):
         # User Django to validate other fields and ensure they meet requirements.
         if form.is_valid():
             password = request.POST.get("password1")
-            supabase.supabase_sign_up(request, username, email, password)
+            if not supabase.supabase_sign_up(request, username, email, password):
+                return redirect("signup") 
             return redirect("movies")
 
     # Display form.
@@ -125,7 +126,7 @@ def magic_login(request):
     if request.method == "POST":
         email = request.POST.get("email")
 
-        if supabase.reached_limit_magic_login(email):
+        if supabase.reached_limit_magic_login(request, email):
             messages.error(request, "Reached max limit of magic logins for the hour. Try later or login with password.")
             return redirect("magic_login")
 

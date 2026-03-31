@@ -36,6 +36,9 @@ def supabase_sign_up(request, username, email, password):
         username (str): Username entered by the user.
         email (str): Email entered by the user.
         password (str): Password entered by the user.
+    
+    Returns:
+        boolean: Represents if user was sucessfully signed in or not.
     """
     try:
         data = supabase.auth.sign_up({
@@ -51,9 +54,11 @@ def supabase_sign_up(request, username, email, password):
         # Log user in too.
         if not supabase_log_in(request, email, password):
             messages.error(request, "Account created. Please login to account.")
+        return True
 
     except Exception as e:
         messages.error(request, f"Error: {e}")
+        return False
 
 
 def supabase_log_in(request, email, password):
@@ -103,6 +108,24 @@ def is_valid_email(request, email):
         messages.error(request, "Please enter a valid email address.")
         return False
 
+def is_authenticated(request):
+    """
+    Determines if a user is logged in.
+
+    Args:
+        request (HTTP request): Contains information about the request.
+
+    Returns:
+        boolean: Represents if user is logged in or not.
+    """
+    access_token = request.session.get("access_token")
+    
+    try:
+        user = supabase.auth.get_user(access_token)
+        return user is not None
+    
+    except Exception:
+        return False
 
 def send_magic_link_login(request, email):
     """
@@ -112,7 +135,7 @@ def send_magic_link_login(request, email):
         request (HTTP request): Contains information about the request.
         email (str): Email submitted in form by user.
     """
-    redirect_url = request.build_absolute_uri("/callback/?useFragment=false")
+    redirect_url = request.build_absolute_uri("/callback/")
     try:
         response = supabase.auth.sign_in_with_otp({
             'email': email,
@@ -147,25 +170,6 @@ def reached_limit_magic_login(email):
     cache.set(cache_key, num_requests + 1, timeout=3600)
     return False
 
-
-def is_authenticated(request):
-    """
-    Determines if a user is logged in.
-
-    Args:
-        request (HTTP request): Contains information about the request.
-
-    Returns:
-        boolean: Represents if user is logged in or not.
-    """
-    access_token = request.session.get("access_token")
-    
-    try:
-        user = supabase.auth.get_user(access_token)
-        return user is not None
-    
-    except Exception:
-        return False
 
 def get_user_magic_link(request):
     """
