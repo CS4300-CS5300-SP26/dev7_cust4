@@ -10,9 +10,10 @@ jobs:
       
       - name: Deploy to Railway
         uses: bervProject/railway-deploy@main
+        with:
+          service: "CineLog Service"
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-          SERVICE_NAME: "CineLog Service"
       
       - name: Run Migrations
         run: |
