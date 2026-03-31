@@ -8,17 +8,19 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
-      - name: Deploy to Railway
-        uses: bervProject/railway-deploy@main
-        with:
-          service: "CineLog Service"
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
       
-      - name: Run Migrations
-        run: |
-          npm install -g @railway/cli
-          railway run python manage.py migrate
+      - name: Deploy
+        run: railway up --detach --service "CineLog Service"
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+          RAILWAY_ENVIRONMENT_ID: ${{ secrets.RAILWAY_ENVIRONMENT_ID }}
+      
+      - name: Run Migrations
+        run: railway run python manage.py migrate --service "CineLog Service"
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+          RAILWAY_ENVIRONMENT_ID: ${{ secrets.RAILWAY_ENVIRONMENT_ID }}
