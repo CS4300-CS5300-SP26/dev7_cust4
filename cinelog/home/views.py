@@ -126,7 +126,7 @@ def magic_login(request):
     if request.method == "POST":
         email = request.POST.get("email")
 
-        if supabase.reached_limit_magic_login(request, email):
+        if supabase.reached_limit_magic_login(email):
             messages.error(request, "Reached max limit of magic logins for the hour. Try later or login with password.")
             return redirect("magic_login")
 
@@ -135,7 +135,7 @@ def magic_login(request):
             messages.error(request, "Please enter your email.")
             return redirect("magic_login")
 
-        # User supabase to send magic link in email.
+        # Use supabase to send magic link in email.
         supabase.send_magic_link_login(request, email)
         return redirect("magic_login")
 
