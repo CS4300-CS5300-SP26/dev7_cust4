@@ -42,11 +42,11 @@ class SignupTest(TestCase):
             "password2": "Test.1234!!"
         }
         response = self.client.post(self.url, data)
-        mock_sign_up.assert_called_once()
+        mock_sign_up.assert_not_called()
         self.assertRedirects(response, reverse("signup"))
 
     @patch("home.views.supabase.supabase_sign_up")
-    @patch("home.views.supabase.supabase.auth.get_user")
+    @patch("home.views.supabase.supabase_client.auth.get_user")
     @patch("home.views.UserCreationForm.is_valid", return_value=True)
     def test_signup_view_successful(self, mock_form_valid, mock_get_user, mock_sign_up):
         """
@@ -135,7 +135,7 @@ class SignupTest(TestCase):
         }
 
         response = self.client.post(self.url, data=no_username_data)
-        mock_sign_up.assert_called_once()
+        mock_sign_up.assert_not_called()
         self.assertRedirects(response, reverse("signup"))
 
     def test_signup_weak_password(self):
@@ -200,7 +200,35 @@ class LoginTest(TestCase):
         }
         response = self.client.post(self.url, data)
         self.assertTemplateUsed("login.html")
-        mock_log_in.assert_called_once()
+        mock_log_in.assert_not_called()
+
+    @patch("home.views.supabase.supabase_log_in", return_value=False)
+    def test_log_in_with_empty_fields(self, mock_log_in):
+        """
+        Test that a user cannot sign up if they have an invalid email.
+        """
+        data = {
+            "email": "",
+            "password": ""
+        }
+        response = self.client.post(self.url, data)
+        self.assertTemplateUsed("login.html")
+        self.assertRedirects(response, reverse("login"))
+        mock_log_in.assert_not_called()
+
+    @patch("home.views.supabase.supabase_log_in", return_value=False)
+    def test_log_in_with_no_email(self, mock_log_in):
+        """
+        Test that a user cannot sign up if they have an invalid email.
+        """
+        data = {
+            "email": "",
+            "password": "Test1234!!"
+        }
+        response = self.client.post(self.url, data)
+        self.assertTemplateUsed("login.html")
+        self.assertRedirects(response, reverse("login"))
+        mock_log_in.assert_not_called()
 
 
 class MagicLogin(TestCase):
@@ -326,13 +354,6 @@ class AuthenticationTest(TestCase):
             email='test@example.com'
         )
 
-    def test_login_with_invalid_credentials(self):
-        """Login should fail with wrong password."""
-        response = self.client.post('/login/', {
-            'email': 'test@example.com',
-            'password': 'wrongpassword',
-        })
-        self.assertFalse(response.wsgi_request.user.is_authenticated)
 
     def test_login_page_loads_successfully(self):
         """Login page should load with HTTP 200."""

@@ -6,7 +6,6 @@ from unittest.mock import patch
 from django.http import HttpResponseRedirect
 from home.services import supabase
 
-supabase = supabase.get_supabase_client()
 
 @given("I have an account with {email}, {username}, and {password}")
 def step_impl(context, email, username, password):

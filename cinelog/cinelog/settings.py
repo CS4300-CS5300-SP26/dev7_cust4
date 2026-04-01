@@ -50,6 +50,7 @@ ALLOWED_HOSTS = [
 
 CSRF_TRUSTED_ORIGINS = [
     'https://cinelog-service-production.up.railway.app',
+    'https://app-lkarsanb-21.devedu.io'
 ]
 
 # Application definition

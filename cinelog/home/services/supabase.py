@@ -17,17 +17,19 @@ def get_supabase_client():
     Returns:
         Client: The supabase client that can be used to access Supabase.
     """
-    # url: str = settings.SUPABASE_URL
-    # key: str = settings.SUPABASE_KEY
-    url = key = None
+    url: str = settings.SUPABASE_URL
+    key: str = settings.SUPABASE_KEY
+
     if not url or not key:
-        supabase = MagicMock()
+        supabase_client = MagicMock()
 
     else:
-        supabase: Client = create_client(url, key)
-
+        supabase_client = create_client(url, key)
     
-    return supabase
+    return supabase_client
+
+# Create the client.
+supabase_client = get_supabase_client()
 
 def create_session(request, response, email, access_token):
     """
@@ -56,7 +58,7 @@ def supabase_sign_up(request, username, email, password):
         boolean: Represents if user was sucessfully signed in or not.
     """
     try:
-        data = supabase.auth.sign_up({
+        data = supabase_client.auth.sign_up({
             'email': email,
             'password': password,
             'options': {
@@ -89,7 +91,7 @@ def supabase_log_in(request, email, password):
         boolean: Represents if user was logged in or not.
     """
     try:
-        response = supabase.auth.sign_in_with_password(
+        response = supabase_client.auth.sign_in_with_password(
             {
                 "email": email,
                 "password": password,
@@ -136,7 +138,7 @@ def is_authenticated(request):
     access_token = request.session.get("access_token")
     
     try:
-        user = supabase.auth.get_user(access_token)
+        user = supabase_client.auth.get_user(access_token)
         return user is not None
     
     except Exception:
@@ -152,7 +154,7 @@ def send_magic_link_login(request, email):
     """
     redirect_url = request.build_absolute_uri("/callback/")
     try:
-        response = supabase.auth.sign_in_with_otp({
+        response = supabase_client.auth.sign_in_with_otp({
             'email': email,
             'options': {
                 'should_create_user': False, # User must have an account.
@@ -204,7 +206,7 @@ def get_user_magic_link(request):
 
     try:
         # Use token hash to authenticate the user.
-        response = supabase.auth.verify_otp({
+        response = supabase_client.auth.verify_otp({
             "token_hash": token_hash,
             "type": "email",
         })
@@ -242,7 +244,7 @@ def logout(request):
 
     try:
         if access_token:
-            supabase.auth.sign_out()
+            supabase_client.auth.sign_out()
     
     except Exception as e:
         messages.error(request, f"Error: {e}")

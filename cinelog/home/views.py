@@ -9,8 +9,6 @@ from .services.tmdb import fetch_movies, fetch_movie_detail, get_cast, get_direc
 from .services import supabase
 from django.contrib import messages
 
-supabase = supabase.get_supabase_client()
-
 def landing_page(request):
     """
     Renders the landing page of the web application.
