@@ -4,11 +4,14 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 from unittest.mock import patch
 from django.http import HttpResponseRedirect
+from home.services import supabase
 
-@given("I have an account with {email} and {password}")
-def step_impl(context, email, password):
+supabase = supabase.get_supabase_client()
+
+@given("I have an account with {email}, {username}, and {password}")
+def step_impl(context, email, username, password):
     context.email = email
-    context.username = "user5678"
+    context.username = username
     context.password = password
 
 @given('I am on the "Sign up" page')

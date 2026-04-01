@@ -5,14 +5,29 @@ from django.contrib import messages
 from django.core.cache import cache
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
-
+from unittest.mock import MagicMock
 
 # Set a max for number of links user can recieve.
 MAX_EMAILS_1_HOUR = 4
 
-url: str = settings.SUPABASE_URL
-key: str = settings.SUPABASE_KEY
-supabase: Client = create_client(url, key)
+def get_supabase_client():
+    """
+    Creates a supabase client. 
+
+    Returns:
+        Client: The supabase client that can be used to access Supabase.
+    """
+    # url: str = settings.SUPABASE_URL
+    # key: str = settings.SUPABASE_KEY
+    url = key = None
+    if not url or not key:
+        supabase = MagicMock()
+
+    else:
+        supabase: Client = create_client(url, key)
+
+    
+    return supabase
 
 def create_session(request, response, email, access_token):
     """

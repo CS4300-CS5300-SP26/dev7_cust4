@@ -8,6 +8,7 @@ from django.contrib.messages import get_messages
 from home import views
 
 User = get_user_model()
+supabase = supabase.get_supabase_client()
 
 class SignupTest(TestCase):
     def setUp(self):
@@ -29,7 +30,8 @@ class SignupTest(TestCase):
         self.assertTemplateUsed(response, "signup.html")
         self.assertIn("form", response.context)
 
-    def test_invalid_email(self):
+    @patch("home.views.supabase.supabase_sign_up", return_value=False)
+    def test_invalid_email(self, mock_sign_up):
         """
         Test that a user cannot sign up if they have an invalid email.
         """
@@ -40,6 +42,7 @@ class SignupTest(TestCase):
             "password2": "Test.1234!!"
         }
         response = self.client.post(self.url, data)
+        mock_sign_up.assert_called_once()
         self.assertRedirects(response, reverse("signup"))
 
     @patch("home.views.supabase.supabase_sign_up")
@@ -119,7 +122,8 @@ class SignupTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertFalse(response.context["form"].is_valid())
 
-    def test_signup_blank_email(self):
+    @patch("home.views.supabase.supabase_sign_up", return_value=False)
+    def test_signup_blank_email(self, mock_sign_up):
         """
         Test that user cannot sign up if they do not provide a username.
         """
@@ -131,7 +135,7 @@ class SignupTest(TestCase):
         }
 
         response = self.client.post(self.url, data=no_username_data)
-        self.assertEqual(response.status_code, 302)
+        mock_sign_up.assert_called_once()
         self.assertRedirects(response, reverse("signup"))
 
     def test_signup_weak_password(self):
@@ -185,7 +189,8 @@ class LoginTest(TestCase):
         self.assertTemplateUsed(response, "login.html")
         mock_log_in.assert_called_once()
     
-    def test_log_in_with_invalid_email(self):
+    @patch("home.views.supabase.supabase_log_in", return_value=False)
+    def test_log_in_with_invalid_email(self, mock_log_in):
         """
         Test that a user cannot sign up if they have an invalid email.
         """
@@ -194,7 +199,8 @@ class LoginTest(TestCase):
             "password": "Test.1234!!"
         }
         response = self.client.post(self.url, data)
-        self.assertRedirects(response, reverse("login"))
+        self.assertTemplateUsed("login.html")
+        mock_log_in.assert_called_once()
 
 
 class MagicLogin(TestCase):

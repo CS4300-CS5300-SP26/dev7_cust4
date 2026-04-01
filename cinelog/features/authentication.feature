@@ -1,6 +1,6 @@
 Feature: User Authentication
     Scenario: Use the login form.
-        Given I have an account with user5678@email.com and password.5678
+        Given I have an account with user5678@email.com, user5678, and password.5678
         And I am on the "Log in" page
         When I fill in the "Email" field with "user5678@email.com"
         And I fill in the "Password" field with "password.5678"
@@ -19,7 +19,7 @@ Feature: User Authentication
         And I should be on the "movies" page
 
     Scenario: Login with invalid credentials
-        Given I have an account with user5678 and password.5678
+        Given I have an account with user5678@email.com, user5678, and password.5678
         And I am on the "Log in" page
         When I fill in the "Email" field with "user5678@email.com"
         And I fill in the "Password" field with the wrong password "1234" instead of "password.5678"
