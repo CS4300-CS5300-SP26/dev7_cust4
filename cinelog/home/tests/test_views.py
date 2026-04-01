@@ -1,114 +1,109 @@
-from django.test import TestCase
-from django.urls import reverse
+from django.test import TestCase, Client
+from django.urls import reverse, resolve
+from unittest.mock import patch, MagicMock
 from django.contrib.auth import get_user_model
+from home.services import supabase
+from django.contrib.auth.models import User
+from django.contrib.messages import get_messages
+from home import views
 
 User = get_user_model()
-
-class CustomLogInViewTest(TestCase):
-    def test_login_valid_account(self):
-        """
-        Test that a user with an account can login.
-        """
-
-        data = {
-            "username": "user1",
-            "password": "Test.1234!!",
-        }
-        initial_user_count = User.objects.count()
-        user, created = User.objects.get_or_create(username="user1")
-        if created:
-            user.set_password("Test.1234!!")
-            user.save()
-
-        response = self.client.post(reverse("login"), data=data)
-        self.assertEqual(User.objects.count(), initial_user_count + 1)
-        self.assertTrue(User.objects.filter(username=data["username"]).exists())
-        self.assertEqual(response.status_code, 302)
-        self.assertIn("_auth_user_id", self.client.session)
-
-    def test_login_invalid_account(self):
-        """
-        Test that a user without an account cannot login.
-        """
-
-        data = {
-            "username": "user1",
-            "password": "Test.1234!!",
-        }
-        initial_user_count = User.objects.count()
-
-        response = self.client.post(reverse("login"), data=data)
-        self.assertEqual(User.objects.count(), initial_user_count)
-        self.assertEqual(response.status_code, 200)
-        self.assertNotIn("_auth_user_id", self.client.session)
-
+supabase = supabase.get_supabase_client()
 
 class SignupTest(TestCase):
     def setUp(self):
+        self.client = Client()
+        self.url = reverse("signup")
         self.data = {
-            "username": "user2",
+            "email": "user1@email.com",
+            "username": "user1",
             "password1": "Test.1234!!",
-            "password2": "Test.1234!!",
+            "password2": "Test.1234!!"
         }
 
     def test_signup_view_valid(self):
         """
         Test that the signup page loads.
         """
-        response = self.client.get(reverse("signup"))
+        response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "signup.html")
         self.assertIn("form", response.context)
 
-    def test_signup_view_successful(self):
+    @patch("home.views.supabase.supabase_sign_up", return_value=False)
+    def test_invalid_email(self, mock_sign_up):
         """
-        Test that a user can create an account.
+        Test that a user cannot sign up if they have an invalid email.
         """
-        initial_user_count = User.objects.count()
+        data = {
+            "email": "user1",
+            "username": "user1",
+            "password1": "Test.1234!!",
+            "password2": "Test.1234!!"
+        }
+        response = self.client.post(self.url, data)
+        mock_sign_up.assert_not_called()
+        self.assertRedirects(response, reverse("signup"))
 
-        response = self.client.post(reverse("signup"), data=self.data)
-
+    @patch("home.views.supabase.supabase_sign_up")
+    @patch("home.views.supabase.supabase_client.auth.get_user")
+    @patch("home.views.UserCreationForm.is_valid", return_value=True)
+    def test_signup_view_successful(self, mock_form_valid, mock_get_user, mock_sign_up):
+        """
+        Test post request when information is valid and user can sign up.
+        """
+        mock_get_user.return_value = {
+            "user": {
+                "id": "11111111-1111-1111-1111-111111111111",
+                },
+            "user_metadata": {"username": self.data["username"]},
+            "email": self.data["email"]
+            }
+        response = self.client.post(self.url, self.data)
+        mock_sign_up.assert_called_once()
         self.assertRedirects(response, reverse("movies"))
-        self.assertEqual(User.objects.count(), initial_user_count + 1)
-        self.assertTrue(User.objects.filter(username="user2").exists())
-        self.assertIn("_auth_user_id", self.client.session)
 
-    def test_signup_unsuccessful(self):
+        # Ensure user is also signed in.
+        session = self.client.session
+        session.save()
+
+        request = response.wsgi_request
+        request.session["access_token"] = "ABCD123"
+        request.session["supabase_username"] = self.data["username"]
+        self.assertTrue(views.supabase.is_authenticated(request))
+
+    
+    @patch("home.views.supabase.supabase_sign_up")
+    def test_signup_with_existing_username(self, mock_sign_up):
         """
         Test that user cannot sign up if username is same as another user or already have an account.
         """
         # Create user with same username.
         same_data = {
-            "username": "user3",
+            "username": self.data["username"],
+            "email": "helloworld@email.com",
             "password1": "password.5678",
             "password2": "password.5678"
         }
+        mock_sign_up.return_value = False
 
         # Create user with same username if one does not already exist.
-        if not User.objects.filter(username=same_data["username"]).exists():
-            User.objects.create_user(username=same_data["username"], password="Test.1234!!")
-        initial_user_count = User.objects.count()
-
-        # Try to sign up with the same data.
-        response = self.client.post(reverse("signup"), data=same_data)
-        self.assertEqual(User.objects.count(), initial_user_count)
-        self.assertEqual(response.status_code, 200)
-        self.assertFalse(response.context["form"].is_valid())
+        response = self.client.post(self.url, same_data)
+        self.assertRedirects(response, reverse("signup"))
+        mock_sign_up.assert_called_once()
 
     def test_signup_different_passwords(self):
         """
         Test that user cannot sign up if their passwords do not match.
         """
         not_matching_data = {
+            "email": "user123@email.com",
             "username": "user123",
             "password1": "Test.1234!!",
             "password2": "Test",
         }
 
-        initial_user_count = User.objects.count()
-
-        response = self.client.post(reverse("signup"), data=not_matching_data)
-        self.assertEqual(User.objects.count(), initial_user_count)
+        response = self.client.post(self.url, data=not_matching_data)
         self.assertEqual(response.status_code, 200)
         self.assertFalse(response.context["form"].is_valid())
 
@@ -117,39 +112,213 @@ class SignupTest(TestCase):
         Test that user cannot sign up if they do not provide a username.
         """
         no_username_data = {
+            "email": "user123@email.com",
             "username": "",
             "password1": "Test.1234!!",
-            "password2": "Test",
+            "password2": "Test.1234!!",
         }
 
-        initial_user_count = User.objects.count()
-
-        response = self.client.post(reverse("signup"), data=no_username_data)
-        self.assertEqual(User.objects.count(), initial_user_count)
+        response = self.client.post(self.url, data=no_username_data)
         self.assertEqual(response.status_code, 200)
         self.assertFalse(response.context["form"].is_valid())
+
+    @patch("home.views.supabase.supabase_sign_up", return_value=False)
+    def test_signup_blank_email(self, mock_sign_up):
+        """
+        Test that user cannot sign up if they do not provide a username.
+        """
+        no_username_data = {
+            "email": "",
+            "username": "user123",
+            "password1": "Test.1234!!",
+            "password2": "Test.1234!!",
+        }
+
+        response = self.client.post(self.url, data=no_username_data)
+        mock_sign_up.assert_not_called()
+        self.assertRedirects(response, reverse("signup"))
 
     def test_signup_weak_password(self):
         """
         Test that user cannot sign up if they provide a weak password.
         """
         no_username_data = {
+            "email": "user12345@email.com",
             "username": "user12345",
             "password1": "hello",
             "password2": "hello",
         }
 
-        initial_user_count = User.objects.count()
-
         response = self.client.post(reverse("signup"), data=no_username_data)
-        self.assertEqual(User.objects.count(), initial_user_count)
         self.assertEqual(response.status_code, 200)
         self.assertFalse(response.context["form"].is_valid())
 
-from django.test import TestCase, Client
-from django.urls import reverse, resolve
-from django.contrib.auth.models import User
-from home import views
+class LoginTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse("login")
+        self.data = {
+            "email": "user1@email.com",
+            "password": "Test.1234!!"
+        }
+
+    def test_log_in_view_valid(self):
+        """
+        Test that the login page loads.
+        """
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "login.html")
+
+    @patch("home.views.supabase.supabase_log_in", return_value=True)
+    def test_log_in_successful(self, mock_log_in):
+        """
+        Test that user with an account can login.
+        """
+        response = self.client.post(self.url, self.data)
+        self.assertRedirects(response, reverse("movies"))
+        mock_log_in.assert_called_once()
+
+    @patch("home.views.supabase.supabase_log_in", return_value=False)
+    def test_log_in_failure_without_account(self, mock_log_in):
+        """
+        Test that user without an account cannot login.
+        """
+        response = self.client.post(self.url, self.data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "login.html")
+        mock_log_in.assert_called_once()
+    
+    @patch("home.views.supabase.supabase_log_in", return_value=False)
+    def test_log_in_with_invalid_email(self, mock_log_in):
+        """
+        Test that a user cannot sign up if they have an invalid email.
+        """
+        data = {
+            "email": "user1",
+            "password": "Test.1234!!"
+        }
+        response = self.client.post(self.url, data)
+        self.assertTemplateUsed("login.html")
+        mock_log_in.assert_not_called()
+
+    @patch("home.views.supabase.supabase_log_in", return_value=False)
+    def test_log_in_with_empty_fields(self, mock_log_in):
+        """
+        Test that a user cannot sign up if they have an invalid email.
+        """
+        data = {
+            "email": "",
+            "password": ""
+        }
+        response = self.client.post(self.url, data)
+        self.assertTemplateUsed("login.html")
+        self.assertRedirects(response, reverse("login"))
+        mock_log_in.assert_not_called()
+
+    @patch("home.views.supabase.supabase_log_in", return_value=False)
+    def test_log_in_with_no_email(self, mock_log_in):
+        """
+        Test that a user cannot sign up if they have an invalid email.
+        """
+        data = {
+            "email": "",
+            "password": "Test1234!!"
+        }
+        response = self.client.post(self.url, data)
+        self.assertTemplateUsed("login.html")
+        self.assertRedirects(response, reverse("login"))
+        mock_log_in.assert_not_called()
+
+
+class MagicLogin(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse("magic_login")
+        self.data = {
+            "email": "user1@email.com"
+        }
+    
+
+    def test_magic_login_view_valid(self):
+        """
+        Test that the login page loads.
+        """
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "magic_link_login.html")
+
+    @patch("home.views.supabase.send_magic_link_login")
+    @patch("home.views.supabase.reached_limit_magic_login", return_value=False)
+    def test_magic_login_successful(self, mock_reached_limit, mock_send_magic_link):
+        """
+        Test that link can be sent.
+        """
+        response = self.client.post(self.url, self.data)
+        self.assertRedirects(response, reverse("magic_login"))
+        mock_send_magic_link.assert_called_once()
+
+    @patch("home.views.supabase.send_magic_link_login")
+    @patch("home.views.supabase.reached_limit_magic_login", return_value=False)
+    def test_magic_failed_no_email_entered(self, mock_reached_limit, mock_send_magic_link):
+        """
+        Test that no link sent if no email is entered.
+        """
+        data = {"email": ""}
+        response = self.client.post(self.url, data)
+        self.assertRedirects(response, reverse("magic_login"))
+
+
+    @patch("home.views.supabase.reached_limit_magic_login", return_value=True)
+    def test_magic_failed_reached_limit_of_links(self, mock_reached_limit):
+        """
+        Test that no link is sent if user reaches limit of sending links.
+        """
+        response = self.client.post(self.url, self.data)
+        self.assertRedirects(response, reverse("magic_login"))
+        messages = list(get_messages(response.wsgi_request))
+        self.assertTrue(
+            any
+            ("Reached max limit of magic logins for the hour. Try later or login with password.") 
+            in str(m) for m in messages)
+
+class MagicCallback(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse("callback")
+
+    @patch("home.views.supabase.get_user_magic_link", return_value=True)
+    def test_magic_callback_sucessful(self, mock_get_magic_link):
+        """
+        Test that user is successfully redirected to account with link.
+        """
+        response = self.client.get(self.url)
+        self.assertRedirects(response, reverse("movies"))
+        mock_get_magic_link.assert_called_once()
+
+    @patch("home.views.supabase.get_user_magic_link", return_value=False)
+    def test_magic_callback_fail(self, mock_get_magic_link):
+        """
+        Test that if link fails, user is redirected to magic_login page.
+        """
+        response = self.client.get(self.url)
+        self.assertRedirects(response, reverse("magic_login"))
+        mock_get_magic_link.assert_called_once()
+
+
+class Logout(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse("logout")
+
+    @patch("home.views.supabase.logout")
+    def test_logout(self, mock_logout):
+        """
+        Test that a user is logged out and redirected to home page.
+        """
+        response = self.client.get(self.url)
+        mock_logout.assert_called_once()
+        self.assertRedirects(response, "/")
 
 
 class LandingPageViewTest(TestCase):
@@ -185,27 +354,12 @@ class AuthenticationTest(TestCase):
             email='test@example.com'
         )
 
-    def test_login_with_valid_credentials(self):
-        """User should be able to log in with valid credentials."""
-        response = self.client.post('/accounts/login/', {
-            'username': 'testuser',
-            'password': 'testpassword123',
-        }, follow=True)
-        self.assertTrue(response.wsgi_request.user.is_authenticated)
-
-    def test_login_with_invalid_credentials(self):
-        """Login should fail with wrong password."""
-        response = self.client.post('/accounts/login/', {
-            'username': 'testuser',
-            'password': 'wrongpassword',
-        })
-        self.assertFalse(response.wsgi_request.user.is_authenticated)
 
     def test_login_page_loads_successfully(self):
         """Login page should load with HTTP 200."""
-        response = self.client.get('/accounts/login/')
+        response = self.client.get('/login/')
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'registration/login.html')
+        self.assertTemplateUsed(response, 'login.html')
 
     def test_user_creation(self):
         """User objects should be created correctly."""
@@ -215,14 +369,9 @@ class AuthenticationTest(TestCase):
     def test_logout_redirects_authenticated_user(self):
         """Authenticated user logout should succeed (200 or 302 depending on config)."""
         self.client.login(username='testuser', password='testpassword123')
-        response = self.client.post('/accounts/logout/')
+        response = self.client.post('/logout/')
         self.assertIn(response.status_code, [200, 302])
-        # User should no longer be authenticated after logout
-        self.assertFalse(response.wsgi_request.user.is_authenticated)
 
-from django.test import TestCase, Client
-from django.urls import reverse
-from unittest.mock import patch, MagicMock
 
 # create a movie to test with
 MOCK_MOVIE = {

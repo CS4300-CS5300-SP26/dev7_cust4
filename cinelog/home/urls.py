@@ -1,11 +1,13 @@
-from django.urls import path, include
+from django.urls import path
 from . import views
 
 urlpatterns = [
     path('', views.landing_page, name="landing"),
-    path('accounts/login/', views.CustomLoginView.as_view(), name='login'),
-    path('accounts/', include('django.contrib.auth.urls')),
+    path('login/', views.login_view, name='login'),
     path('signup/', views.signup_view, name='signup'),
-    path("movies/", views.movies_view, name="movies"),
+    path('magiclogin/', views.magic_login, name='magic_login'),
+    path('callback/', views.magic_callback, name='callback'),
+    path('logout/', views.logout_view, name='logout'),
+    path('movies/', views.movies_view, name='movies'),
     path('movies/<int:movie_id>/', views.movie_detail_view, name='movie_detail'),
 ]

@@ -12,10 +12,10 @@ class URLRoutingTest(TestCase):
 
     def test_login_url_exists(self):
         """Django auth login URL should be accessible."""
-        response = self.client.get('/accounts/login/')
+        response = self.client.get('/login/')
         self.assertEqual(response.status_code, 200)
 
     def test_logout_url_exists(self):
         """Django auth logout URL only allows POST (Django 4.1+)."""
-        response = self.client.post('/accounts/logout/')
+        response = self.client.post('/logout/')
         self.assertIn(response.status_code, [200, 302])
