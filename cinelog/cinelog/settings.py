@@ -38,7 +38,7 @@ SUPABASE_KEY = config("SUPABASE_KEY", default="")
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-bd*mrkv-p!rdl6^0dfeb=na9nxd3a1u!l%3og+w$3tlx2)#5w8')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = [
     '.devedu.io',
@@ -50,7 +50,6 @@ ALLOWED_HOSTS = [
 
 CSRF_TRUSTED_ORIGINS = [
     'https://cinelog-service-production.up.railway.app',
-    'https://app-lkarsanb-21.devedu.io',
 ]
 
 # Application definition
