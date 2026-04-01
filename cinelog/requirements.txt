@@ -21,7 +21,6 @@ Django==4.2.11
 djangorestframework==3.16.1
 fsspec==2026.3.0
 gunicorn==25.1.0
-gyp==0.1
 h11==0.16.0
 h2==4.3.0
 hpack==4.1.0
