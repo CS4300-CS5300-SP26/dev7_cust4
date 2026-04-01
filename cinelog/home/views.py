@@ -64,10 +64,17 @@ def signup_view(request):
         # Get the email and username from the form.
         email = request.POST.get("email")
         username = request.POST.get("username")
+        password1 = request.POST.get("password1")
+        password2 = request.POST.get("password2")
+    
         form = UserCreationForm(request.POST)
         
         # Check if email is a valid email.
         if not supabase.is_valid_email(request, email):
+            return redirect("signup")
+        
+        if password1 != password2:
+            messages.error(request, "Passwords do not match.")
             return redirect("signup")
 
         # User Django to validate other fields and ensure they meet requirements.
