@@ -104,8 +104,8 @@ class SignupTest(TestCase):
         }
 
         response = self.client.post(self.url, data=not_matching_data)
-        self.assertEqual(response.status_code, 200)
-        self.assertFalse(response.context["form"].is_valid())
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse("signup"))
 
     def test_signup_blank_username(self):
         """
