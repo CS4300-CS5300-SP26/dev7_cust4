@@ -175,3 +175,14 @@ def logout_view(request):
     """
     supabase.logout(request)
     return redirect("/")
+
+def watchlist_view(request):
+    """
+    Renders the landing page of the web application.
+    Args:
+        request (HTTP request): Contains information about the request.
+
+    Returns:
+        HTTPResponse: A rendering of the landing.html page.
+    """
+    return render(request, 'watchlist.html', {"movies": fetch_movies("popular")})

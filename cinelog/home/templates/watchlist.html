@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %} Watchlist {% endblock %}
+{% block content %}
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="{% static 'css/movies.css' %}" rel="stylesheet">
+<div class="hero-container relative">
+    <!-- Decorative teal blob — (just for design) -->
+    <div aria-hidden="true" class="hero-blob hero-blob--top absolute z-0">
+        <div class="hero-blob__shape hero-blob__shape--top"></div>
+    </div>
+
+    <div class="hero-content">
+        <div class="hero-text">
+            <h1 class="hero-heading">My Watchlist</h1>
+        </div>
+    </div>
+
+    <div aria-hidden="true" class="hero-blob hero-blob--bottom">
+        <div class="hero-blob__shape hero-blob__shape--bottom"></div>
+    </div>
+</div>
+
+
+<div class="flex flex-wrap items-center justify-center gap-20 relative z-10">
+    {% for movie in movies %}
+        <div class="group/item bg-white rounded-2xl overflow-hidden relative hover:-translate-y-1 transition duration-300">
+            <!-- Movie card -->
+            <img class="w-64 h-full object-cover" src="https://image.tmdb.org/t/p/w500{{ movie.poster_path }}" alt="{{ movie.title }}">
+            
+            <!-- Gray overlay to image. -->
+            <div class="absolute inset-0 bg-black bg-opacity-0 group-hover/item:bg-opacity-70 transition duration-300"></div>
+            
+            <!-- Buttons that appear only when movie hovered over. -->
+            <div class="absolute inset-0 flex flex-col items-center justify-center">
+                <a href="#" class="group/edit invisible text-white border group-hover/item:visible text-black hover:bg-gray-300 transition cursor-pointer px-6 py-1 rounded-full mt-5">
+                    <p class="group-hover/edit:text-gray-700">Add to Logger</p>           
+                </a>
+
+                <a href="#" class="group/edit invisible text-white border group-hover/item:visible text-black hover:bg-gray-300 transition cursor-pointer px-6 py-1 rounded-full mt-5">
+                    <p class="group-hover/edit:text-gray-700">Remove from List</p>           
+                </a>
+
+                <a href="{% url 'movie_detail' movie.id %}" class="group/edit invisible text-white border group-hover/item:visible text-black hover:bg-gray-300 transition cursor-pointer px-6 py-1 rounded-full mt-5">
+                    <p class="group-hover/edit:text-gray-700">View Details</p>           
+                </a>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+{% endblock %}
