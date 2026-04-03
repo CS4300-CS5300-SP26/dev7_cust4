@@ -43,6 +43,7 @@ def create_session(request, response, email, access_token):
     request.session["access_token"] = access_token
     request.session["supabase_user_email"] = email
     request.session["supabase_username"] = response.user.user_metadata.get("username")
+    request.session["supabase_user_id"] = response.user.id
 
 def supabase_sign_up(request, username, email, password):
     """
@@ -250,3 +251,46 @@ def logout(request):
         messages.error(request, f"Error: {e}")
     
     request.session.flush()
+
+def get_user_id(request):
+    """
+    Returns user_id for user to access data in supapabse. None if fails.
+    Args:
+        request (HTTP request): Contains information about the request.
+
+    Returns:
+        str: The user's id (or None if not logged in or request fails).
+    """
+    if request.session.get("supabase_user_id"):
+        return request.session.get("supabase_user_id")
+    else:
+        return None
+
+def insert_in_watchlist(request, user_id, movie_id):
+    """
+    Add movie to user's watchlist.
+    Args:
+        request (HTTP request): Contains information about the request.
+        user_id (str): Unique id that can be used to reference a user.
+        movie_id (int): Value representing movie in TMDB.
+
+    Returns:
+        boolean: Represents if movie was added to watchlist or not.
+    """
+    try:
+        response = (
+            supabase_client.table("Watchlist")
+            .insert({
+                "user_id": user_id,
+                "movie_id": movie_id
+            })
+            .execute()
+        )
+        return True, "Succesfully added movie to watchlist."
+        
+    except Exception as e:
+        # Display specific error if movie is already in the watchlist.
+        if "duplicate key value violates unique constraint" in str(e):
+            return False, "Movie is already in watchlist."
+        else:
+            return False, f"Error: {e}"

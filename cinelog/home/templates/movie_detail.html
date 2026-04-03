@@ -4,6 +4,12 @@
 
 <link href="{% static 'css/movie_detail.css' %}" rel="stylesheet">
 
+<!-- Display any errors. -->
+<div class="my-6">
+    {% include "components/alerts.html" %}
+</div>
+
+
 <!-- Backdrop Banner -->
 <div class="detail-banner"
     style="background-image: url('https://image.tmdb.org/t/p/original{{ movie.backdrop_path }}');">
@@ -33,9 +39,12 @@
 
             <!-- show different button depending on user's login status -->
             {% if is_authenticated %}
-            <button class="btn-add-log">+ Add to List</button>
+                <form action="{% url 'add_to_watchlist' movie.id %}" method="POST">
+                    {% csrf_token %}
+                    <button class="btn-add-log">+ Add to Watchlist</button>
+                </form>
             {% else %}
-            <a href="{% url 'login' %}" class="btn-login-prompt">Add to List</a>
+                <a href="{% url 'login' %}" class="btn-login-prompt">Add to Watchlist</a>
             {% endif %}
         </div>
     </div>

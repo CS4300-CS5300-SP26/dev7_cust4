@@ -8,12 +8,6 @@
     a {
         text-decoration: none !important;
     }
-    .alert-warning {
-        background-color:rgba(2, 125, 150, 0.4) !important;
-        backdrop-filter: blur(10px) !important;
-        border: none !important;
-        color: white !important;
-    }
 
 </style>
 
@@ -29,15 +23,10 @@
             <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
                 <div class="d-flex justify-content-center mb-4">
                     <!-- Display any errors with form if needed. -->
-                    {% if messages %}
-                        <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                            {% for message in messages %}
-                                {{ message }}
-                                <br>
-                            {% endfor %}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    {% endif %}
+                    <div class="d-flex justify-content-center mb-4">
+                        <!-- Display any errors with form if needed. -->
+                        {% include "components/alerts.html" %}
+                    </div>
 
                     <!-- Display any errors with form if needed. -->
                     {% if form.errors %}

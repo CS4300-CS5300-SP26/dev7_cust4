@@ -126,7 +126,7 @@ def magic_login(request):
         request (HTTP request): Contains information about the request.
 
     Returns:
-        HTTP Response: Contains the login form or redirects user if they successfully logged in.
+        HTTPResponse: Contains the login form or redirects user if they successfully logged in (or redirects user).
     """
     # If form has been submitted, create the user if form is valid.
     if request.method == "POST":
@@ -156,7 +156,7 @@ def magic_callback(request):
         request (HTTP request): Contains information about the request.
 
     Returns:
-        HTTP Response: Contains the login form or redirects user if they successfully logged in.
+        HTTPResponseRedirect: Redirects user to login page if unsuccesful, movies page if successful.
     """
     if supabase.get_user_magic_link(request):
         return redirect("movies")
@@ -171,10 +171,37 @@ def logout_view(request):
         request (HTTP request): Contains information about the request.
 
     Returns:
-        HTTP Response: Contains the login form or redirects user if they successfully logged in.
+        HTTPResponseRedirect: Redirects user to home page.
     """
     supabase.logout(request)
     return redirect("/")
+
+
+def add_to_watchlist(request, movie_id):
+    """
+    Adds a movie to the user's watchlist in database.
+    Args:
+        request (HTTP request): Contains information about the request.
+        movie_id (int): Value representing movie in TMDB (passed in url).
+
+    Returns:
+        HTTPResponseRedirect: Redirects to current page (movie_detail page).
+    """
+    if request.method == "POST":
+        user_id = supabase.get_user_id(request)
+        if not user_id:
+            messages.error(request, "Must be logged in to add movie to watchlist.")
+            return redirect("movie_detail", movie_id=movie_id)
+        
+        # Insert movie into watchlist table in database.
+        success, message = supabase.insert_in_watchlist(request, user_id, movie_id)
+        if success:
+            messages.success(request, message)
+            return redirect("movie_detail", movie_id=movie_id)
+        else:
+            messages.error(request, message)
+            return redirect("movie_detail", movie_id=movie_id)
+
 
 def watchlist_view(request):
     """
