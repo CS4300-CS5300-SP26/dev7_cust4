@@ -519,6 +519,8 @@ class WatchlistTest(TestCase):
         self.watchlist_url = reverse("watchlist")
         self.movie_url = reverse("movie_detail", args=[self.movie_id])
         self.user_id = "1111111-1111111"
+        print("Movie ID:", self.movie_id)
+        print("Add URL:", self.add_url)
 
     @patch("home.views.supabase.get_user_id", return_value="user123")
     @patch("home.views.supabase.insert_in_watchlist", return_value=(True, "Added successfully"))
@@ -532,8 +534,11 @@ class WatchlistTest(TestCase):
 
     @patch("home.views.supabase.get_user_id", return_value="user123")
     @patch("home.views.supabase.insert_in_watchlist", return_value=(False, "Error: Movie is already in watchlist."))
-    def test_add_to_watchlist_not_success(self, mock_insert, mock_user_id):
-        """Test adding a movie is inserted unsccessfully."""
+    @patch("home.services.supabase.get_supabase_client", return_value=MagicMock())
+    def test_add_to_watchlist_not_success(self, mock_client, mock_insert, mock_user_id):
+        """
+        Test adding a movie is inserted unsccessfully.
+        """
         response = self.client.post(self.add_url)
         mock_insert.assert_called_once_with("user123", self.movie_id)
         self.assertRedirects(response, self.movie_url)
@@ -542,7 +547,9 @@ class WatchlistTest(TestCase):
 
     @patch("home.views.supabase.get_user_id", return_value=None)
     def test_add_to_watchlist_not_logged_in(self, mock_user_id):
-        """Test a movie cannot be added if user is not logged in."""
+        """
+        Test a movie cannot be added if user is not logged in.
+        """
         response = self.client.post(self.add_url)
         self.assertRedirects(response, reverse("login"))
 
