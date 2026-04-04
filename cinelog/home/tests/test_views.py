@@ -555,14 +555,19 @@ class WatchlistTest(TestCase):
         self.assertRedirects(response, "/watchlist/")
 
     @patch("home.views.supabase.get_user_id", return_value="user123")
-    @patch("home.views.supabase.delete_in_watchlist", return_value=False)
-    def test_remove_from_watchlist_not_success(self, mock_delete, mock_user_id):
-        """Test that error is shown if there is an error."""
-        response = self.client.post(self.remove_url, HTTP_REFERER="/watchlist/")
-        mock_delete.assert_called_once_with("user123", self.movie_id)
-        self.assertRedirects(response, "/watchlist/")
+    @patch("home.views.supabase.insert_in_watchlist", return_value=(False, "Error: Movie is already in watchlist."))
+    @patch("home.views.supabase.create_client")
+    def test_add_to_watchlist_not_success(self, mock_create_client, mock_insert, mock_user_id):
+        mock_client = MagicMock()
+        mock_client.table.return_value.select.return_value.eq.return_value.execute.return_value = {
+            "data": [{"id": self.movie_id}]
+        }
+        mock_create_client.return_value = mock_client
+        response = self.client.post(self.add_url)
+        mock_insert.assert_called_once_with("user123", self.movie_id)
+        self.assertRedirects(response, self.movie_url)
         messages = list(get_messages(response.wsgi_request))
-        self.assertTrue(any("Unable to remove movie. Please try again." in str(m) for m in messages))
+        self.assertTrue(any("Error:" in str(m) for m in messages))
 
     @patch("home.views.supabase.get_user_id", return_value=None)
     def test_remove_from_watchlist_not_logged_in(self, mock_user_id):
