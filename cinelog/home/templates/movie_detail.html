@@ -38,7 +38,7 @@
             <p class="detail-overview">{{ movie.overview }}</p>
 
             <!-- show different button depending on user's login status -->
-            {% if is_authenticated %}
+            {% if is_authenticated and movie.id %}
                 <!-- Alter button if movie is already in watchlist. -->
                 {% if in_watchlist %}
                     <form action="{% url 'remove_from_watchlist' movie.id %}" method="POST">
