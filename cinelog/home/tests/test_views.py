@@ -562,7 +562,7 @@ class WatchlistTest(TestCase):
         mock_delete.assert_called_once_with("user123", self.movie_id)
         self.assertRedirects(response, self.movie_url)
         essages = list(get_messages(response.wsgi_request))
-        self.assertTrue(any("Error:" in str(m) for m in messages)
+        self.assertTrue(any("Error:" in str(m) for m in messages))
 
     @patch("home.views.supabase.get_user_id", return_value=None)
     def test_remove_from_watchlist_not_logged_in(self, mock_user_id):
