@@ -17,9 +17,8 @@ def get_supabase_client():
     Returns:
         Client: The supabase client that can be used to access Supabase.
     """
-    url: str = settings.SUPABASE_URL
-    key: str = settings.SUPABASE_KEY
-
+    url = getattr(settings, "SUPABASE_URL", None)
+    key = getattr(settings, "SUPABASE_KEY", None)
     if not url or not key:
         supabase_client = MagicMock()
 
@@ -43,6 +42,7 @@ def create_session(request, response, email, access_token):
     request.session["access_token"] = access_token
     request.session["supabase_user_email"] = email
     request.session["supabase_username"] = response.user.user_metadata.get("username")
+    request.session["supabase_user_id"] = response.user.id
 
 def supabase_sign_up(request, username, email, password):
     """
@@ -250,3 +250,104 @@ def logout(request):
         messages.error(request, f"Error: {e}")
     
     request.session.flush()
+
+def get_user_id(request):
+    """
+    Returns user_id for user to access data in supapabse. None if fails.
+    Args:
+        request (HTTP request): Contains information about the request.
+
+    Returns:
+        str: The user's id (or None if not logged in or request fails).
+    """
+    if request.session.get("supabase_user_id"):
+        return request.session.get("supabase_user_id")
+    else:
+        return None
+
+def insert_in_watchlist(user_id, movie_id):
+    """
+    Add movie to user's watchlist.
+
+    Args:
+        user_id (str): Unique id that can be used to reference a user.
+        movie_id (int): Value representing movie in TMDB.
+
+    Returns:
+        boolean: Represents if movie was added to watchlist or not.
+    """
+    try:
+        response = (
+            supabase_client.table("Watchlist")
+            .insert({
+                "user_id": user_id,
+                "movie_id": movie_id
+            })
+            .execute()
+        )
+        return True, "Succesfully added movie to watchlist."
+        
+    except Exception as e:
+        # Display specific error if movie is already in the watchlist.
+        if "duplicate key value violates unique constraint" in str(e):
+            return False, "Error: Movie is already in watchlist."
+        else:
+            return False, f"Error: {e}"
+
+def delete_in_watchlist(user_id, movie_id):
+    """
+    Delete a movie from user's watchlist.
+
+    Args:
+        user_id (str): Unique id that can be used to reference a user.
+        movie_id (int): Value representing movie in TMDB.
+
+    Returns:
+        boolean: Represents if movie was removed from watchlist or not.
+    """
+    try:
+        response = (
+            supabase_client.table("Watchlist")
+            .delete()
+            .eq("user_id", user_id)
+            .eq("movie_id", movie_id)
+            .execute()
+        )
+        return True
+        
+    except Exception as e:
+        return False
+
+
+def get_watchlist(user_id, movie_id=None, order=False, descending=False):
+    """
+    Retrieve a movie from the user's watchlist.
+
+    Args:
+        user_id (str): Unique id that can be used to reference a user.
+        movie_id (int, optional): If provided, specifies a certain movie to check if is in watchlist.
+
+    Returns:
+        list: Contains movie ids of movies in watchlist. Returns empty list if none or if an error.
+    """
+    try:
+        query = (
+            supabase_client.table("Watchlist")
+            .select("*")
+            .eq("user_id", user_id)
+        )
+
+        if movie_id is not None:
+            query = query.eq("movie_id", movie_id)
+        
+        if order:
+            query = query.order("date_added", desc=descending)
+        
+        response = query.execute()
+
+        # Go through response and retrieve each movie_id
+        movie_ids = [row["movie_id"] for row in response.data]
+        return movie_ids
+
+    except Exception as e:
+        return []

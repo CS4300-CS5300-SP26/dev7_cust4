@@ -5,13 +5,18 @@ from django.urls import reverse
 from unittest.mock import patch
 from django.http import HttpResponseRedirect
 from home.services import supabase
+from django.test import Client
 
 
-@given("I have an account with {email}, {username}, and {password}")
+@given('I have an account with "{email}", "{username}", and "{password}"')
 def step_impl(context, email, username, password):
-    context.email = email
-    context.username = username
-    context.password = password
+    session = context.test.client.session
+    session["access_token"] = "fake-token"
+    session["supabase_user_id"] = "user123"
+    session["supabase_user_email"] = email
+    session["supabase_username"] = username
+    session.save()
+
 
 @given('I am on the "Sign up" page')
 def step_impl(context):

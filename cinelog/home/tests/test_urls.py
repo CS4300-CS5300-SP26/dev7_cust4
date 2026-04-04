@@ -19,3 +19,8 @@ class URLRoutingTest(TestCase):
         """Django auth logout URL only allows POST (Django 4.1+)."""
         response = self.client.post('/logout/')
         self.assertIn(response.status_code, [200, 302])
+
+    def test_logout_url_exists(self):
+        """Django auth logout URL only allows POST (Django 4.1+)."""
+        response = self.client.post('/logout/')
+        self.assertIn(response.status_code, [200, 302])

@@ -46,8 +46,16 @@ def movie_detail_view(request, movie_id):
     else:
         movie["formatted_runtime"] = "N/A"
 
+    user_id = supabase.get_user_id(request)
+
+    # Add to response if movie is already in watchlist.
+    if user_id and supabase.get_watchlist(user_id, movie_id=movie_id):
+        in_watchlist = True
+    else:
+        in_watchlist = False
+
     return render(request, "movie_detail.html", 
-    {"movie": movie, "cast": get_cast(movie), "director": get_director(movie),})
+    {"movie": movie, "cast": get_cast(movie), "director": get_director(movie), "in_watchlist": in_watchlist})
 
 def signup_view(request):
     """
@@ -126,7 +134,7 @@ def magic_login(request):
         request (HTTP request): Contains information about the request.
 
     Returns:
-        HTTP Response: Contains the login form or redirects user if they successfully logged in.
+        HTTPResponse: Contains the login form or redirects user if they successfully logged in (or redirects user).
     """
     # If form has been submitted, create the user if form is valid.
     if request.method == "POST":
@@ -156,7 +164,7 @@ def magic_callback(request):
         request (HTTP request): Contains information about the request.
 
     Returns:
-        HTTP Response: Contains the login form or redirects user if they successfully logged in.
+        HTTPResponseRedirect: Redirects user to login page if unsuccesful, movies page if successful.
     """
     if supabase.get_user_magic_link(request):
         return redirect("movies")
@@ -171,7 +179,124 @@ def logout_view(request):
         request (HTTP request): Contains information about the request.
 
     Returns:
-        HTTP Response: Contains the login form or redirects user if they successfully logged in.
+        HTTPResponseRedirect: Redirects user to home page.
     """
     supabase.logout(request)
     return redirect("/")
+
+
+def add_to_watchlist(request, movie_id):
+    """
+    Adds a movie to the user's watchlist in database.
+    Args:
+        request (HTTP request): Contains information about the request.
+        movie_id (int): Value representing movie in TMDB (passed in url).
+
+    Returns:
+        HTTPResponseRedirect: Redirects to current page (movie_detail page).
+    """
+    if request.method == "POST":
+        user_id = supabase.get_user_id(request)
+        if not user_id:
+            messages.error(request, "Must be logged in to add movie to watchlist.")
+            return redirect("login")
+        
+        # Insert movie into watchlist table in database.
+        success, message = supabase.insert_in_watchlist(user_id, movie_id)
+        if success:
+            messages.success(request, message)
+        else:
+            messages.error(request, message)
+        
+        return redirect("movie_detail", movie_id=movie_id)
+
+def remove_from_watchlist(request, movie_id):
+    """
+    Remove a movie from the user's watchlist in database.
+
+    Args:
+        request (HTTP request): Contains information about the request.
+        movie_id (int): Value representing movie in TMDB (passed in url).
+
+    Returns:
+        HTTPResponseRedirect: Redirects to referring page or login page if not signed in.
+    """
+    if request.method == "POST":
+        user_id = supabase.get_user_id(request)
+        if not user_id:
+            messages.error(request, "Must be logged in to remove movie from watchlist.")
+            return redirect("login")
+        
+        # Remove movie into watchlist table in database.
+        success = supabase.delete_in_watchlist(user_id, movie_id)
+        if not success:
+            messages.error(request, "Unable to remove movie. Please try again.")
+        
+        return redirect(request.META.get("HTTP_REFERER", f"/movies/{movie_id}/"))
+
+def watchlist_view(request):
+    """
+    Renders the watchlist page of the web application.
+
+    Args:
+        request (HTTP request): Contains information about the request.
+
+    Returns:
+        HTTPResponse: A rendering of the watchlist.html page.
+    """
+    user_id = supabase.get_user_id(request)
+    sort = request.GET.get("sort", "")
+    if not user_id:
+        return render(request, 'watchlist.html')
+
+    movie_ids = supabase.get_watchlist(user_id)
+    if "date" in sort:
+        movie_ids = sort_movies_date(user_id, sort)
+
+    movies = []
+    for movie in movie_ids:
+        movie = fetch_movies(movie, single=True)
+        if movie.get("id"):
+            movies.append(movie)
+    
+    if "title" in sort:
+        movies = sort_movies_title(movies, sort)
+
+    return render(request, 'watchlist.html', {"movies": movies})
+
+def sort_movies_title(movies, sort_method):
+    """
+    Given movies list, sorts them based on their title.
+
+    Args:
+        movies (list): Contains dictionaries with information about movies in user's watchlist.
+        sort_method (str): Contains how movies should be sorted.
+
+    Returns:
+        list: Sorted version of passed in movies.
+    """
+    if sort_method == "ascending_title":
+        movies.sort(key=lambda x: x.get("title", "").lower())
+
+    elif sort_method == "descending_title":
+        movies.sort(key=lambda x: x.get("title", "").lower(), reverse=True)
+    return movies
+
+def sort_movies_date(user_id, sort_method):
+    """
+    Given movies ids, accesses supabase to find when movies were added and sort them by date.
+
+    Args:
+        user_id (str): Unique id that can be used to reference a user.
+        sort_method (str): Contains how movies should be sorted.
+
+    Returns:
+        list: Sorted version of passed in movies.
+    """
+    if sort_method == "ascending_date":
+        movie_ids = supabase.get_watchlist(user_id, order=True, descending=False)
+
+    elif sort_method == "descending_date":
+        movie_ids = supabase.get_watchlist(user_id, order=True, descending=True)
+
+    return movie_ids

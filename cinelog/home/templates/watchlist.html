@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %} Watchlist {% endblock %}
+{% block content %}
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="{% static 'css/movies.css' %}" rel="stylesheet">
+<div class="hero-container relative">
+    <!-- Decorative teal blob — (just for design) -->
+    <div aria-hidden="true" class="hero-blob hero-blob--top absolute z-0">
+        <div class="hero-blob__shape hero-blob__shape--top"></div>
+    </div>
+
+    <div class="hero-content">
+        <div class="hero-text">
+            <h1 class="hero-heading">My Watchlist</h1>
+        </div>
+    </div>
+
+    <div aria-hidden="true" class="hero-blob hero-blob--bottom">
+        <div class="hero-blob__shape hero-blob__shape--bottom"></div>
+    </div>
+</div>
+
+
+<div class="flex justify-start mx-14 z-50">
+  <div
+    x-data="{
+                open: false,
+                toggle() {
+                    if (this.open) {
+                        return this.close()
+                    }
+  
+                    this.$refs.button.focus()
+  
+                    this.open = true
+                },
+                close(focusAfter) {
+                    if (! this.open) return
+  
+                    this.open = false
+  
+                    focusAfter && focusAfter.focus()
+                }
+            }"
+    x-on:keydown.escape.prevent.stop="close($refs.button)"
+    x-on:focusin.window="! $refs.panel.contains($event.target) && close()"
+    x-id="['dropdown-button']"
+    class="relative inline-block">
+    <!-- Button -->
+
+    <button x-ref="button" x-on:click="toggle()" :aria-expanded="open" :aria-controls="$id('dropdown-button')" type="button" class="inline-flex gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-center text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-100 focus:ring focus:ring-gray-100 disabled:cursor-not-allowed disabled:border-gray-100 disabled:bg-gray-50 disabled:text-gray-400">
+      Sort By
+
+      <!-- Heroicon: chevron-down -->
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+      </svg>
+    </button>
+
+    <!-- Panel -->
+    <div x-ref="panel" x-show="open" x-transition.origin.top.left x-on:click.outside="close($refs.button)" :id="$id('dropdown-button')" class="absolute left-0 z-50 mt-2 w-48 rounded-lg border border-gray-100 bg-white text-left text-sm shadow-lg">
+      <div class="p-1">
+        <a href="?sort=descending_title" class="flex w-full items-center rounded-md px-3 py-2 text-gray-700 hover:bg-gray-100"> Title (Z-A) </a>
+        <a href="?sort=ascending_title" class="flex w-full items-center rounded-md px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"> Title (A-Z) </a>
+        <a href="?sort=descending_date" class="flex w-full items-center rounded-md px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"> Date (newest to oldest) </a>
+        <a href="?sort=ascending_date" class="flex w-full items-center rounded-md px-3 py-2 text-gray-700 hover:bg-gray-100"> Date (oldest to newest) </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="flex justify-center relative z-0 py-6 px-11">
+    <div class="flex flex-wrap gap-6">
+    {% if is_authenticated %}
+        {% if movies %}
+            {% for movie in movies %}
+                <div class="group/item bg-white rounded-2xl overflow-hidden relative hover:-translate-y-1 transition duration-300">
+                    <!-- Movie card -->
+                    <img class="w-64 h-full object-cover" src="https://image.tmdb.org/t/p/w500{{ movie.poster_path }}" alt="{{ movie.title }}">
+                    
+                    <!-- Gray overlay to image. -->
+                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover/item:bg-opacity-70 transition duration-300"></div>
+                    
+                    <!-- Buttons that appear only when movie hovered over. -->
+                    <div class="absolute inset-0 flex flex-col items-center justify-center text-white">
+                        <a href="#" class="group/edit invisible text-white border group-hover/item:visible text-black hover:bg-gray-300 transition cursor-pointer px-6 py-1 rounded-full mt-5">
+                            <p class="group-hover/edit:text-gray-700">Add to Logger</p>           
+                        </a>
+
+                        <form action="{% url 'remove_from_watchlist' movie.id %}" method="POST">
+                            {% csrf_token %}
+                            <button class="group/edit invisible text-white border group-hover/item:visible text-black hover:bg-gray-300 transition cursor-pointer px-6 py-1 rounded-full mt-5">
+                                <p class="group-hover/edit:text-gray-700">Remove from List</p> 
+                            </button>
+                        </form>
+
+                        <a href="{% url 'movie_detail' movie.id %}" class="group/edit invisible text-white border group-hover/item:visible text-black hover:bg-gray-300 transition cursor-pointer px-6 py-1 rounded-full mt-5">
+                            <p class="group-hover/edit:text-gray-700">View Details</p>           
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+
+        {% else %}
+            <div class="text-center">
+                <p class="text-5xl font-semibold tracking-tight text-balance text-white-900">No movies yet!</p>
+            </div>
+        {% endif %}
+
+    {% else %}
+    <!-- Display a button to sign in.-->
+    <div class="text-center">
+        <p class="mt-8 text-lg font-medium text-pretty text-gray-500 sm:text-xl/8">Sign in to view watchlist!</p>
+        <div class="mt-10 flex items-center justify-center gap-x-6">
+          <a href="{% url 'login' %}" class="rounded-md bg-[#027d96] px-6 py-3 font-semibold text-white shadow-xs hover:bg-[#7699A9] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Sign In</a>
+        </div>
+      </div>
+    {% endif %}
+    </div>
+</div>
+{% endblock %}

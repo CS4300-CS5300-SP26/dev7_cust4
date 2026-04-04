@@ -6,6 +6,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="{% static 'css/output.css' %}" rel="stylesheet">
+
+    <!-- Use Alpine JS. -->
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
 </head>
 
 <style>
@@ -42,7 +46,7 @@
         </button>
       </div>
       <div class="hidden lg:flex lg:gap-x-20">
-        <a href="#" class="font-semibold text-white hover:text-[#d0f0fd]">Watchlist</a>
+        <a href="{% url 'watchlist' %}" class="font-semibold text-white hover:text-[#d0f0fd]">Watchlist</a>
         <a href="{% url 'movies' %}" class="font-semibold text-white hover:text-[#d0f0fd]">Movies</a>
         <a href="#" class="font-semibold text-white hover:text-[#d0f0fd]">Account</a>
       </div>

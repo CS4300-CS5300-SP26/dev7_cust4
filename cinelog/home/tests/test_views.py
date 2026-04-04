@@ -491,7 +491,7 @@ class MovieDetailViewTest(TestCase):
 
     def test_movie_detail_handles_empty_api_response(self):
         """Movie detail page should handle empty dict from API without crashing."""
-        self.mock_fetch.return_value = {}
+        self.mock_fetch.return_value = {"id": 550, "formatted_runtime": "N/A"}
         self.mock_cast.return_value = []
         self.mock_director.return_value = None
         response = self.client.get(reverse("movie_detail", args=[550]))
@@ -504,3 +504,163 @@ class MovieDetailViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
 
 
+class WatchlistTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.movie_id = 550
+        self.movie_list = [
+            {"id": 1, "title": "Avengers"},
+            {"id": 2, "title": "Black Panther"},
+            {"id": 3, "title": "Hoppers"},
+        ]
+        self.movie_ids = [1, 2, 3]
+        self.add_url = reverse("add_to_watchlist", args=[self.movie_id])
+        self.remove_url = reverse("remove_from_watchlist", args=[self.movie_id])
+        self.watchlist_url = reverse("watchlist")
+        self.movie_url = reverse("movie_detail", args=[self.movie_id])
+        self.user_id = "1111111-1111111"
+
+    @patch("home.views.supabase.get_user_id", return_value="user123")
+    @patch("home.views.supabase.insert_in_watchlist", return_value=(True, "Added successfully"))
+    def test_add_to_watchlist_success(self, mock_insert, mock_user_id):
+        """Test adding a movie is inserted successfully."""
+        response = self.client.post(self.add_url)
+        mock_insert.assert_called_once_with("user123", self.movie_id)
+        self.assertRedirects(response, self.movie_url)
+        messages = list(get_messages(response.wsgi_request))
+        self.assertTrue(any("Added successfully" in str(m) for m in messages))
+
+    @patch("home.views.supabase.get_user_id", return_value="user123")
+    @patch("home.views.supabase.insert_in_watchlist", return_value=(False, "Error: Movie is already in watchlist."))
+    @patch("home.services.supabase.get_supabase_client", return_value=MagicMock())
+    def test_add_to_watchlist_not_success(self, mock_client, mock_insert, mock_user_id):
+        """
+        Test adding a movie is inserted unsccessfully.
+        """
+        response = self.client.post(self.add_url)
+        mock_insert.assert_called_once_with("user123", self.movie_id)
+        self.assertRedirects(response, self.movie_url)
+        messages = list(get_messages(response.wsgi_request))
+        self.assertTrue(any("Error:" in str(m) for m in messages))
+
+    @patch("home.views.supabase.get_user_id", return_value=None)
+    def test_add_to_watchlist_not_logged_in(self, mock_user_id):
+        """
+        Test a movie cannot be added if user is not logged in.
+        """
+        response = self.client.post(self.add_url)
+        self.assertRedirects(response, reverse("login"))
+
+    @patch("home.views.supabase.get_user_id", return_value="user123")
+    @patch("home.views.supabase.delete_in_watchlist", return_value=False)
+    def test_remove_from_watchlist_not_success(self, mock_delete, mock_user_id):
+        """Test that error is shown if there is an error."""
+        response = self.client.post(self.remove_url, HTTP_REFERER="/watchlist/")
+        mock_delete.assert_called_once_with("user123", self.movie_id)
+        self.assertRedirects(response, "/watchlist/")
+        messages = list(get_messages(response.wsgi_request))
+        self.assertTrue(any("Unable to remove movie. Please try again." in str(m) for m in messages))
+
+
+    @patch("home.views.supabase.get_user_id", return_value=None)
+    def test_remove_from_watchlist_not_logged_in(self, mock_user_id):
+        """Test that a user cannot remove if they are not logged in."""
+        response = self.client.post(self.remove_url)
+        self.assertRedirects(response, reverse("login"))
+
+    @patch("home.views.supabase.get_user_id", return_value="user123")
+    @patch("home.views.supabase.get_watchlist", return_value=[550])
+    @patch("home.views.fetch_movies", return_value={"id": 550, "title": "Fight Club"})
+    def test_watchlist_view_logged_in(self, mock_fetch, mock_get_watchlist, mock_user_id):
+        """Test that the watchlist page is correctly displayed if used logged in."""
+        response = self.client.get(self.watchlist_url)
+        self.assertTemplateUsed(response, "watchlist.html")
+        self.assertIn("movies", response.context)
+        self.assertEqual(response.context["movies"][0]["title"], "Fight Club")
+
+    @patch("home.views.supabase.get_user_id", return_value=None)
+    def test_watchlist_view_not_logged_in(self, mock_user_id):
+        """Test watchlist page if shown worrectly if user not logged in."""
+        response = self.client.get(self.watchlist_url)
+        self.assertTemplateUsed(response, "watchlist.html")
+        self.assertNotIn("movies", response.context)
+
+    @patch("home.views.supabase.get_user_id")
+    @patch("home.views.supabase.get_watchlist")
+    @patch("home.views.fetch_movies")
+    def test_watchlist_view_title_sort_ascending(self, mock_fetch, mock_get_watchlist, mock_get_user_id):
+        """
+        Test that movies are sorted correctly in ascending order for title.
+        """
+        mock_get_user_id.return_value = self.user_id
+        mock_get_watchlist.return_value = self.movie_ids
+        mock_fetch.side_effect = lambda movie_id, single: next((m for m in self.movie_list if m["id"] == movie_id), {})
+
+        response = self.client.get("/watchlist/?sort=ascending_title")
+        movies = response.context["movies"]
+        titles = [m["title"] for m in movies]
+        self.assertEqual(titles, ["Avengers", "Black Panther", "Hoppers"])
+
+    @patch("home.views.supabase.get_user_id")
+    @patch("home.views.supabase.get_watchlist")
+    @patch("home.views.fetch_movies")
+    def test_watchlist_view_title_sort_descending(self, mock_fetch, mock_get_watchlist, mock_get_user_id):
+        """
+        Test that movies are sorted correctly in descending order for title.
+        """
+        mock_get_user_id.return_value = self.user_id
+        mock_get_watchlist.return_value = self.movie_ids
+        mock_fetch.side_effect = lambda movie_id, single: next((m for m in self.movie_list if m["id"] == movie_id), {})
+
+        response = self.client.get("/watchlist/?sort=descending_title")
+        movies = response.context["movies"]
+        titles = [m["title"] for m in movies]
+        self.assertEqual(titles, ["Hoppers", "Black Panther", "Avengers"])
+
+    @patch("home.views.supabase.get_user_id")
+    @patch("home.views.supabase.get_watchlist")
+    @patch("home.views.fetch_movies")
+    def test_watchlist_view_date_sort_ascending(self, mock_fetch, mock_get_watchlist, mock_get_user_id):
+        """
+        Test that movies are sorted correctly in ascending order for date.
+        """
+        mock_get_user_id.return_value = self.user_id
+        mock_get_watchlist.return_value = [2, 1, 3] 
+        mock_fetch.side_effect = lambda movie_id, single: next((m for m in self.movie_list if m["id"] == movie_id), {})
+
+        response = self.client.get("/watchlist/?sort=ascending_date")
+        movies = response.context["movies"]
+        ids = [m["id"] for m in movies]
+        self.assertEqual(ids, [2, 1, 3])
+
+    @patch("home.views.supabase.get_user_id")
+    @patch("home.views.supabase.get_watchlist")
+    @patch("home.views.fetch_movies")
+    def test_watchlist_view_date_sort_descending(self, mock_fetch, mock_get_watchlist, mock_get_user_id):
+        """
+        Test that movies are sorted correctly in descending order for date.
+        """
+        mock_get_user_id.return_value = self.user_id
+        mock_get_watchlist.return_value = [3, 1, 2]  # IDs in descending date order
+        mock_fetch.side_effect = lambda movie_id, single: next((m for m in self.movie_list if m["id"] == movie_id), {})
+
+        response = self.client.get("/watchlist/?sort=descending_date")
+        movies = response.context["movies"]
+        ids = [m["id"] for m in movies]
+        self.assertEqual(ids, [3, 1, 2])
+
+    @patch("home.views.supabase.get_user_id")
+    @patch("home.views.supabase.get_watchlist")
+    @patch("home.views.fetch_movies")
+    def test_watchlist_view_missing_movie(self, mock_fetch, mock_get_watchlist, mock_get_user_id):
+        """
+        Test that movie ids that do not exist are not returned.
+        """
+        mock_get_user_id.return_value = self.user_id
+        mock_get_watchlist.return_value = [1, 2, 99]  # 99 does not exist
+        mock_fetch.side_effect = lambda movie_id, single: next((m for m in self.movie_list if m["id"] == movie_id), {})
+
+        response = self.client.get("/watchlist/")
+        movies = response.context["movies"]
+        ids = [m["id"] for m in movies]
+        self.assertNotIn(99, ids)
