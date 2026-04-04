@@ -517,6 +517,7 @@ class WatchlistTest(TestCase):
         self.add_url = reverse("add_to_watchlist", args=[self.movie_id])
         self.remove_url = reverse("remove_from_watchlist", args=[self.movie_id])
         self.watchlist_url = reverse("watchlist")
+        self.movie_url = reverse("movie_detail", args=[self.movie_id])
         self.user_id = "1111111-1111111"
 
     @patch("home.views.supabase.get_user_id", return_value="user123")
@@ -525,7 +526,7 @@ class WatchlistTest(TestCase):
         """Test adding a movie is inserted successfully."""
         response = self.client.post(self.add_url)
         mock_insert.assert_called_once_with("user123", self.movie_id)
-        self.assertRedirects(response, reverse("movie_detail", args=[self.movie_id]))
+        self.assertRedirects(response, self.movie_url)
         messages = list(get_messages(response.wsgi_request))
         self.assertTrue(any("Added successfully" in str(m) for m in messages))
 
@@ -535,7 +536,7 @@ class WatchlistTest(TestCase):
         """Test adding a movie is inserted unsccessfully."""
         response = self.client.post(self.add_url)
         mock_insert.assert_called_once_with("user123", self.movie_id)
-        self.assertRedirects(response, reverse("movie_detail", args=[self.movie_id]))
+        self.assertRedirects(response, self.movie_url)
         messages = list(get_messages(response.wsgi_request))
         self.assertTrue(any("Error:" in str(m) for m in messages))
 
