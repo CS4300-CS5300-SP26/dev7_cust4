@@ -291,7 +291,7 @@ def insert_in_watchlist(user_id, movie_id):
     except Exception as e:
         # Display specific error if movie is already in the watchlist.
         if "duplicate key value violates unique constraint" in str(e):
-            return False, "Movie is already in watchlist."
+            return False, "Error: Movie is already in watchlist."
         else:
             return False, f"Error: {e}"
 

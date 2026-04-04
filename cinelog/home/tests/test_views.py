@@ -504,3 +504,77 @@ class MovieDetailViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
 
 
+class WatchlistTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.movie_id = 550
+        self.add_url = reverse("add_to_watchlist", args=[self.movie_id])
+        self.remove_url = reverse("remove_from_watchlist", args=[self.movie_id])
+        self.watchlist_url = reverse("watchlist")
+
+    @patch("home.views.supabase.get_user_id", return_value="user123")
+    @patch("home.views.supabase.insert_in_watchlist", return_value=(True, "Added successfully"))
+    def test_add_to_watchlist_success(self, mock_insert, mock_user_id):
+        """Test adding a movie is inserted successfully."""
+        response = self.client.post(self.add_url)
+        mock_insert.assert_called_once_with("user123", self.movie_id)
+        self.assertRedirects(response, reverse("movie_detail", args=[self.movie_id]))
+        messages = list(get_messages(response.wsgi_request))
+        self.assertTrue(any("Added successfully" in str(m) for m in messages))
+
+    @patch("home.views.supabase.get_user_id", return_value="user123")
+    @patch("home.views.supabase.insert_in_watchlist", return_value=(False, "Error: Movie is already in watchlist."))
+    def test_add_to_watchlist_not_success(self, mock_insert, mock_user_id):
+        """Test adding a movie is inserted unsccessfully."""
+        response = self.client.post(self.add_url)
+        mock_insert.assert_called_once_with("user123", self.movie_id)
+        self.assertRedirects(response, reverse("movie_detail", args=[self.movie_id]))
+        messages = list(get_messages(response.wsgi_request))
+        self.assertTrue(any("Error:" in str(m) for m in messages))
+
+    @patch("home.views.supabase.get_user_id", return_value=None)
+    def test_add_to_watchlist_not_logged_in(self, mock_user_id):
+        """Test a movie cannot be added if user is not logged in."""
+        response = self.client.post(self.add_url)
+        self.assertRedirects(response, reverse("login"))
+
+    @patch("home.views.supabase.get_user_id", return_value="user123")
+    @patch("home.views.supabase.delete_in_watchlist", return_value=True)
+    def test_remove_from_watchlist_success(self, mock_delete, mock_user_id):
+        """Test that a movie can be removed."""
+        response = self.client.post(self.remove_url, HTTP_REFERER="/watchlist/")
+        mock_delete.assert_called_once_with("user123", self.movie_id)
+        self.assertRedirects(response, "/watchlist/")
+
+    @patch("home.views.supabase.get_user_id", return_value="user123")
+    @patch("home.views.supabase.delete_in_watchlist", return_value=False)
+    def test_remove_from_watchlist_not_success(self, mock_delete, mock_user_id):
+        """Test that error is shown if there is an error."""
+        response = self.client.post(self.remove_url, HTTP_REFERER="/watchlist/")
+        mock_delete.assert_called_once_with("user123", self.movie_id)
+        self.assertRedirects(response, "/watchlist/")
+        messages = list(get_messages(response.wsgi_request))
+        self.assertTrue(any("Unable to remove movie. Please try again." in str(m) for m in messages))
+
+    @patch("home.views.supabase.get_user_id", return_value=None)
+    def test_remove_from_watchlist_not_logged_in(self, mock_user_id):
+        """Test that a user cannot remove if they are not logged in."""
+        response = self.client.post(self.remove_url)
+        self.assertRedirects(response, reverse("login"))
+
+    @patch("home.views.supabase.get_user_id", return_value="user123")
+    @patch("home.views.supabase.get_watchlist", return_value=[550])
+    @patch("home.views.fetch_movies", return_value={"id": 550, "title": "Fight Club"})
+    def test_watchlist_view_logged_in(self, mock_fetch, mock_get_watchlist, mock_user_id):
+        """Test that the watchlist page is correctly displayed if used logged in."""
+        response = self.client.get(self.watchlist_url)
+        self.assertTemplateUsed(response, "watchlist.html")
+        self.assertIn("movies", response.context)
+        self.assertEqual(response.context["movies"][0]["title"], "Fight Club")
+
+    @patch("home.views.supabase.get_user_id", return_value=None)
+    def test_watchlist_view_not_logged_in(self, mock_user_id):
+        """Test watchlist page if shown worrectly if user not logged in."""
+        response = self.client.get(self.watchlist_url)
+        self.assertTemplateUsed(response, "watchlist.html")
+        self.assertNotIn("movies", response.context)
