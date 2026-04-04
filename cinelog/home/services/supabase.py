@@ -9,6 +9,7 @@ from unittest.mock import MagicMock
 
 # Set a max for number of links user can recieve.
 MAX_EMAILS_1_HOUR = 4
+supabase_client = None
 
 def get_supabase_client():
     """
@@ -17,8 +18,10 @@ def get_supabase_client():
     Returns:
         Client: The supabase client that can be used to access Supabase.
     """
-    url = getattr(settings, "SUPABASE_URL", None)
-    key = getattr(settings, "SUPABASE_KEY", None)
+    # url = getattr(settings, "SUPABASE_URL", None)
+    # key = getattr(settings, "SUPABASE_KEY", None)
+    url = None
+    key = None
     if not url or not key:
         supabase_client = MagicMock()
 
