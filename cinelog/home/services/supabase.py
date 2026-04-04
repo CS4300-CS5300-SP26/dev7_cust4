@@ -17,9 +17,8 @@ def get_supabase_client():
     Returns:
         Client: The supabase client that can be used to access Supabase.
     """
-    url: str = settings.SUPABASE_URL
-    key: str = settings.SUPABASE_KEY
-
+    url = getattr(settings, "SUPABASE_URL", None)
+    key = getattr(settings, "SUPABASE_KEY", None)
     if not url or not key:
         supabase_client = MagicMock()
 
