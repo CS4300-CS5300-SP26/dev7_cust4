@@ -46,8 +46,16 @@ def movie_detail_view(request, movie_id):
     else:
         movie["formatted_runtime"] = "N/A"
 
+    user_id = supabase.get_user_id(request)
+
+    # Add to response if movie is already in watchlist.
+    if user_id and supabase.get_watchlist(user_id, movie_id=movie_id):
+        in_watchlist = True
+    else:
+        in_watchlist = False
+
     return render(request, "movie_detail.html", 
-    {"movie": movie, "cast": get_cast(movie), "director": get_director(movie),})
+    {"movie": movie, "cast": get_cast(movie), "director": get_director(movie), "in_watchlist": in_watchlist})
 
 def signup_view(request):
     """
@@ -191,17 +199,40 @@ def add_to_watchlist(request, movie_id):
         user_id = supabase.get_user_id(request)
         if not user_id:
             messages.error(request, "Must be logged in to add movie to watchlist.")
-            return redirect("movie_detail", movie_id=movie_id)
+            return redirect("login")
         
         # Insert movie into watchlist table in database.
-        success, message = supabase.insert_in_watchlist(request, user_id, movie_id)
+        success, message = supabase.insert_in_watchlist(user_id, movie_id)
         if success:
             messages.success(request, message)
-            return redirect("movie_detail", movie_id=movie_id)
         else:
             messages.error(request, message)
-            return redirect("movie_detail", movie_id=movie_id)
+        
+        return redirect("movie_detail", movie_id=movie_id)
 
+def remove_from_watchlist(request, movie_id):
+    """
+    Remove a movie from the user's watchlist in database.
+
+    Args:
+        request (HTTP request): Contains information about the request.
+        movie_id (int): Value representing movie in TMDB (passed in url).
+
+    Returns:
+        HTTPResponseRedirect: Redirects to referring page or login page if not signed in.
+    """
+    if request.method == "POST":
+        user_id = supabase.get_user_id(request)
+        if not user_id:
+            messages.error(request, "Must be logged in to remove movie from watchlist.")
+            return redirect("login")
+        
+        # Remove movie into watchlist table in database.
+        success = supabase.delete_in_watchlist(user_id, movie_id)
+        if not success:
+            messages.error(request, "Unable to remove movie. Please try again.")
+        
+        return redirect(request.META.get("HTTP_REFERER", f"/movies/{movie_id}/"))
 
 def watchlist_view(request):
     """
@@ -210,6 +241,17 @@ def watchlist_view(request):
         request (HTTP request): Contains information about the request.
 
     Returns:
-        HTTPResponse: A rendering of the landing.html page.
+        HTTPResponse: A rendering of the watchlist.html page.
     """
-    return render(request, 'watchlist.html', {"movies": fetch_movies("popular")})
+    user_id = supabase.get_user_id(request)
+    if not user_id:
+        return render(request, 'watchlist.html')
+
+    movie_ids = supabase.get_watchlist(user_id)
+    movies = []
+    for movie in movie_ids:
+        movie = fetch_movies(movie, single=True)
+        if movie.get("id"):
+            movies.append(movie)
+
+    return render(request, 'watchlist.html', {"movies": movies})

@@ -266,11 +266,11 @@ def get_user_id(request):
     else:
         return None
 
-def insert_in_watchlist(request, user_id, movie_id):
+def insert_in_watchlist(user_id, movie_id):
     """
     Add movie to user's watchlist.
+
     Args:
-        request (HTTP request): Contains information about the request.
         user_id (str): Unique id that can be used to reference a user.
         movie_id (int): Value representing movie in TMDB.
 
@@ -294,3 +294,58 @@ def insert_in_watchlist(request, user_id, movie_id):
             return False, "Movie is already in watchlist."
         else:
             return False, f"Error: {e}"
+
+def delete_in_watchlist(user_id, movie_id):
+    """
+    Delete a movie from user's watchlist.
+
+    Args:
+        user_id (str): Unique id that can be used to reference a user.
+        movie_id (int): Value representing movie in TMDB.
+
+    Returns:
+        boolean: Represents if movie was removed from watchlist or not.
+    """
+    try:
+        response = (
+            supabase_client.table("Watchlist")
+            .delete()
+            .eq("user_id", user_id)
+            .eq("movie_id", movie_id)
+            .execute()
+        )
+        return True
+        
+    except Exception as e:
+        return False
+
+
+def get_watchlist(user_id, movie_id=None):
+    """
+    Retrieve a movie from the user's watchlist.
+
+    Args:
+        user_id (str): Unique id that can be used to reference a user.
+        movie_id (int, optional): If provided, specifies a certain movie to check if is in watchlist.
+
+    Returns:
+        list: Contains movie ids of movies in watchlist. Returns empty list if none or if an error.
+    """
+    try:
+        query = (
+            supabase_client.table("Watchlist")
+            .select("*")
+            .eq("user_id", user_id)
+        )
+
+        if movie_id is not None:
+            query = query.eq("movie_id", movie_id)
+        
+        response = query.execute()
+
+        # Go through response and retrieve each movie_id
+        movie_ids = [row["movie_id"] for row in response.data]
+        return movie_ids
+
+    except Exception as e:
+        return []

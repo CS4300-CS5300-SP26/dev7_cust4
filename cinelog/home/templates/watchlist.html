@@ -22,7 +22,10 @@
 </div>
 
 
-<div class="flex flex-wrap items-center justify-center gap-20 relative z-10">
+<div class="flex justify-center relative z-10 py-6 px-11">
+    <div class="flex flex-wrap gap-6">
+    {% if is_authenticated %}
+    {% if movies %}
     {% for movie in movies %}
         <div class="group/item bg-white rounded-2xl overflow-hidden relative hover:-translate-y-1 transition duration-300">
             <!-- Movie card -->
@@ -37,9 +40,12 @@
                     <p class="group-hover/edit:text-gray-700">Add to Logger</p>           
                 </a>
 
-                <a href="#" class="group/edit invisible text-white border group-hover/item:visible text-black hover:bg-gray-300 transition cursor-pointer px-6 py-1 rounded-full mt-5">
-                    <p class="group-hover/edit:text-gray-700">Remove from List</p>           
-                </a>
+                <form action="{% url 'remove_from_watchlist' movie.id %}" method="POST">
+                    {% csrf_token %}
+                    <button class="group/edit invisible text-white border group-hover/item:visible text-black hover:bg-gray-300 transition cursor-pointer px-6 py-1 rounded-full mt-5">
+                        <p class="group-hover/edit:text-gray-700">Remove from List</p> 
+                    </button>
+                </form>
 
                 <a href="{% url 'movie_detail' movie.id %}" class="group/edit invisible text-white border group-hover/item:visible text-black hover:bg-gray-300 transition cursor-pointer px-6 py-1 rounded-full mt-5">
                     <p class="group-hover/edit:text-gray-700">View Details</p>           
@@ -47,6 +53,23 @@
             </div>
         </div>
     {% endfor %}
+
+    {% else %}
+    <div class="text-center">
+        <p class="text-5xl font-semibold tracking-tight text-balance text-white-900">No movies yet!</p>
+      </div>
+    {% endif %}
+    {% else %}
+    <!-- Display a button to sign in.-->
+    <div class="text-center">
+        <p class="mt-8 text-lg font-medium text-pretty text-gray-500 sm:text-xl/8">Sign in to view watchlist!</p>
+        <div class="mt-10 flex items-center justify-center gap-x-6">
+          <a href="{% url 'login' %}" class="rounded-md bg-[#027d96] px-6 py-3 font-semibold text-white shadow-xs hover:bg-[#7699A9] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Sign In</a>
+        </div>
+      </div>
+    {% endif %}
+    </div>
 </div>
+
 
 {% endblock %}
