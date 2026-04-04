@@ -236,7 +236,8 @@ def remove_from_watchlist(request, movie_id):
 
 def watchlist_view(request):
     """
-    Renders the landing page of the web application.
+    Renders the watchlist page of the web application.
+
     Args:
         request (HTTP request): Contains information about the request.
 
@@ -244,14 +245,58 @@ def watchlist_view(request):
         HTTPResponse: A rendering of the watchlist.html page.
     """
     user_id = supabase.get_user_id(request)
+    sort = request.GET.get("sort", "")
     if not user_id:
         return render(request, 'watchlist.html')
 
     movie_ids = supabase.get_watchlist(user_id)
+    if "date" in sort:
+        movie_ids = sort_movies_date(user_id, sort)
+
     movies = []
     for movie in movie_ids:
         movie = fetch_movies(movie, single=True)
         if movie.get("id"):
             movies.append(movie)
+    
+    if "title" in sort:
+        movies = sort_movies_title(movies, sort)
 
     return render(request, 'watchlist.html', {"movies": movies})
+
+def sort_movies_title(movies, sort_method):
+    """
+    Given movies list, sorts them based on their title.
+
+    Args:
+        movies (list): Contains dictionaries with information about movies in user's watchlist.
+        sort_method (str): Contains how movies should be sorted.
+
+    Returns:
+        list: Sorted version of passed in movies.
+    """
+    if sort_method == "ascending_title":
+        movies.sort(key=lambda x: x.get("title", "").lower())
+
+    elif sort_method == "descending_title":
+        movies.sort(key=lambda x: x.get("title", "").lower(), reverse=True)
+    return movies
+
+def sort_movies_date(user_id, sort_method):
+    """
+    Given movies ids, accesses supabase to find when movies were added and sort them by date.
+
+    Args:
+        user_id (str): Unique id that can be used to reference a user.
+        sort_method (str): Contains how movies should be sorted.
+
+    Returns:
+        list: Sorted version of passed in movies.
+    """
+    if sort_method == "ascending_date":
+        movie_ids = supabase.get_watchlist(user_id, order=True, descending=False)
+
+    elif sort_method == "descending_date":
+        movie_ids = supabase.get_watchlist(user_id, order=True, descending=True)
+
+    return movie_ids

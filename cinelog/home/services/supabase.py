@@ -320,7 +320,7 @@ def delete_in_watchlist(user_id, movie_id):
         return False
 
 
-def get_watchlist(user_id, movie_id=None):
+def get_watchlist(user_id, movie_id=None, order=False, descending=False):
     """
     Retrieve a movie from the user's watchlist.
 
@@ -340,6 +340,9 @@ def get_watchlist(user_id, movie_id=None):
 
         if movie_id is not None:
             query = query.eq("movie_id", movie_id)
+        
+        if order:
+            query = query.order("date_added", desc=descending)
         
         response = query.execute()
 

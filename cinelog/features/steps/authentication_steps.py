@@ -9,7 +9,7 @@ from django.test import Client
 
 
 @given('I have an account with "{email}", "{username}", and "{password}"')
-def step_have_account(context, email, username, password):
+def step_impl(context, email, username, password):
     if not hasattr(context, "client"):
         context.client = Client()
     session = context.client.session
