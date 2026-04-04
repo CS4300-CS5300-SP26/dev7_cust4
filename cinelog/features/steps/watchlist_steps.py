@@ -18,7 +18,7 @@ def step_impl(context, movie):
 @given('I am on the Movie Details page')
 def step_impl(context):
     context.movie_id = 550
-    context.client.get(reverse("movie_detail", args=[context.movie_id]))
+    context.test.client.get(reverse("movie_detail", args=[context.movie_id]))
 
 @given('I have added the movies "{movie1}", "{movie2}", "{movie3}" in this order')
 def step_impl(context, movie1, movie2, movie3):
@@ -37,25 +37,20 @@ def step_impl(context):
 
 @when('I select the remove from list button')
 def step_impl(context):
-    with patch("home.views.supabase.get_user_id", return_value="user123"), \
-         patch("home.views.supabase.delete_in_watchlist", return_value=True):
-
-        context.response = context.client.post(
-            reverse("remove_from_watchlist", args=[context.movie_id]),
-            HTTP_REFERER="/watchlist/"
-        )
+    with patch("home.views.supabase.get_user_id", return_value="user123") as mock_user_id:
+        with patch("home.views.supabase.delete_in_watchlist", return_value=True) as mock_delete:
+            context.response = context.test.client.post(
+                reverse("remove_from_watchlist", args=[context.movie_id]),
+                HTTP_REFERER="/watchlist/"
+            )
 
 @when('I select add to watchlist')
 def step_impl(context):
-    with patch("home.views.supabase.get_user_id", return_value="user123"), \
-         patch(
-             "home.views.supabase.insert_in_watchlist",
-             return_value=(False, "Error: Movie is already in watchlist.")
-         ):
-        
-        context.response = context.client.post(
-            reverse("add_to_watchlist", args=[context.movie_id])
-        )
+    with patch("home.views.supabase.get_user_id", return_value="user123") as mock_user_id:
+        with patch("home.views.supabase.insert_in_watchlist", return_value=(False, "Error: Movie is already in watchlist.")):
+            context.response = context.test.client.post(
+                reverse("add_to_watchlist", args=[context.movie_id])
+            )
 
 @when('I select to order by "{criteria}"')
 def step_impl(context, criteria):
@@ -67,11 +62,10 @@ def step_impl(context, criteria):
 
 @then('I can view "{movie}" in my watchlist')
 def step_impl(context, movie):
-    with patch("home.views.supabase.get_user_id", return_value="user123"), \
-         patch("home.views.supabase.get_watchlist", return_value=[550]), \
-         patch("home.views.fetch_movies", return_value={"id": 550, "title": movie}):
-        
-        response = context.test.client.get(reverse("watchlist"))
+    with patch("home.views.supabase.get_user_id", return_value="user123") as mock_user_id:
+        with patch("home.views.supabase.get_watchlist", return_value=[550]):
+            with patch("home.views.fetch_movies", return_value={"id": 550, "title": movie}):
+                response = context.test.client.get(reverse("watchlist"))
 
     assert response.status_code == 200
     assert "movies" in response.context
@@ -84,10 +78,9 @@ def step_impl(context, movie):
 
 @then('"Black Panther" is no longer in my watchlist')
 def step_impl(context):
-    with patch("home.views.supabase.get_user_id", return_value="user123"), \
-         patch("home.views.supabase.get_watchlist", return_value=[]):
-
-        response = context.client.get(reverse("watchlist"))
+    with patch("home.views.supabase.get_user_id", return_value="user123"):
+        with patch("home.views.supabase.get_watchlist", return_value=[]):
+            response = context.test.client.get(reverse("watchlist"))
 
     assert response.context["movies"] == []
 

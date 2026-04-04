@@ -10,9 +10,7 @@ from django.test import Client
 
 @given('I have an account with "{email}", "{username}", and "{password}"')
 def step_impl(context, email, username, password):
-    if not hasattr(context, "client"):
-        context.client = Client()
-    session = context.client.session
+    session = context.test.client.session
     session["access_token"] = "fake-token"
     session["supabase_user_id"] = "user123"
     session["supabase_user_email"] = email
