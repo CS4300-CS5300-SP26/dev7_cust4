@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<!-- Link to the movies stylesheet (reuse existing CSS) -->
+<link href="{% static 'css/movies.css' %}" rel="stylesheet">
+
+<!-- Search Results Hero Section -->
+<div class="hero-container">
+    <div aria-hidden="true" class="hero-blob hero-blob--top">
+        <div class="hero-blob__shape hero-blob__shape--top"></div>
+    </div>
+
+    <div class="hero-content">
+        <div class="hero-text">
+            <h1 class="hero-heading">Search Results</h1>
+        </div>
+    </div>
+
+    <div aria-hidden="true" class="hero-blob hero-blob--bottom">
+        <div class="hero-blob__shape hero-blob__shape--bottom"></div>
+    </div>
+</div>
+
+<!-- Search Bar (same as before) -->
+<style>
+.search-container {
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 0 20px;
+}
+
+.search-form {
+    display: flex;
+    gap: 10px;
+    background: white;
+    border-radius: 50px;
+    padding: 5px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.search-input {
+    flex: 1;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 50px;
+    font-size: 16px;
+    outline: none;
+}
+
+.search-button {
+    background: #ff6b35;
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 0 25px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.search-button:hover {
+    background: #ff5722;
+}
+
+.search-info {
+    text-align: center;
+    margin: 20px 0;
+    color: #666;
+}
+
+.clear-search {
+    color: #ff6b35;
+    text-decoration: none;
+    margin-left: 10px;
+}
+
+.clear-search:hover {
+    text-decoration: underline;
+}
+
+.no-results {
+    text-align: center;
+    padding: 50px;
+    color: #666;
+}
+
+.no-results a {
+    color: #ff6b35;
+    text-decoration: none;
+}
+
+.results-count {
+    text-align: center;
+    color: #666;
+    margin-bottom: 20px;
+}
+</style>
+
+<div class="search-container">
+    <form class="search-form" method="GET" action="{% url 'search_movies' %}">
+        <input 
+            type="text" 
+            name="q" 
+            class="search-input" 
+            placeholder="Search for any movie by title..." 
+            value="{{ search_query }}"
+        >
+        <button type="submit" class="search-button">Search</button>
+    </form>
+    
+    <div class="search-info">
+        🔍 Showing {{ result_count }} results for: "{{ search_query }}"
+        <a href="{% url 'movies' %}" class="clear-search">Back to Movies</a>
+    </div>
+</div>
+
+<!-- Search Results Row -->
+<div class="movie-row-container">
+    <h2 class="row-title">Search Results</h2>
+    
+    {% if movies %}
+        <button class="scroll-btn left" onclick="scrollRow('searchResultsRow', -1)">❮</button>
+        <div class="movie-row" id="searchResultsRow">
+            {% for movie in movies %}
+                <a href="{% url 'movie_detail' movie.id %}" class="movie-card-link">
+                    <div class="movie-card">
+                        {% if movie.poster_path %}
+                            <img src="https://image.tmdb.org/t/p/w500{{ movie.poster_path }}" alt="{{ movie.title }}">
+                        {% else %}
+                            <div class="no-poster">No Image</div>
+                        {% endif %}
+                        <div class="movie-info">
+                            <h3>{{ movie.title }}</h3>
+                            <p>★ {{ movie.vote_average|floatformat:1 }}</p>
+                            {% if movie.release_date %}
+                                <p class="release-year">{{ movie.release_date|slice:":4" }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+        <button class="scroll-btn right" onclick="scrollRow('searchResultsRow', 1)">❯</button>
+    {% else %}
+        <div class="no-results">
+            <p>No movies found for "{{ search_query }}"</p>
+            <p>Try different keywords or <a href="{% url 'movies' %}">browse all movies</a></p>
+        </div>
+    {% endif %}
+</div>
+
+<!-- JavaScript for horizontal scrolling (same as before) -->
+<script>
+    function scrollRow(rowID, direction) {
+        const container = document.getElementById(rowID);
+        const scrollAmount = 400;
+
+        container.scrollBy({
+            left: direction * scrollAmount,
+            behavior: "smooth"
+        });
+    }
+</script>
+
+{% endblock %}
