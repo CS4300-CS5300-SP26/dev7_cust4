@@ -6,6 +6,7 @@ from django.core.cache import cache
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from unittest.mock import MagicMock
+import logging
 
 # Set a max for number of links user can recieve.
 MAX_EMAILS_1_HOUR = 4
@@ -371,14 +372,19 @@ def insert_hidden_movie(user_id, movie_id):
             })
             .execute()
         )
+        if hasattr(response, "error") and response.error:
+            error_str = str(response.error)
+            if "23505" in error_str or "duplicate key value violates unique constraint" in error_str:
+                return False, "Movie is already hidden."
+            logging.error(f"insert_hidden_movie supabase error: {response.error}")
+            return False, "An error occurred while hiding the movie."
         return True, "Movie hidden successfully."
 
     except Exception as e:
-        import logging
         error_str = str(e)
         if "23505" in error_str or "duplicate key value violates unique constraint" in error_str:
             return False, "Movie is already hidden."
-        logging.error(f"insert_hidden_movie error for user {user_id}, movie {movie_id}: {e}")
+        logging.error(f"insert_hidden_movie exception for user {user_id}, movie {movie_id}: {e}")
         return False, "An error occurred while hiding the movie."
 
 
@@ -401,13 +407,15 @@ def delete_hidden_movie(user_id, movie_id):
             .eq("movie_id", movie_id)
             .execute()
         )
+        if hasattr(response, "error") and response.error:
+            logging.error(f"delete_hidden_movie supabase error: {response.error}")
+            return False
         if response.data:
             return True
         return False
 
     except Exception as e:
-        import logging
-        logging.error(f"delete_hidden_movie error for user {user_id}, movie {movie_id}: {e}")
+        logging.error(f"delete_hidden_movie exception for user {user_id}, movie {movie_id}: {e}")
         return False
 
 
@@ -433,10 +441,17 @@ def get_hidden_movies(user_id, movie_id=None):
             query = query.eq("movie_id", movie_id)
 
         response = query.execute()
+
+        if hasattr(response, "error") and response.error:
+            logging.error(f"get_hidden_movies supabase error for user {user_id}: {response.error}")
+            return []
+
+        if not response.data:
+            return []
+
         movie_ids = [row["movie_id"] for row in response.data]
         return movie_ids
 
     except Exception as e:
-        import logging
-        logging.error(f"get_hidden_movies error for user {user_id}: {e}")
+        logging.error(f"get_hidden_movies exception for user {user_id}: {e}")
         return []
