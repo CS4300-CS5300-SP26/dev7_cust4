@@ -664,3 +664,68 @@ class WatchlistTest(TestCase):
         movies = response.context["movies"]
         ids = [m["id"] for m in movies]
         self.assertNotIn(99, ids)
+
+class HiddenMoviesTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.mock_user_id = "11111111-1111-1111-1111-111111111111"
+        session = self.client.session
+        session["supabase_user_id"] = self.mock_user_id
+        session["access_token"] = "mock_token"
+        session.save()
+
+    @patch("home.views.supabase.insert_hidden_movie", return_value=(True, "Movie hidden successfully."))
+    @patch("home.views.supabase.get_user_id", return_value="11111111-1111-1111-1111-111111111111")
+    def test_hide_movie_success(self, mock_get_user, mock_insert):
+        """Test that a logged-in user can hide a movie."""
+        response = self.client.post(reverse("hide_movie", args=[278]))
+        mock_insert.assert_called_once_with("11111111-1111-1111-1111-111111111111", 278)
+        self.assertRedirects(response, reverse("movie_detail", args=[278]))
+
+    @patch("home.views.supabase.get_user_id", return_value=None)
+    def test_hide_movie_requires_login(self, mock_get_user):
+        """Test that an unauthenticated user is redirected to login when trying to hide."""
+        response = self.client.post(reverse("hide_movie", args=[278]))
+        self.assertRedirects(response, reverse("login"))
+
+    @patch("home.views.supabase.delete_hidden_movie", return_value=True)
+    @patch("home.views.supabase.get_user_id", return_value="11111111-1111-1111-1111-111111111111")
+    def test_unhide_movie_success(self, mock_get_user, mock_delete):
+        """Test that a logged-in user can unhide a movie."""
+        response = self.client.post(reverse("unhide_movie", args=[278]))
+        mock_delete.assert_called_once_with("11111111-1111-1111-1111-111111111111", 278)
+
+    @patch("home.views.supabase.get_user_id", return_value=None)
+    def test_unhide_movie_requires_login(self, mock_get_user):
+        """Test that an unauthenticated user is redirected to login when trying to unhide."""
+        response = self.client.post(reverse("unhide_movie", args=[278]))
+        self.assertRedirects(response, reverse("login"))
+
+    @patch("home.views.supabase.get_hidden_movies", return_value=[278, 155])
+    @patch("home.views.fetch_movies", side_effect=lambda mid, single=False: {"id": mid, "title": f"Movie {mid}", "poster_path": "", "vote_average": 8.0})
+    @patch("home.views.supabase.get_user_id", return_value="11111111-1111-1111-1111-111111111111")
+    def test_hidden_movies_page_renders(self, mock_get_user, mock_fetch, mock_get_hidden):
+        """Test that the hidden movies page loads and shows hidden movies."""
+        response = self.client.get(reverse("hidden_movies"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "hidden_movies.html")
+        self.assertEqual(len(response.context["movies"]), 2)
+
+    @patch("home.views.supabase.get_hidden_movies", return_value=[])
+    @patch("home.views.supabase.get_user_id", return_value="11111111-1111-1111-1111-111111111111")
+    def test_hidden_movies_page_empty(self, mock_get_user, mock_get_hidden):
+        """Test that the hidden movies page renders with no movies."""
+        response = self.client.get(reverse("hidden_movies"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context["movies"]), 0)
+
+    @patch("home.views.supabase.get_hidden_movies", return_value=[278])
+    @patch("home.views.fetch_movies", side_effect=lambda category: [{"id": 278, "title": "Shawshank", "vote_average": 8.7, "poster_path": ""}] if category == "popular" else [])
+    @patch("home.views.supabase.get_user_id", return_value="11111111-1111-1111-1111-111111111111")
+    def test_hidden_movie_filtered_from_movies_view(self, mock_get_user, mock_fetch, mock_get_hidden):
+        """Test that hidden movies do not appear on the main movies page."""
+        response = self.client.get(reverse("movies"))
+        self.assertEqual(response.status_code, 200)
+        movies = response.context["movies"]
+        ids = [m["id"] for m in movies]
+        self.assertNotIn(278, ids)
