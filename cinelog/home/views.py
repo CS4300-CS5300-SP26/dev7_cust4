@@ -5,7 +5,7 @@ from django.http import HttpResponse
 from django.contrib.auth.views import LoginView
 from django.contrib.auth import login
 from django.contrib.auth.forms import UserCreationForm
-from .services.tmdb import fetch_movies, fetch_movie_detail, get_cast, get_director
+from .services.tmdb import fetch_movies, fetch_movie_detail, get_cast, get_director, search_movies
 from .services import supabase
 from django.contrib import messages
 from django.urls import reverse
@@ -302,3 +302,26 @@ def sort_movies_date(user_id, sort_method):
         movie_ids = supabase.get_watchlist(user_id, order=True, descending=True)
 
     return movie_ids
+
+
+
+def search_movies_view(request):
+    """
+    Search for movies with TMDB search API
+    """
+
+    query = request.GET.get('q', '').strip()
+    
+    if not query:
+        return redirect('movies')
+    
+    # Use the new search_movies function
+    search_results = search_movies(query)
+    
+    return render(request, "movies.html", {
+        "movies": search_results,
+        "top_rated_movies": [],  #Remains empty when seacrhing
+        "now_playing_movies": [],  #Remains empty when seacrhing
+        "search_query": query,
+        "is_search": True
+    })
