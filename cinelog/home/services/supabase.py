@@ -374,10 +374,12 @@ def insert_hidden_movie(user_id, movie_id):
         return True, "Movie hidden successfully."
 
     except Exception as e:
-        if "duplicate key value violates unique constraint" in str(e):
+        import logging
+        error_str = str(e)
+        if "23505" in error_str or "duplicate key value violates unique constraint" in error_str:
             return False, "Movie is already hidden."
-        else:
-            return False, f"Error: {e}"
+        logging.error(f"insert_hidden_movie error for user {user_id}, movie {movie_id}: {e}")
+        return False, "An error occurred while hiding the movie."
 
 
 def delete_hidden_movie(user_id, movie_id):
@@ -399,9 +401,13 @@ def delete_hidden_movie(user_id, movie_id):
             .eq("movie_id", movie_id)
             .execute()
         )
-        return True
+        if response.data:
+            return True
+        return False
 
     except Exception as e:
+        import logging
+        logging.error(f"delete_hidden_movie error for user {user_id}, movie {movie_id}: {e}")
         return False
 
 
@@ -431,4 +437,6 @@ def get_hidden_movies(user_id, movie_id=None):
         return movie_ids
 
     except Exception as e:
+        import logging
+        logging.error(f"get_hidden_movies error for user {user_id}: {e}")
         return []
