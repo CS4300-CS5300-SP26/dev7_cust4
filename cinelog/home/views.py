@@ -8,6 +8,8 @@ from django.contrib.auth.forms import UserCreationForm
 from .services.tmdb import fetch_movies, fetch_movie_detail, get_cast, get_director
 from .services import supabase
 from django.contrib import messages
+from django.urls import reverse
+
 
 def landing_page(request):
     """
