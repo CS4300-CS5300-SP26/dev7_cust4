@@ -27,11 +27,19 @@ def landing_page(request):
 def movies_view(request):
     """
     Render the movies page with separate TMDB categories.
+    Hidden movies are filtered out for logged-in users.
     """
+    user_id = supabase.get_user_id(request)
+    hidden_ids = set(supabase.get_hidden_movies(user_id)) if user_id else set()
+
+    popular = [m for m in fetch_movies("popular") if m.get("id") not in hidden_ids]
+    top_rated = [m for m in fetch_movies("top_rated") if m.get("id") not in hidden_ids]
+    now_playing = [m for m in fetch_movies("now_playing") if m.get("id") not in hidden_ids]
+
     return render(request, "movies.html", {
-        "movies": fetch_movies("popular"),
-        "top_rated_movies": fetch_movies("top_rated"),
-        "now_playing_movies": fetch_movies("now_playing"),
+        "movies": popular,
+        "top_rated_movies": top_rated,
+        "now_playing_movies": now_playing,
     })
 
 def movie_detail_view(request, movie_id):
@@ -57,8 +65,10 @@ def movie_detail_view(request, movie_id):
     else:
         in_watchlist = False
 
-    return render(request, "movie_detail.html", 
-    {"movie": movie, "cast": get_cast(movie), "director": get_director(movie), "in_watchlist": in_watchlist})
+    is_hidden = bool(supabase.get_hidden_movies(user_id, movie_id=movie_id)) if user_id else False
+
+    return render(request, "movie_detail.html",
+    {"movie": movie, "cast": get_cast(movie), "director": get_director(movie), "in_watchlist": in_watchlist, "is_hidden": is_hidden})
 
 def signup_view(request):
     """
@@ -407,3 +417,78 @@ def remove_movie_view(request, movie_id):
             messages.error(request, "Movie not found.")
 
     return redirect("library")
+
+def hide_movie(request, movie_id):
+    """
+    Hides a movie from the user's browsing experience.
+
+    Args:
+        request (HTTP request): Contains information about the request.
+        movie_id (int): Value representing movie in TMDB (passed in url).
+
+    Returns:
+        HTTPResponseRedirect: Redirects to referring page or login if not signed in.
+    """
+    if request.method == "POST":
+        user_id = supabase.get_user_id(request)
+        if not user_id:
+            messages.error(request, "Must be logged in to hide a movie.")
+            return redirect("login")
+
+        success, message = supabase.insert_hidden_movie(user_id, movie_id)
+        if success:
+            messages.success(request, f'Movie hidden. <a href="/movies/unhide/{movie_id}/" id="undo-hide" style="text-decoration:underline;" onclick="document.getElementById(\'undo-form-{movie_id}\').submit(); return false;">Undo</a>')
+        else:
+            messages.error(request, message)
+
+        return redirect("movie_detail", movie_id=movie_id)
+
+
+def unhide_movie(request, movie_id):
+    """
+    Restores a hidden movie back to the user's browsing experience.
+
+    Args:
+        request (HTTP request): Contains information about the request.
+        movie_id (int): Value representing movie in TMDB (passed in url).
+
+    Returns:
+        HTTPResponseRedirect: Redirects to referring page or login if not signed in.
+    """
+    if request.method == "POST":
+        user_id = supabase.get_user_id(request)
+        if not user_id:
+            messages.error(request, "Must be logged in to unhide a movie.")
+            return redirect("login")
+
+        success = supabase.delete_hidden_movie(user_id, movie_id)
+        if success:
+            messages.success(request, "Movie restored to your feed.")
+        else:
+            messages.error(request, "Unable to unhide movie. Please try again.")
+
+        return redirect(request.META.get("HTTP_REFERER", "/movies/"))
+
+
+def hidden_movies_view(request):
+    """
+    Renders a page showing all movies the user has hidden.
+
+    Args:
+        request (HTTP request): Contains information about the request.
+
+    Returns:
+        HTTPResponse: A rendering of the hidden_movies.html page.
+    """
+    user_id = supabase.get_user_id(request)
+    if not user_id:
+        return render(request, "hidden_movies.html")
+
+    hidden_ids = supabase.get_hidden_movies(user_id)
+    movies = []
+    for mid in hidden_ids:
+        movie = fetch_movies(mid, single=True)
+        if movie.get("id"):
+            movies.append(movie)
+
+    return render(request, "hidden_movies.html", {"movies": movies})

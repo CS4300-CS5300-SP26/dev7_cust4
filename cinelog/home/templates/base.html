@@ -57,11 +57,22 @@
       </div>
       <div class="hidden lg:flex lg:gap-x-20">
         <a href="{% url 'watchlist' %}" class="font-semibold text-white hover:text-[#d0f0fd]">Watchlist</a>
+        <a href="{% url 'hidden_movies' %}" class="font-semibold text-white hover:text-[#d0f0fd]">Hidden</a>
         <a href="{% url 'movies' %}" class="font-semibold text-white hover:text-[#d0f0fd]">Movies</a>
         <a href="#" class="font-semibold text-white hover:text-[#d0f0fd]">Account</a>
         <a href="{% url 'library' %}" class="font-semibold text-white hover:text-[#d0f0fd]">My Library</a>
         <!-- {% if user.is_authenticated %}-->
         <!-- {% endif %}-->
+        {% if messages %}
+        <div class="position-fixed top-0 start-50 translate-middle-x mt-3" style="z-index: 9999; min-width: 300px;">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show text-center" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
       </div>
       <div class="hidden lg:flex lg:flex-1 lg:justify-end">
         {% if is_authenticated %}
@@ -109,7 +120,9 @@
                     class="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">Movies</a>
                   <a href="#"
                     class="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">Account</a>
+                  <a href="{% url 'hidden_movies' %}" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">Hidden</a>
                 </div>
+                
                 <div class="py-6">
                   {% if is_authenticated %}
                   <!-- Logout Button -->

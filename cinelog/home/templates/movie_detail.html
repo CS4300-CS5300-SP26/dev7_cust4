@@ -4,12 +4,6 @@
 
 <link href="{% static 'css/movie_detail.css' %}" rel="stylesheet">
 
-<!-- Display any errors. -->
-<div class="mx-8">
-    {% include "components/alerts.html" %}
-</div>
-
-
 <!-- Backdrop Banner -->
 <div class="detail-banner"
     style="background-image: url('https://image.tmdb.org/t/p/original{{ movie.backdrop_path }}');">
@@ -53,6 +47,21 @@
                 {% endif %}
             {% else %}
                 <a href="{% url 'login' %}" class="btn-add-log">Add to Watchlist</a>
+            {% endif %}
+
+            <!-- Dislike / Hide button -->
+            {% if is_authenticated and movie.id %}
+                {% if is_hidden %}
+                    <form action="{% url 'unhide_movie' movie.id %}" method="POST" style="margin-top:0.5rem;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-dislike">↩ Unhide this Movie</button>
+                    </form>
+                {% else %}
+                    <form action="{% url 'hide_movie' movie.id %}" method="POST" style="margin-top:0.5rem;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-dislike">👎 Not Interested</button>
+                    </form>
+                {% endif %}
             {% endif %}
         </div>
     </div>

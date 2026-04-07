@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+<link href="{% static 'css/movies.css' %}" rel="stylesheet">
+
+<div class="hero-container">
+    <div aria-hidden="true" class="hero-blob hero-blob--top">
+        <div class="hero-blob__shape hero-blob__shape--top"></div>
+    </div>
+    <div class="hero-content">
+        <div class="hero-text">
+            <h1 class="hero-heading">Hidden Movies</h1>
+        </div>
+    </div>
+    <div aria-hidden="true" class="hero-blob hero-blob--bottom">
+        <div class="hero-blob__shape hero-blob__shape--bottom"></div>
+    </div>
+</div>
+
+<div style="padding: 2rem 4rem; max-width: 1200px; margin: 0 auto;">
+
+    <div class="relative" style="margin-bottom: 2rem;">
+        <a href="{% url 'movies' %}" style="color: #027d96; font-weight: 600; text-decoration: none;">← Back to Movies</a>
+    </div>
+
+    {% include "components/alerts.html" %}
+
+    {% if not request.session.supabase_user_id %}
+        <p style="color: #9ca3af;">You must be logged in to manage hidden movies.</p>
+    {% elif movies %}
+        <p style="color: #9ca3af; margin-bottom: 1.5rem;">These movies are hidden from your browsing experience. Unhide them to see them again.</p>
+        <div class="movie-row" style="flex-wrap: wrap; overflow: visible; gap: 1rem;">
+            {% for movie in movies %}
+                <div class="movie-card" style="position: relative; flex-shrink: 0; width: 160px;">
+                    <a href="{% url 'movie_detail' movie.id %}" class="movie-card-link">
+                        {% if movie.poster_path %}
+                            <img src="https://image.tmdb.org/t/p/w500{{ movie.poster_path }}" alt="{{ movie.title }}">
+                        {% else %}
+                            <div class="no-poster">No Image</div>
+                        {% endif %}
+                        <div class="movie-info">
+                            <h3>{{ movie.title }}</h3>
+                            <p>★ {{ movie.vote_average|floatformat:1 }}</p>
+                        </div>
+                    </a>
+                    <form action="{% url 'unhide_movie' movie.id %}" method="POST" style="margin-top: 0.5rem;">
+                        {% csrf_token %}
+                        <button type="submit" style="width:100%; padding: 0.4rem; background:#027d96; color:#fff; border:none; border-radius:0.375rem; font-size:0.8rem; cursor:pointer;">↩ Unhide</button>
+                    </form>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p style="color: #9ca3af;">You haven't hidden any movies yet. Click "Not Interested" on any movie to hide it.</p>
+    {% endif %}
+
+</div>
+
+{% endblock %}

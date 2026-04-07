@@ -6,6 +6,7 @@ from django.core.cache import cache
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from unittest.mock import MagicMock
+import logging
 
 # Set a max for number of links user can recieve.
 MAX_EMAILS_1_HOUR = 4
@@ -350,4 +351,107 @@ def get_watchlist(user_id, movie_id=None, order=False, descending=False):
         return movie_ids
 
     except Exception as e:
+        return []
+def insert_hidden_movie(user_id, movie_id):
+    """
+    Add movie to user's hidden movies list.
+
+    Args:
+        user_id (str): Unique id that can be used to reference a user.
+        movie_id (int): Value representing movie in TMDB.
+
+    Returns:
+        tuple: (bool, str) success flag and message.
+    """
+    try:
+        response = (
+            supabase_client.table("HiddenMovies")
+            .insert({
+                "user_id": user_id,
+                "movie_id": movie_id
+            })
+            .execute()
+        )
+        if hasattr(response, "error") and response.error:
+            error_str = str(response.error)
+            if "23505" in error_str or "duplicate key value violates unique constraint" in error_str:
+                return False, "Movie is already hidden."
+            logging.error(f"insert_hidden_movie supabase error: {response.error}")
+            return False, "An error occurred while hiding the movie."
+        return True, "Movie hidden successfully."
+
+    except Exception as e:
+        error_str = str(e)
+        if "23505" in error_str or "duplicate key value violates unique constraint" in error_str:
+            return False, "Movie is already hidden."
+        logging.error(f"insert_hidden_movie exception for user {user_id}, movie {movie_id}: {e}")
+        return False, "An error occurred while hiding the movie."
+
+
+def delete_hidden_movie(user_id, movie_id):
+    """
+    Remove a movie from user's hidden movies list.
+
+    Args:
+        user_id (str): Unique id that can be used to reference a user.
+        movie_id (int): Value representing movie in TMDB.
+
+    Returns:
+        bool: True if removed successfully, False otherwise.
+    """
+    try:
+        response = (
+            supabase_client.table("HiddenMovies")
+            .delete()
+            .eq("user_id", user_id)
+            .eq("movie_id", movie_id)
+            .execute()
+        )
+        if hasattr(response, "error") and response.error:
+            logging.error(f"delete_hidden_movie supabase error: {response.error}")
+            return False
+        if response.data:
+            return True
+        return False
+
+    except Exception as e:
+        logging.error(f"delete_hidden_movie exception for user {user_id}, movie {movie_id}: {e}")
+        return False
+
+
+def get_hidden_movies(user_id, movie_id=None):
+    """
+    Retrieve hidden movies for a user.
+
+    Args:
+        user_id (str): Unique id that can be used to reference a user.
+        movie_id (int, optional): If provided, checks if a specific movie is hidden.
+
+    Returns:
+        list: Contains movie_ids of hidden movies. Returns empty list on error.
+    """
+    try:
+        query = (
+            supabase_client.table("HiddenMovies")
+            .select("*")
+            .eq("user_id", user_id)
+        )
+
+        if movie_id is not None:
+            query = query.eq("movie_id", movie_id)
+
+        response = query.execute()
+
+        if hasattr(response, "error") and response.error:
+            logging.error(f"get_hidden_movies supabase error for user {user_id}: {response.error}")
+            return []
+
+        if not response.data:
+            return []
+
+        movie_ids = [row["movie_id"] for row in response.data]
+        return movie_ids
+
+    except Exception as e:
+        logging.error(f"get_hidden_movies exception for user {user_id}: {e}")
         return []
