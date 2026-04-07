@@ -4,7 +4,6 @@ from django.conf import settings
 BASE_URL = "https://api.themoviedb.org/3"
 TMDB_KEY = settings.TMDB_API_KEY
 
-
 def fetch_movies(endpoint, single=False):
     """
     Fetch a list of movies from a TMDB movie endpoint.
@@ -78,3 +77,29 @@ def get_director(movie):
     """
     crew = movie.get("credits", {}).get("crew", [])
     return next((member for member in crew if member["job"] == "Director"), None)
+
+def search_movies(query):
+    """
+    Search movies from TMDB by query string.
+
+    Args:
+        query: Search term
+
+    Returns:
+        list: List of movie dicts
+    """
+    url = f"{BASE_URL}/search/movie"
+    params = {
+        "api_key": TMDB_KEY,
+        "language": "en-US",
+        "query": query,
+    }
+
+    try:
+        response = requests.get(url, params=params, timeout=5)
+        response.raise_for_status()
+        data = response.json()
+
+        return data.get("results", [])
+    except requests.RequestException:
+gi        return []
