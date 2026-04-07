@@ -3,7 +3,7 @@ from django.conf import settings
 from django.utils import timezone
 
 class Movie(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.UUIDField()
     title = models.CharField(max_length=255)
     poster_url = models.URLField(max_length=500, null=True, blank=True)
     tmdb_id = models.IntegerField()
