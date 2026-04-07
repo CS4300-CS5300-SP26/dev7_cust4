@@ -325,7 +325,7 @@ def library_view(request):
         return redirect('login')
 
     # each user only sees their OWN movies
-    movies = Movie.objects.filter(user=request.user.id)
+    movies = Movie.objects.filter(user=user_id)
 
     # Get search query (general input)
     query = request.GET.get("q", "").strip()
@@ -358,7 +358,7 @@ def add_movie_view(request):
 
         # duplicate check to this user only
         movie, created = Movie.objects.get_or_create(
-            user=request.user.id,
+            user=user_id,
             tmdb_id=tmdb_id,
             defaults={
                 "title":      title,
@@ -394,7 +394,7 @@ def edit_movie_view(request):
         rating   = request.POST.get("rating", 3)
         notes    = request.POST.get("notes", "").strip()
 
-        movie = Movie.objects.filter(id=movie_id, user=request.user.id).first()
+        movie = Movie.objects.filter(id=movie_id, user=user_id).first()
         if movie:
             movie.rating = rating
             movie.notes  = notes
@@ -415,7 +415,7 @@ def remove_movie_view(request, movie_id):
         return redirect('login')
 
     if request.method == "POST":
-        movie = Movie.objects.filter(id=movie_id, user=request.user.id).first()
+        movie = Movie.objects.filter(id=movie_id, user=user_id).first()
         if movie:
             movie.delete()
             messages.success(request, f'"{movie.title}" removed from your library.')

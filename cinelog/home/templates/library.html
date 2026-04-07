@@ -133,7 +133,7 @@
 
             <!-- LOG VIEW (hidden initially) -->
             <div id="log-view" style="display:none;">
-                <form method="POST" action="{% url 'edit_movie' %}">
+                <form method="POST" action="{% url 'add_movie' %}">
                     {% csrf_token %}
                     <input type="hidden" name="title"   id="log-title">
                     <input type="hidden" name="tmdb_id" id="log-tmdb-id">
