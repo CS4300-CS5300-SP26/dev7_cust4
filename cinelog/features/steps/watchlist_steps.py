@@ -3,11 +3,17 @@ from django.urls import reverse
 from unittest.mock import patch
 from django.contrib.messages import get_messages
 
+TEST_USER_ID = "550e8400-e29b-41d4-a716-446655440000"
+TEST_MOVIE_ID = 550
+TEST_MOVIE_TITLE = "Black Panther"
 
 @given('I am on the Watchlist page')
 def step_impl(context):
-    # Check on the sign up page.
-    context.response = context.test.client.get(reverse("watchlist"))
+    with patch("home.views.supabase.get_user_id", return_value="user123"):
+        with patch("home.views.supabase.get_watchlist", return_value=[550]):
+            with patch("home.views.fetch_movies", return_value={"id": 550, "title": "Black Panther"}):
+                context.response = context.test.client.get(reverse("watchlist"))
+
     assert context.response.status_code == 200
 
 @given('"{movie}" is on my watchlist')
@@ -17,22 +23,32 @@ def step_impl(context, movie):
 
 @given('I am on the Movie Details page')
 def step_impl(context):
-    context.movie_id = 550
-    context.test.client.get(reverse("movie_detail", args=[context.movie_id]))
+    context.movie_id = TEST_MOVIE_ID
+    with patch("home.views.supabase.get_user_id", return_value=TEST_USER_ID), \
+         patch("home.views.supabase.get_watchlist", return_value=[TEST_MOVIE_ID]), \
+         patch("home.views.supabase.get_hidden_movies", return_value=[]), \
+         patch("home.views.fetch_movies", return_value={"id": TEST_MOVIE_ID, "title": TEST_MOVIE_TITLE}):
+        context.response = context.test.client.get(reverse("movie_detail", args=[context.movie_id]))
+
+    assert context.response.status_code == 200
 
 @given('I have added the movies "{movie1}", "{movie2}", "{movie3}" in this order')
 def step_impl(context, movie1, movie2, movie3):
     context.movies = [
         {"id": 101, "user_id": "ABC123", "title": movie1, "movie_id": 1, "date_added": "2026-04-01T10:00:00Z"},
         {"id": 102, "user_id": "ABC123", "title": movie2, "movie_id": 2, "date_added": "2026-04-01T10:05:00Z"},
-        {"id": 103, "user_id": "111-111", "title": movie3, "movie_id": 1, "date_added": "2026-04-01T10:10:00Z"},
+        {"id": 103, "user_id": "111-111", "title": movie3, "movie_id": 3, "date_added": "2026-04-01T10:10:00Z"},
     ]
 
 
 @when('I select the view details button')
 def step_impl(context):
-    context.response = context.test.client.get(
-        reverse("movie_detail", args=[context.movie_id])
+    with patch("home.views.supabase.get_user_id", return_value=TEST_USER_ID), \
+         patch("home.views.supabase.get_watchlist", return_value=[TEST_MOVIE_ID]), \
+         patch("home.views.supabase.get_hidden_movies", return_value=[]), \
+         patch("home.views.fetch_movies", return_value={"id": TEST_MOVIE_ID, "title": context.movie_name}):
+        context.response = context.test.client.get(
+            reverse("movie_detail", args=[context.movie_id])
     )
 
 @when('I select the remove from list button')
@@ -91,10 +107,23 @@ def step_impl(context):
 
 @then('the movies are reordered by the selected criteria')
 def step_impl(context):
-    response = context.test.client.get(reverse("watchlist"))
-    sorted_titles = [m["title"] for m in context.movies]
-    template_titles = [m["title"] for m in context.movies]
+    sorted_movies = context.movies  # already sorted in previous @when step
+
+    # Mock Supabase and fetch_movies
+    with patch("home.views.supabase.get_user_id", return_value=TEST_USER_ID), \
+         patch("home.views.supabase.get_watchlist", return_value=[m["movie_id"] for m in sorted_movies]), \
+         patch(
+             "home.views.fetch_movies",
+             side_effect=lambda movie_id, *args, **kwargs: next(
+                 m for m in sorted_movies if m["movie_id"] == movie_id
+             )
+         ):
+        response = context.test.client.get(reverse("watchlist"))
+
+    template_titles = [m["title"] for m in response.context["movies"]]
+    sorted_titles = [m["title"] for m in sorted_movies]
     assert template_titles == sorted_titles, f"Expected {sorted_titles}, got {template_titles}"
+
 
 @then('"{movie1}" will be displayed first')
 def step_impl(context, movie1):
