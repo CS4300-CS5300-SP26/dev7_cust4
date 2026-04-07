@@ -315,15 +315,14 @@ def sort_movies_date(user_id, sort_method):
 
     return movie_ids
 
-@login_required
 def library_view(request):
     """
     Renders the My Library page, displaying all movies the user
     has logged with their personal ratings, notes, and watch preferences.
     """
-
-    if not request.user.is_authenticated:
-        return redirect('landing')
+    user_id = supabase.get_user_id(request)
+    if not user_id:
+        return redirect('login')
 
     # each user only sees their OWN movies
     movies = Movie.objects.filter(user=request.user)
@@ -341,8 +340,11 @@ def library_view(request):
         "search_results": search_results,
     })
     
-@login_required
 def add_movie_view(request):
+    user_id = supabase.get_user_id(request)
+    if not user_id:
+        return redirect('login')
+
     if request.method == "POST":
         title   = request.POST.get("title", "").strip()
         poster  = request.POST.get("poster", "").strip()
@@ -373,7 +375,6 @@ def add_movie_view(request):
 
     return redirect("library")
 
-@login_required
 def edit_movie_view(request):
     """
     Update the rating and notes for a movie already in user's library.
@@ -383,6 +384,11 @@ def edit_movie_view(request):
 
     Returns: Redirect user back to library page after saving changes.
     """
+
+    user_id = supabase.get_user_id(request)
+    if not user_id:
+        return redirect('login')
+
     if request.method == "POST":
         movie_id = request.POST.get("movie_id")
         rating   = request.POST.get("rating", 3)
@@ -399,12 +405,15 @@ def edit_movie_view(request):
 
     return redirect("library")
 
-
-@login_required
 def remove_movie_view(request, movie_id):
     """
     Delete a movie from the user's library.
     """
+
+    user_id = supabase.get_user_id(request)
+    if not user_id:
+        return redirect('login')
+
     if request.method == "POST":
         movie = Movie.objects.filter(id=movie_id, user=request.user).first()
         if movie:
