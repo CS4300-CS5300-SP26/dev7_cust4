@@ -10,6 +10,7 @@ from .services import supabase
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from .models import Movie
+from django.urls import reverse
 
 
 def landing_page(request):
@@ -334,10 +335,6 @@ def library_view(request):
     # Only search if user typed something
     if query:
         search_results = search_movies(query)
-        
-        # DEBUG (remove later)
-        print("QUERY:", query)
-        print("RESULT COUNT:", len(search_results))
 
     return render(request, "library.html", {
         "movies": movies,
@@ -492,3 +489,28 @@ def hidden_movies_view(request):
             movies.append(movie)
 
     return render(request, "hidden_movies.html", {"movies": movies})
+
+def search_movies_view(request):
+    """
+    Search for movies with TMDB search API
+    """
+
+    query = request.GET.get('q', '').strip()
+    
+    if not query:
+        # If no query, just show the search page with no results
+        return render(request, 'search_results.html', {
+            'movies': [],
+            'search_query': '',
+            'is_search': True
+        })
+    
+    # Search for movies
+    search_results = search_movies(query)
+    
+    return render(request, 'search_results.html', {
+        'movies': search_results,
+        'search_query': query,
+        'is_search': True,
+        'result_count': len(search_results)
+    })

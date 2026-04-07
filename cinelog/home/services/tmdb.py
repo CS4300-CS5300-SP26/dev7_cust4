@@ -79,29 +79,28 @@ def get_director(movie):
     crew = movie.get("credits", {}).get("crew", [])
     return next((member for member in crew if member["job"] == "Director"), None)
 
+
 def search_movies(query):
     """
-    Search movies from TMDB by query string.
+    Search for movies using the TMDB search API
 
-    Args:
-        query: Search term
+    query: The movie title being searched
 
-    Returns:
-        list: List of movie dicts
+    returns: list of movie dicts matching the search query/ empty list if there is no match
     """
     url = f"{BASE_URL}/search/movie"
     params = {
         "api_key": TMDB_KEY,
         "language": "en-US",
         "query": query,
+        "page": 1
     }
 
     try:
         response = requests.get(url, params=params, timeout=5)
         response.raise_for_status()
         data = response.json()
-
         return data.get("results", [])
-        
     except requests.RequestException:
         return []
+
