@@ -8,6 +8,8 @@ from django.contrib.auth.forms import UserCreationForm
 from .services.tmdb import fetch_movies, fetch_movie_detail, get_cast, get_director, search_movies
 from .services import supabase
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from .models import Movie
 from django.urls import reverse
 
 
@@ -313,6 +315,105 @@ def sort_movies_date(user_id, sort_method):
 
     return movie_ids
 
+@login_required
+def library_view(request):
+    """
+    Renders the My Library page, displaying all movies the user
+    has logged with their personal ratings, notes, and watch preferences.
+    """
+
+    if not request.user.is_authenticated:
+        return redirect('landing')
+
+    # each user only sees their OWN movies
+    movies = Movie.objects.filter(user=request.user)
+
+    # Get search query (general input)
+    query = request.GET.get("q", "").strip()
+    search_results = []
+
+    # Only search if user typed something
+    if query:
+        search_results = search_movies(query)
+
+    return render(request, "library.html", {
+        "movies": movies,
+        "search_results": search_results,
+    })
+    
+@login_required
+def add_movie_view(request):
+    if request.method == "POST":
+        title   = request.POST.get("title", "").strip()
+        poster  = request.POST.get("poster", "").strip()
+        tmdb_id = request.POST.get("tmdb_id", "").strip()
+        rating  = request.POST.get("rating", 3)
+        notes   = request.POST.get("notes", "").strip()
+
+        if not tmdb_id:
+            messages.error(request, "Invalid movie selection.")
+            return redirect("library")
+
+        # duplicate check to this user only
+        movie, created = Movie.objects.get_or_create(
+            user=request.user,
+            tmdb_id=tmdb_id,
+            defaults={
+                "title":      title,
+                "poster_url": poster,
+                "rating":     rating,
+                "notes":      notes,
+            }
+        )
+
+        if created:
+            messages.success(request, f'"{title}" added to your library!')
+        else:
+            messages.warning(request, f'"{title}" is already in your library.')
+
+    return redirect("library")
+
+@login_required
+def edit_movie_view(request):
+    """
+    Update the rating and notes for a movie already in user's library.
+
+    Args: 
+    request: POST request containing movie_id, rating, and notes.
+
+    Returns: Redirect user back to library page after saving changes.
+    """
+    if request.method == "POST":
+        movie_id = request.POST.get("movie_id")
+        rating   = request.POST.get("rating", 3)
+        notes    = request.POST.get("notes", "").strip()
+
+        movie = Movie.objects.filter(id=movie_id, user=request.user).first()
+        if movie:
+            movie.rating = rating
+            movie.notes  = notes
+            movie.save()
+            messages.success(request, f'"{movie.title}" updated.')
+        else:
+            messages.error(request, "Movie not found.")
+
+    return redirect("library")
+
+
+@login_required
+def remove_movie_view(request, movie_id):
+    """
+    Delete a movie from the user's library.
+    """
+    if request.method == "POST":
+        movie = Movie.objects.filter(id=movie_id, user=request.user).first()
+        if movie:
+            movie.delete()
+            messages.success(request, f'"{movie.title}" removed from your library.')
+        else:
+            messages.error(request, "Movie not found.")
+
+    return redirect("library")
 
 def hide_movie(request, movie_id):
     """

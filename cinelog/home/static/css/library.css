@@ -1,0 +1,239 @@
+/* --- Layout Container --- */
+.hero-container {
+    position: relative;
+    isolation: isolate;
+    padding: 3.5rem 1.5rem 0;
+}
+
+@media (min-width: 1024px) {
+    .hero-container {
+        padding-left: 2rem;
+        padding-right: 2rem;
+    }
+}
+
+.hero-blob {
+    position: absolute;
+    inset: 0 0 auto 0;
+    z-index: -10;
+    overflow: hidden;
+    transform: translateZ(0);
+    filter: blur(48px);
+}
+
+.hero-blob--top {
+    top: -10rem;
+}
+
+.hero-blob--bottom {
+    top: calc(100% - 13rem);
+}
+
+@media (min-width: 640px) {
+    .hero-blob--top {
+        top: -20rem;
+    }
+
+    .hero-blob--bottom {
+        top: calc(100% - 30rem);
+    }
+}
+
+.hero-blob__shape {
+    position: relative;
+    aspect-ratio: 1155 / 678;
+    width: 36.125rem;
+    background-image: linear-gradient(to top right, #027d96, #5bd3e6);
+    opacity: 0.3;
+}
+
+.hero-blob__shape--top {
+    left: 50%;
+    transform: translateX(-50%) rotate(30deg);
+}
+
+.hero-blob__shape--bottom {
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.hero-content {
+    max-width: 42rem;
+    padding: 3rem 0 2rem;
+}
+
+.hero-text {
+    padding-left: 2rem;
+}
+
+.hero-heading {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #fcfcfc;
+    margin: 0;
+}
+
+/* --- Library Grid --- */
+.library-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 24px;
+    padding: 0 2rem 4rem;
+}
+
+/* --- Movie Card --- */
+.movie-card {
+    position: relative;
+    width: 100%;
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.movie-card img {
+    width: 100%;
+    height: 230px;
+    object-fit: cover;
+    display: block;
+    border-radius: 10px 10px 0 0;
+    transition: opacity 0.2s ease;
+}
+
+.movie-card:hover img {
+    opacity: 0.4;
+}
+
+/* Hover overlay - covers poster only */
+.movie-card .card-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 230px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 3;
+}
+
+.movie-card:hover .card-overlay {
+    opacity: 1;
+}
+
+.movie-card .card-overlay .overlay-btn {
+    width: 110px;
+    background: transparent;
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 6px;
+    padding: 5px 0;
+    font-size: 12px;
+    cursor: pointer;
+    text-align: center;
+    transition: border-color 0.2s ease;
+}
+
+.movie-card .card-overlay .overlay-btn:hover {
+    border-color: #fff;
+}
+
+/* Info panel below poster */
+.movie-card .card-info {
+    padding: 7px 8px 9px;
+}
+
+.movie-card .card-info .movie-title {
+    color: #fcfcfc;
+    font-size: 0.82rem;
+    font-weight: 500;
+    margin: 0 0 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Star row */
+.movie-card .card-info .star-row {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.movie-card .card-info .star-row .star {
+    color: #f5c518;
+    font-size: 11px;
+}
+
+.movie-card .card-info .star-row .star.empty {
+    color: #444;
+}
+
+.movie-card .card-info .star-row .rating-num {
+    color: #f5c518;
+    font-size: 11px;
+    font-weight: 500;
+    margin-left: 3px;
+}
+
+/* --- Add Movie Card --- */
+.add-movie-card {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* --- Poster Button --- */
+.poster-button {
+    width: 100%;
+    height: 270px;
+    border: 2px dashed rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    background: transparent;
+    cursor: pointer;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    transition: all 0.25s ease;
+}
+
+.poster-button:hover {
+    border-color: #5bd3e6;
+    background: rgba(255, 255, 255, 0.03);
+    transform: scale(1.05);
+}
+
+/* --- Add Content --- */
+.add-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.add-text {
+    margin-bottom: 6px;
+    font-size: 18px;
+    color: #666;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.plus {
+    font-size: 28px;
+    color: #777;
+}
+
+.poster-button:hover .add-text,
+.poster-button:hover .plus {
+    color: #5bd3e6;
+}
+
+.movie-card-link {
+    text-decoration: none;
+    display: block;
+}

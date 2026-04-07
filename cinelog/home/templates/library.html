@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+<link href="{% static 'css/library.css' %}" rel="stylesheet">
+
+<div class="hero-container">
+    <div aria-hidden="true" class="hero-blob hero-blob--top">
+        <div class="hero-blob__shape hero-blob__shape--top"></div>
+    </div>
+    <div class="hero-content">
+        <div class="hero-text">
+            <h1 class="hero-heading">My Library</h1>
+        </div>
+    </div>
+    <div aria-hidden="true" class="hero-blob hero-blob--bottom">
+        <div class="hero-blob__shape hero-blob__shape--bottom"></div>
+    </div>
+</div>
+
+<div class="library-grid">
+    {% for movie in movies %}
+    <div class="movie-card">
+        <img src="{{ movie.poster_url }}" alt="{{ movie.title }}">
+        
+        <div class="card-overlay">
+            <button type="button"
+                    class="overlay-btn edit-movie-btn"
+                    data-id="{{ movie.id }}"
+                    data-title="{{ movie.title }}"
+                    data-poster="{{ movie.poster_url }}"
+                    data-rating="{{ movie.rating }}"
+                    data-notes="{{ movie.notes }}"
+                    data-bs-toggle="modal"
+                    data-bs-target="#editModal">
+                Edit
+            </button>
+            <form method="POST" action="{% url 'remove_movie' movie.id %}">
+                {% csrf_token %}
+                <button type="submit" class="overlay-btn">Remove</button>
+            </form>
+        </div>
+    
+        <div class="card-info">
+            <p class="movie-title">{{ movie.title }}</p>
+            <div class="star-row">
+                {% for i in "12345" %}
+                    {% if forloop.counter <= movie.rating %}
+                        <span class="star">★</span>
+                    {% else %}
+                        <span class="star empty">★</span>
+                    {% endif %}
+                {% endfor %}
+                <span class="rating-num">{{ movie.rating }}</span>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <div class="add-movie-card">
+        <button type="button" class="poster-button" data-bs-toggle="modal" data-bs-target="#searchModal">
+            <div class="add-content">
+                <span class="add-text">Add movie</span>
+                <span class="plus">+</span>
+            </div>
+        </button>
+    </div>
+</div>
+
+<!-- Single Modal: Search + Rate + Notes -->
+<div class="modal fade {% if request.GET.modal == 'open' %}show{% endif %}"
+     id="searchModal"
+     tabindex="-1"
+     {% if request.GET.modal == 'open' %}style="display:block; background: rgba(0,0,0,0.8);"{% endif %}>
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content bg-dark text-white border-secondary">
+
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title" id="modal-title">Search Movies</h5>
+                <a href="{% url 'library' %}" class="btn-close btn-close-white"></a>
+            </div>
+
+            <!-- SEARCH VIEW -->
+            <div id="search-view">
+                <div class="modal-body">
+                    <form method="GET" action="{% url 'library' %}" class="input-group mb-4">
+                        <input type="text" name="q"
+                               class="form-control bg-black text-white border-secondary"
+                               placeholder="Search for a movie (e.g. Interstellar)..."
+                               value="{{ request.GET.q }}">
+                        <input type="hidden" name="modal" value="open">
+                        <button class="btn btn-info" type="submit">Search</button>
+                    </form>
+
+                    <div style="max-height: 400px; overflow-y: auto;">
+                        {% if search_results %}
+                            {% for movie in search_results %}
+                            <div class="card bg-black border-secondary mb-2">
+                                <div class="card-body d-flex align-items-center p-2">
+                                    {% if movie.poster_path %}
+                                        <img src="https://image.tmdb.org/t/p/w92{{ movie.poster_path }}"
+                                             class="rounded me-3" style="width:50px; height:75px; object-fit:cover;">
+                                    {% else %}
+                                        <div class="bg-secondary rounded me-3 d-flex align-items-center justify-content-center"
+                                             style="width:50px; height:75px; font-size:10px;">No Img</div>
+                                    {% endif %}
+
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-0">{{ movie.title }}</h6>
+                                        <small class="text-muted">{{ movie.release_date|slice:":4" }}</small>
+                                    </div>
+
+                                    <button type="button"
+                                            class="btn btn-sm btn-success add-movie-btn"
+                                            data-title="{{ movie.title }}"
+                                            data-tmdb-id="{{ movie.id }}"
+                                            data-poster="{% if movie.poster_path %}https://image.tmdb.org/t/p/w500{{ movie.poster_path }}{% endif %}"
+                                            data-year="{{ movie.release_date|slice:':4' }}">
+                                        Add
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% elif request.GET.q %}
+                            <p class="text-center text-muted">No results for "{{ request.GET.q }}"</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- LOG VIEW (hidden initially) -->
+            <div id="log-view" style="display:none;">
+                <form method="POST" action="{% url 'add_movie' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="title"   id="log-title">
+                    <input type="hidden" name="tmdb_id" id="log-tmdb-id">
+                    <input type="hidden" name="poster"  id="log-poster">
+
+                    <div class="modal-body d-flex gap-4">
+                        <img id="log-poster-preview" src="" alt=""
+                             class="rounded"
+                             style="width:100px; height:150px; object-fit:cover; flex-shrink:0;">
+
+                        <div class="flex-grow-1 d-flex flex-column gap-3">
+                            <div>
+                                <p id="log-movie-title" class="fw-bold mb-0"></p>
+                                <small id="log-movie-year" class="text-muted"></small>
+                            </div>
+
+                            <div>
+                                <label class="form-label text-muted small">Your Rating</label>
+                                <div class="d-flex gap-2">
+                                    <input type="radio" class="btn-check" name="rating" id="star1" value="1">
+                                    <label class="btn btn-outline-warning btn-sm" for="star1">1★</label>
+                                    <input type="radio" class="btn-check" name="rating" id="star2" value="2">
+                                    <label class="btn btn-outline-warning btn-sm" for="star2">2★</label>
+                                    <input type="radio" class="btn-check" name="rating" id="star3" value="3" checked>
+                                    <label class="btn btn-outline-warning btn-sm" for="star3">3★</label>
+                                    <input type="radio" class="btn-check" name="rating" id="star4" value="4">
+                                    <label class="btn btn-outline-warning btn-sm" for="star4">4★</label>
+                                    <input type="radio" class="btn-check" name="rating" id="star5" value="5">
+                                    <label class="btn btn-outline-warning btn-sm" for="star5">5★</label>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="form-label text-muted small">Notes <span class="text-muted fw-normal">(optional)</span></label>
+                                <textarea name="notes"
+                                          class="form-control bg-black text-white border-secondary"
+                                          rows="4"
+                                          placeholder="What did you think? Favourite scenes, quotes..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer border-secondary">
+                        <button type="button" class="btn btn-outline-secondary" id="back-btn">← Back</button>
+                        <button type="submit" class="btn btn-info">Save to Library</button>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-white border-secondary">
+
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title">Edit Log</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <form method="POST" action="{% url 'edit_movie' %}">
+                {% csrf_token %}
+                <input type="hidden" name="movie_id" id="edit-movie-id">
+
+                <div class="modal-body d-flex gap-4">
+                    <img id="edit-poster-preview" src="" alt=""
+                         class="rounded"
+                         style="width:100px; height:150px; object-fit:cover; flex-shrink:0;">
+
+                    <div class="flex-grow-1 d-flex flex-column gap-3">
+                        <p id="edit-movie-title" class="fw-bold mb-0"></p>
+
+                        <div>
+                            <label class="form-label text-muted small">Your Rating</label>
+                            <div class="d-flex gap-2">
+                                {% for i in "12345" %}
+                                <input type="radio" class="btn-check" name="rating" id="edit-star{{ i }}" value="{{ i }}">
+                                <label class="btn btn-outline-warning btn-sm" for="edit-star{{ i }}">{{ i }}★</label>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="form-label text-muted small">Notes <span class="text-muted fw-normal">(optional)</span></label>
+                            <textarea name="notes"
+                                      id="edit-notes"
+                                      class="form-control bg-black text-white border-secondary"
+                                      rows="4"
+                                      placeholder="What did you think?"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-info">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Show log view when Add is clicked
+    document.addEventListener('click', event => {
+        const btn = event.target.closest('.add-movie-btn');
+        if (!btn) return;
+
+        document.getElementById('log-title').value             = btn.dataset.title;
+        document.getElementById('log-tmdb-id').value           = btn.dataset.tmdbId;
+        document.getElementById('log-poster').value            = btn.dataset.poster;
+        document.getElementById('log-poster-preview').src      = btn.dataset.poster;
+        document.getElementById('log-poster-preview').alt      = btn.dataset.title;
+        document.getElementById('log-movie-title').textContent = btn.dataset.title;
+        document.getElementById('log-movie-year').textContent  = btn.dataset.year;
+
+        document.getElementById('modal-title').textContent     = btn.dataset.title;
+        document.getElementById('search-view').style.display   = 'none';
+        document.getElementById('log-view').style.display      = 'block';
+    });
+
+    // Back button returns to search view
+    document.getElementById('back-btn').addEventListener('click', () => {
+        document.getElementById('search-view').style.display = 'block';
+        document.getElementById('log-view').style.display    = 'none';
+        document.getElementById('modal-title').textContent   = 'Search Movies';
+    });
+
+    // Populate edit modal
+    document.addEventListener('click', event => {
+        const btn = event.target.closest('.edit-movie-btn');
+        if (!btn) return;
+
+        document.getElementById('edit-movie-id').value          = btn.dataset.id;
+        document.getElementById('edit-poster-preview').src      = btn.dataset.poster;
+        document.getElementById('edit-poster-preview').alt      = btn.dataset.title;
+        document.getElementById('edit-movie-title').textContent = btn.dataset.title;
+        document.getElementById('edit-notes').value             = btn.dataset.notes;
+
+        const ratingInput = document.getElementById('edit-star' + btn.dataset.rating);
+        if (ratingInput) ratingInput.checked = true;
+    });
+</script>
+
+{% endblock %}
