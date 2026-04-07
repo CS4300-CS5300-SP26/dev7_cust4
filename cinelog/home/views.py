@@ -443,7 +443,7 @@ def hide_movie(request, movie_id):
 
         success, message = supabase.insert_hidden_movie(user_id, movie_id)
         if success:
-            messages.success(request, f'Movie hidden. <a href="/movies/unhide/{movie_id}/" id="undo-hide" style="text-decoration:underline;" onclick="document.getElementById(\'undo-form-{movie_id}\').submit(); return false;">Undo</a>')
+            messages.success(request, 'Movie hidden successfully.')
         else:
             messages.error(request, message)
 
