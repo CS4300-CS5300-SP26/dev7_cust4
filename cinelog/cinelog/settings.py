@@ -38,7 +38,7 @@ SUPABASE_KEY = config("SUPABASE_KEY", default="")
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-bd*mrkv-p!rdl6^0dfeb=na9nxd3a1u!l%3og+w$3tlx2)#5w8')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = [
     '.devedu.io',
@@ -190,6 +190,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
+LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = "landing"
 LOGOUT_REDIRECT_URL = "landing"
 
