@@ -1,5 +1,7 @@
 from django.urls import path
 from . import views
+from django.contrib import admin
+
 
 urlpatterns = [
     path('', views.landing_page, name="landing"),
@@ -12,5 +14,10 @@ urlpatterns = [
     path('movies/<int:movie_id>/', views.movie_detail_view, name='movie_detail'),
     path('movies/add-watchlist/<int:movie_id>/', views.add_to_watchlist, name="add_to_watchlist"),
     path('movies/remove-watchlist/<int:movie_id>/', views.remove_from_watchlist, name="remove_from_watchlist"),
-    path('watchlist/', views.watchlist_view, name='watchlist')
+    path('watchlist/', views.watchlist_view, name='watchlist'),
+    path('library/', views.library_view, name='library'),
+    path("add-movie/", views.add_movie_view, name="add_movie"),
+    path('admin/', admin.site.urls),
+    path('library/edit/', views.edit_movie_view,name='edit_movie'),
+    path('library/remove/<int:movie_id>/', views.remove_movie_view, name='remove_movie'),
 ]
