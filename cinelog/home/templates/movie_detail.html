@@ -4,12 +4,6 @@
 
 <link href="{% static 'css/movie_detail.css' %}" rel="stylesheet">
 
-<!-- Display any errors. -->
-<div class="mx-8">
-    {% include "components/alerts.html" %}
-</div>
-
-
 <!-- Backdrop Banner -->
 <div class="detail-banner"
     style="background-image: url('https://image.tmdb.org/t/p/original{{ movie.backdrop_path }}');">
