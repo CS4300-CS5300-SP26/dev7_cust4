@@ -313,15 +313,19 @@ def search_movies_view(request):
     query = request.GET.get('q', '').strip()
     
     if not query:
-        return redirect('movies')
+        # If no query, just show the search page with no results
+        return render(request, 'search_results.html', {
+            'movies': [],
+            'search_query': '',
+            'is_search': True
+        })
     
-    # Use the new search_movies function
+    # Search for movies
     search_results = search_movies(query)
     
-    return render(request, "movies.html", {
-        "movies": search_results,
-        "top_rated_movies": [],  #Remains empty when seacrhing
-        "now_playing_movies": [],  #Remains empty when seacrhing
-        "search_query": query,
-        "is_search": True
+    return render(request, 'search_results.html', {
+        'movies': search_results,
+        'search_query': query,
+        'is_search': True,
+        'result_count': len(search_results)
     })
