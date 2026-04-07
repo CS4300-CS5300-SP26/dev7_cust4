@@ -9,6 +9,7 @@ urlpatterns = [
     path('callback/', views.magic_callback, name='callback'),
     path('logout/', views.logout_view, name='logout'),
     path('movies/', views.movies_view, name='movies'),
+    path('movies/search/', views.search_movies_view, name='search_movies'),
     path('movies/<int:movie_id>/', views.movie_detail_view, name='movie_detail'),
     path('movies/add-watchlist/<int:movie_id>/', views.add_to_watchlist, name="add_to_watchlist"),
     path('movies/remove-watchlist/<int:movie_id>/', views.remove_from_watchlist, name="remove_from_watchlist"),

@@ -5,9 +5,11 @@ from django.http import HttpResponse
 from django.contrib.auth.views import LoginView
 from django.contrib.auth import login
 from django.contrib.auth.forms import UserCreationForm
-from .services.tmdb import fetch_movies, fetch_movie_detail, get_cast, get_director
+from .services.tmdb import fetch_movies, fetch_movie_detail, get_cast, get_director, search_movies
 from .services import supabase
 from django.contrib import messages
+from django.urls import reverse
+
 
 def landing_page(request):
     """
@@ -386,3 +388,28 @@ def hidden_movies_view(request):
             movies.append(movie)
 
     return render(request, "hidden_movies.html", {"movies": movies})
+
+def search_movies_view(request):
+    """
+    Search for movies with TMDB search API
+    """
+
+    query = request.GET.get('q', '').strip()
+    
+    if not query:
+        # If no query, just show the search page with no results
+        return render(request, 'search_results.html', {
+            'movies': [],
+            'search_query': '',
+            'is_search': True
+        })
+    
+    # Search for movies
+    search_results = search_movies(query)
+    
+    return render(request, 'search_results.html', {
+        'movies': search_results,
+        'search_query': query,
+        'is_search': True,
+        'result_count': len(search_results)
+    })
