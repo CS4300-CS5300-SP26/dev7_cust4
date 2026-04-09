@@ -82,7 +82,6 @@
 
 /* --- Buttons --- */
 .btn-add-log {
-    margin-top: 0.5rem;
     padding: 0.5rem 1.25rem;
     background-color: #027d96;
     color: #fff;
@@ -94,7 +93,6 @@
     width: fit-content;
     transition: background-color 0.2s ease;
 }
-
 .btn-add-log:hover {
     background-color: #025f73;
 }
@@ -170,7 +168,6 @@
 }
 /* --- Dislike / Not Interested Button --- */
 .detail-info .btn-dislike {
-    margin-top: 0.5rem;
     padding: 0.5rem 1.25rem;
     background-color: transparent;
     color: #9ca3af;
