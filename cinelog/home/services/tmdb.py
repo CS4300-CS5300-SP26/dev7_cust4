@@ -104,3 +104,25 @@ def search_movies(query):
     except requests.RequestException:
         return []
 
+def get_movie_trailer(movie_id):
+    """
+    Fetch trailer for specific movie via TMDB movie ID.
+
+    returns: dict OR None: The first YouTube trailer video dict, or None if not found.
+    """
+    url = f"{BASE_URL}/movie/{movie_id}/videos" 
+
+    try:
+        response = requests.get(url, params={"api_key": TMDB_KEY}, timeout=5)
+        response.raise_for_status()
+        videos = response.json().get("results", [])
+
+        trailer = next(
+            (v for v in videos if v["type"] == "Trailer" and v["site"] == "YouTube"),
+            None
+        )
+        return trailer
+    except requests.RequestException:
+        return None
+
+
