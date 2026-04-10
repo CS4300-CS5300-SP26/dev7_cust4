@@ -64,7 +64,7 @@
                     {% if is_hidden %}
                         <form action="{% url 'unhide_movie' movie.id %}" method="POST">
                             {% csrf_token %}
-                            <button type="submit" class="btn-dislike">↩ Unhide this Movie</button>
+                            <button type="submit" class="btn-dislike">Unhide Movie</button>
                         </form>
                     {% else %}
                         <form action="{% url 'hide_movie' movie.id %}" method="POST">
@@ -73,8 +73,6 @@
                         </form>
                     {% endif %}
                 {% endif %}
-                    
-
             </div>
         </div>
     </div>
