@@ -5,7 +5,7 @@ from django.http import HttpResponse
 from django.contrib.auth.views import LoginView
 from django.contrib.auth import login
 from django.contrib.auth.forms import UserCreationForm
-from .services.tmdb import fetch_movies, fetch_movie_detail, get_cast, get_director, search_movies
+from .services.tmdb import fetch_movies, fetch_movie_detail, get_cast, get_director, search_movies, get_movie_trailer
 from .services import supabase
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -68,8 +68,11 @@ def movie_detail_view(request, movie_id):
 
     is_hidden = bool(supabase.get_hidden_movies(user_id, movie_id=movie_id)) if user_id else False
 
+    # fetch the movie trailer
+    trailer = get_movie_trailer(movie_id)
+
     return render(request, "movie_detail.html",
-    {"movie": movie, "cast": get_cast(movie), "director": get_director(movie), "in_watchlist": in_watchlist, "is_hidden": is_hidden})
+    {"movie": movie, "cast": get_cast(movie), "director": get_director(movie), "in_watchlist": in_watchlist, "is_hidden": is_hidden, "trailer": trailer,})
 
 def signup_view(request):
     """

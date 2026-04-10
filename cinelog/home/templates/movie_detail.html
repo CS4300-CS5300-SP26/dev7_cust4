@@ -10,9 +10,16 @@
     <div class="detail-banner-overlay"></div>
 
     <div class="detail-content">
-        <!-- Poster -->
-        <img class="detail-poster" src="https://image.tmdb.org/t/p/w500{{ movie.poster_path }}" alt="{{ movie.title }}">
-
+       
+        <!-- Poster + Trailer button right under-->
+        <div class="detail-poster-wrapper">
+            <img class="detail-poster" src="https://image.tmdb.org/t/p/w500{{ movie.poster_path }}" alt="{{ movie.title }}">
+            
+            {% if trailer %}
+            <button class="btn-trailer" onclick="openTrailer()">▶ Play Trailer</button>
+            {% endif %}
+        
+        </div>
         <!-- Info -->
         <div class="detail-info">
             <h1 class="detail-title">
@@ -31,41 +38,64 @@
             <p class="detail-rating">⭐ {{ movie.vote_average|floatformat:1 }}</p>
             <p class="detail-overview">{{ movie.overview }}</p>
 
-            <!-- show different button depending on user's login status -->
-            {% if is_authenticated and movie.id %}
-                <!-- Alter button if movie is already in watchlist. -->
-                {% if in_watchlist %}
-                    <form action="{% url 'remove_from_watchlist' movie.id %}" method="POST">
-                        {% csrf_token %}
-                        <button class="btn-add-log">- Remove from Watchlist</button>
-                    </form>
-                {% else %}
-                    <form action="{% url 'add_to_watchlist' movie.id %}" method="POST">
-                        {% csrf_token %}
-                        <button class="btn-add-log">+ Add to Watchlist</button>
-                    </form>
-                {% endif %}
-            {% else %}
-                <a href="{% url 'login' %}" class="btn-add-log">Add to Watchlist</a>
-            {% endif %}
 
-            <!-- Dislike / Hide button -->
-            {% if is_authenticated and movie.id %}
-                {% if is_hidden %}
-                    <form action="{% url 'unhide_movie' movie.id %}" method="POST" style="margin-top:0.5rem;">
-                        {% csrf_token %}
-                        <button type="submit" class="btn-dislike">↩ Unhide this Movie</button>
-                    </form>
+            <div class="movie-actions"> 
+
+                <!-- show different button depending on user's login status -->
+                {% if is_authenticated and movie.id %}
+                    <!-- Alter button if movie is already in watchlist. -->
+                    {% if in_watchlist %}
+                        <form action="{% url 'remove_from_watchlist' movie.id %}" method="POST">
+                            {% csrf_token %}
+                            <button class="btn-add-log">- Remove from Watchlist</button>
+                        </form>
+                    {% else %}
+                        <form action="{% url 'add_to_watchlist' movie.id %}" method="POST">
+                            {% csrf_token %}
+                            <button class="btn-add-log">+ Add to Watchlist</button>
+                        </form>
+                    {% endif %}
                 {% else %}
-                    <form action="{% url 'hide_movie' movie.id %}" method="POST" style="margin-top:0.5rem;">
-                        {% csrf_token %}
-                        <button type="submit" class="btn-dislike">👎 Not Interested</button>
-                    </form>
+                    <a href="{% url 'login' %}" class="btn-add-log">Add to Watchlist</a>
                 {% endif %}
-            {% endif %}
+
+                <!-- Dislike / Hide button -->
+                {% if is_authenticated and movie.id %}
+                    {% if is_hidden %}
+                        <form action="{% url 'unhide_movie' movie.id %}" method="POST">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-dislike">↩ Unhide this Movie</button>
+                        </form>
+                    {% else %}
+                        <form action="{% url 'hide_movie' movie.id %}" method="POST">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-dislike">🚫 Not Interested</button>
+                        </form>
+                    {% endif %}
+                {% endif %}
+                    
+
+            </div>
         </div>
     </div>
 </div>
+
+<!-- Trailer Popup (hidden by default) -->
+{% if trailer %}
+<div id="trailer-modal" class="trailer-modal">
+
+    <div class="trailer-container">
+        <iframe
+            id="trailer-iframe"
+            src="https://www.youtube.com/embed/{{ trailer.key }}?autoplay=1"  
+            allowfullscreen 
+            allow="autoplay"
+            referrerpolicy="strict-origin-when-cross-origin">
+        </iframe>
+        <button onclick="closeTrailer()" class="trailer-close">✕</button>
+    </div>
+</div>
+{% endif %}
 
 <!-- CREDITS section -->
 <div class="detail-credits">
@@ -90,7 +120,34 @@
         </div>
     </div>
     {% endif %}
-
 </div>
 
+    {% if trailer %}
+    <script>
+        // Script to open and close trailer modal
+        function openTrailer() {
+            document.getElementById('trailer-modal').classList.add('active');
+        }
+        function closeTrailer() {
+            const modal = document.getElementById('trailer-modal');
+            const iframe = document.getElementById('trailer-iframe');
+            modal.classList.remove('active');
+
+            // Reset iframe source to stop video playback
+            iframe.src = iframe.src;
+        }
+
+        // This is for UI - closes modal when clicking outside the video
+        document.addEventListener('DOMContentLoaded', function () {
+            const modal = document.getElementById('trailer-modal');
+
+            modal.addEventListener('click', function (e) {
+                // If user clicks the dark background (not the video)
+                if (e.target === modal) {
+                    closeTrailer();
+                }
+            });
+        });
+    </script>
+    {% endif %}
 {% endblock %}
