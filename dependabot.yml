@@ -1,0 +1,15 @@
+version: 2
+updates:
+  # Scan Python dependencies
+  - package-ecosystem: "pip"
+    directory: "/cinelog"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+
+  # Scan JavaScript dependencies
+  - package-ecosystem: "npm"
+    directory: "/cinelog"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
