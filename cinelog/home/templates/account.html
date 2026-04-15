@@ -122,12 +122,16 @@
 
 		<div class="flex flex-col flex-1 overflow-y-auto">
 			<div class="p-4">
-		
+
 				<!-- Dashboard -->
 				<div x-show="tab === 'dashboard'">
 					<h1 class="text-2xl font-bold mx-8 mb-4">Dashboard</h1>
-					<p class="mt-2 text-gray-600">Welcome to your dashboard.</p>
-				</div>
+					<div class="w-full flex justify-center">
+						<div class="w-full max-w-6xl px-6">
+						  {% include "components/dashboard.html" %}
+						</div>
+					</div>
+				</div>	
 		
 				<!-- Login -->
 				<div x-show="tab === 'login'">
