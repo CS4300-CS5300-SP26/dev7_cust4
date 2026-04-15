@@ -476,31 +476,15 @@ def unhide_movie(request, movie_id):
         else:
             messages.error(request, "Unable to unhide movie. Please try again.")
 
-        return redirect(request.META.get("HTTP_REFERER", "/movies/"))
 
+        referer = request.META.get("HTTP_REFERER", "")
 
-def hidden_movies_view(request):
-    """
-    Renders a page showing all movies the user has hidden.
+        if "/account" in referer:
+            return redirect(f"{reverse('account')}?tab=hidden")
 
-    Args:
-        request (HTTP request): Contains information about the request.
+        else:
+            return redirect(referer)
 
-    Returns:
-        HTTPResponse: A rendering of the hidden_movies.html page.
-    """
-    user_id = supabase.get_user_id(request)
-    if not user_id:
-        return render(request, "hidden_movies.html")
-
-    hidden_ids = supabase.get_hidden_movies(user_id)
-    movies = []
-    for mid in hidden_ids:
-        movie = fetch_movies(mid, single=True)
-        if movie.get("id"):
-            movies.append(movie)
-
-    return render(request, "hidden_movies.html", {"movies": movies})
 
 def search_movies_view(request):
     """
@@ -526,3 +510,27 @@ def search_movies_view(request):
         'is_search': True,
         'result_count': len(search_results)
     })
+
+
+
+def account_view(request):
+    """
+    Renders the account page of the web application.
+    Args:
+        request (HTTP request): Contains information about the request.
+
+    Returns:
+        HTTPResponse: A rendering of the account page with the movies in the user's hidden list.
+    """
+    user_id = supabase.get_user_id(request)
+    if not user_id:
+        return render(request, "account.html")
+
+    hidden_ids = supabase.get_hidden_movies(user_id)
+    movies = []
+    for mid in hidden_ids:
+        movie = fetch_movies(mid, single=True)
+        if movie.get("id"):
+            movies.append(movie)
+
+    return render(request, "account.html", {"movies": movies})
