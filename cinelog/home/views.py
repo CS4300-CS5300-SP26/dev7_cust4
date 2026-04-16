@@ -6,7 +6,7 @@ from django.contrib.auth.views import LoginView
 from django.contrib.auth import login
 from django.contrib.auth.forms import UserCreationForm
 from .services.tmdb import fetch_movies, fetch_movie_detail, get_cast, get_director, search_movies, get_movie_trailer
-from .services import supabase
+from .services import supabase, user_statistics
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from .models import Movie
@@ -452,7 +452,6 @@ def hide_movie(request, movie_id):
 
         return redirect("movie_detail", movie_id=movie_id)
 
-
 def unhide_movie(request, movie_id):
     """
     Restores a hidden movie back to the user's browsing experience.
@@ -476,15 +475,14 @@ def unhide_movie(request, movie_id):
         else:
             messages.error(request, "Unable to unhide movie. Please try again.")
 
-
         referer = request.META.get("HTTP_REFERER", "")
 
         if "/account" in referer:
             return redirect(f"{reverse('account')}?tab=hidden")
-
-        else:
+        elif referer:
             return redirect(referer)
-
+        else:
+            return redirect("account")
 
 def search_movies_view(request):
     """
@@ -511,8 +509,6 @@ def search_movies_view(request):
         'result_count': len(search_results)
     })
 
-
-
 def account_view(request):
     """
     Renders the account page of the web application.
@@ -520,11 +516,12 @@ def account_view(request):
         request (HTTP request): Contains information about the request.
 
     Returns:
-        HTTPResponse: A rendering of the account page with the movies in the user's hidden list.
+        HTTPResponse: A rendering of the account page with the neccessary information to display.
     """
     user_id = supabase.get_user_id(request)
     if not user_id:
-        return render(request, "account.html")
+        messages.error(request, "Must be logged in.")
+        return render(request, "movies.html")
 
     hidden_ids = supabase.get_hidden_movies(user_id)
     movies = []
@@ -533,4 +530,20 @@ def account_view(request):
         if movie.get("id"):
             movies.append(movie)
 
-    return render(request, "account.html", {"movies": movies})
+    top_genre, genre_data = user_statistics.get_genre_statistics(user_id)
+
+    context = {
+        "num_in_watchlist": user_statistics.get_size_of_watchlist(user_id),
+        "num_in_library": user_statistics.get_size_of_library(user_id),
+        "total_hours": user_statistics.get_num_hours_in_library(user_id),
+        "average_rating": user_statistics.get_average_rating(user_id),
+        "weekly_data": user_statistics.get_monthly_logged_movies(user_id),
+        "total_films": sum(user_statistics.get_library_months_for_year(user_id)),
+        "avg_month": user_statistics.get_logged_monthly_average(user_id),
+        "days_logged": user_statistics.get_days_logged(user_id),
+        "genres": genre_data,
+        "top_genre": top_genre,
+        "top_five": user_statistics.get_top_five_movies(user_id),
+        "movies": movies
+    }
+    return render(request, "account.html", context)

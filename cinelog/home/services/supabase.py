@@ -137,6 +137,8 @@ def is_authenticated(request):
         boolean: Represents if user is logged in or not.
     """
     access_token = request.session.get("access_token")
+    if not access_token:
+        return False
     
     try:
         user = supabase_client.auth.get_user(access_token)
@@ -352,6 +354,7 @@ def get_watchlist(user_id, movie_id=None, order=False, descending=False):
 
     except Exception as e:
         return []
+
 def insert_hidden_movie(user_id, movie_id):
     """
     Add movie to user's hidden movies list.
