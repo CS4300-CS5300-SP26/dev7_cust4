@@ -6,6 +6,7 @@ from home.services import supabase
 from django.contrib.auth.models import User
 from django.contrib.messages import get_messages
 from home import views
+from django.http import HttpRequest
 
 User = get_user_model()
 supabase = supabase.get_supabase_client()
@@ -674,9 +675,9 @@ class HiddenMoviesTest(TestCase):
         session["access_token"] = "mock_token"
         session.save()
 
-    @patch("home.views.supabase.insert_hidden_movie", return_value=(True, "Movie hidden successfully."))
     @patch("home.views.supabase.get_user_id", return_value="11111111-1111-1111-1111-111111111111")
-    def test_hide_movie_success(self, mock_get_user, mock_insert):
+    @patch("home.views.supabase.insert_hidden_movie", return_value=(True, "Movie hidden successfully."))
+    def test_hide_movie_success(self, mock_insert, mock_get_user):
         """Test that a logged-in user can hide a movie."""
         response = self.client.post(reverse("hide_movie", args=[278]))
         mock_insert.assert_called_once_with("11111111-1111-1111-1111-111111111111", 278)
@@ -706,16 +707,16 @@ class HiddenMoviesTest(TestCase):
     @patch("home.views.supabase.get_user_id", return_value="11111111-1111-1111-1111-111111111111")
     def test_hidden_movies_page_renders(self, mock_get_user, mock_fetch, mock_get_hidden):
         """Test that the hidden movies page loads and shows hidden movies."""
-        response = self.client.get(reverse("hidden_movies"))
+        response = self.client.get(reverse("account"))
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "hidden_movies.html")
+        self.assertTemplateUsed(response, "account.html")
         self.assertEqual(len(response.context["movies"]), 2)
 
     @patch("home.views.supabase.get_hidden_movies", return_value=[])
     @patch("home.views.supabase.get_user_id", return_value="11111111-1111-1111-1111-111111111111")
     def test_hidden_movies_page_empty(self, mock_get_user, mock_get_hidden):
         """Test that the hidden movies page renders with no movies."""
-        response = self.client.get(reverse("hidden_movies"))
+        response = self.client.get(reverse("account"))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.context["movies"]), 0)
 
@@ -1078,3 +1079,86 @@ class SearchTemplateContentTests(TestCase):
         
         # Should have link back to movies page or clear search
         self.assertContains(response, 'href="/movies/"')
+
+class AccountViewTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse("account")
+        self.user_id = "11111111-1111-1111-1111-111111111111"
+
+    @patch("home.views.supabase.get_user_id", return_value=None)
+    def test_account_redirects_when_not_logged_in(self, mock_user):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "movies.html")
+
+    @patch("home.views.supabase.get_user_id", return_value="user123")
+    @patch("home.views.supabase.get_hidden_movies", return_value=[])
+    @patch("home.views.user_statistics")
+    @patch("home.views.render")
+    def test_account_view_no_hidden_movies(self, mock_render, mock_stats, mock_hidden, mock_user_id):
+        """
+        Test if user has no hidden movies.
+        """
+        request = HttpRequest()
+
+        mock_stats.get_genre_statistics.return_value = ("Action", {})
+        mock_stats.get_size_of_watchlist.return_value = 1
+        mock_stats.get_size_of_library.return_value = 2
+        mock_stats.get_num_hours_in_library.return_value = 10
+        mock_stats.get_average_rating.return_value = 4.5
+        mock_stats.get_monthly_logged_movies.return_value = []
+        mock_stats.get_library_months_for_year.return_value = [1, 2, 3]
+        mock_stats.get_logged_monthly_average.return_value = 2
+        mock_stats.get_days_logged.return_value = 5
+        mock_stats.get_top_five_movies.return_value = []
+
+        views.account_view(request)
+
+        args, kwargs = mock_render.call_args
+        context = args[2]
+
+        assert context["movies"] == []
+        assert context["top_genre"] == "Action"
+
+    @patch("home.views.supabase.get_user_id", return_value="user123")
+    @patch("home.views.supabase.get_hidden_movies", return_value=["1", "2", "3"])
+    @patch("home.views.fetch_movies")
+    @patch("home.views.user_statistics")
+    @patch("home.views.render")
+    def test_account_view_filters_invalid_movies(self, mock_render, mock_stats, mock_fetch, mock_hidden, mock_user_id):
+        """
+        Test correct results if given movies missing id or have none for id.
+        """
+        request = HttpRequest()
+
+        mock_fetch.side_effect = [
+            {"id": "1", "title": "Valid Movie"},
+            {},
+            {"id": None}
+        ]
+
+        mock_stats.get_genre_statistics.return_value = ("Drama", {})
+        views.account_view(request)
+        args, kwargs = mock_render.call_args
+        context = args[2]
+
+        assert len(context["movies"]) == 1
+        assert context["movies"][0]["id"] == "1"
+
+    @patch("home.views.supabase.get_user_id", return_value="user123")
+    @patch("home.views.supabase.get_hidden_movies", return_value=[])
+    @patch("home.views.user_statistics")
+    @patch("home.views.render")
+    def test_account_view_hidden_movies_none(self, mock_render, mock_stats, mock_hidden, mock_user_id):
+        """
+        Test if there are no hidden movies.
+        """
+        request = HttpRequest()
+        mock_stats.get_genre_statistics.return_value = ("Comedy", {})
+
+        views.account_view(request)
+        args, kwargs = mock_render.call_args
+        context = args[2]
+
+        assert context["movies"] == []
