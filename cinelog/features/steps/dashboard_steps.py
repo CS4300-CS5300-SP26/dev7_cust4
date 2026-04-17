@@ -117,7 +117,7 @@ def step_impl(context):
     assert context.response.context["top_genre"] == "Action"
 
 
-@then("I should see a the total watchlist movie count increase by 1")
+@then("I should see the total watchlist movie count increase by 1")
 def step_impl(context):
     with patched_dashboard_context(
         TEST_USER_ID,

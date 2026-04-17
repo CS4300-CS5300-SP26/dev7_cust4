@@ -15,4 +15,4 @@ Feature: Dashboard statistics
     Scenario: Statistics automatically update when a user logs or edits a movie entry.
         Given I have an account with "user5678@email.com", "user5678", and "password.5678"
         When I add a new movie to my watchlist
-        Then I should see a the total watchlist movie count increase by 1
+        Then I should see the total watchlist movie count increase by 1
