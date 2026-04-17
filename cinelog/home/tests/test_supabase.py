@@ -5,7 +5,6 @@ from unittest.mock import patch, MagicMock
 from django.core.cache import cache
 from django.contrib.messages import get_messages
 
-
 MOCK_SIGN_UP = {
     "user": {
         "id": "11111111-1111-1111-1111-111111111111",
@@ -270,7 +269,9 @@ class SupabaseWatchlistTest(TestCase):
         Test user can successfully delete a movie from the watchlist.
         """
         mock_table = mock_client.table.return_value
-        mock_table.delete.return_value.eq.return_value.eq.return_value.execute.return_value = True
+        mock_table.delete.return_value.eq.return_value.eq.return_value.execute.return_value = (
+            True
+        )
 
         result = supabase.delete_in_watchlist(self.user_id, self.movie_id)
         self.assertTrue(result)
@@ -311,7 +312,9 @@ class SupabaseWatchlistTest(TestCase):
         mock_table = mock_client.table.return_value
         mock_response = MagicMock()
         mock_response.data = [{"movie_id": self.movie_id}]
-        mock_table.select.return_value.eq.return_value.eq.return_value.execute.return_value = mock_response
+        mock_table.select.return_value.eq.return_value.eq.return_value.execute.return_value = (
+            mock_response
+        )
 
         movies = supabase.get_watchlist(self.user_id, movie_id=self.movie_id)
         self.assertEqual(movies, [self.movie_id])

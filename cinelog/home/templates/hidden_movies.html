@@ -15,8 +15,9 @@
                     <a href="{% url 'movie_detail' movie.id %}" class="overlay-btn edit-movie-btn">
                         Movie Detail
                     </a>
-                    <form method="POST" action="{% url 'unhide_movie' movie.id %}?tab=hidden">
+                    <form method="POST" action="{% url 'unhide_movie' movie.id %}">
                         {% csrf_token %}
+                        <input type="hidden" name="next" value="{% url 'account' %}?tab=hidden">
                         <button type="submit" class="overlay-btn">↩ Unhide</button>
                     </form>
                 </div>

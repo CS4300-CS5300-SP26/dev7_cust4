@@ -21,12 +21,12 @@ def get_supabase_client():
     url = getattr(settings, "SUPABASE_URL", None)
     key = getattr(settings, "SUPABASE_KEY", None)
     if not url or not key:
-        supabase_client = MagicMock()
+        client = MagicMock()
 
     else:
-        supabase_client = create_client(url, key)
+        client = create_client(url, key)
 
-    return supabase_client
+    return client
 
 
 # Create the client.

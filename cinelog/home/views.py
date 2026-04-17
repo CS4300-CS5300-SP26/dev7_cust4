@@ -519,14 +519,11 @@ def unhide_movie(request, movie_id):
         else:
             messages.error(request, "Unable to unhide movie. Please try again.")
 
-        referer = request.META.get("HTTP_REFERER", "")
+        next_url = request.POST.get("next")
+        if next_url:
+            return redirect(next_url)
 
-        if "/account" in referer:
-            return redirect(f"{reverse('account')}?tab=hidden")
-        elif referer:
-            return redirect(referer)
-        else:
-            return redirect("account")
+        return redirect("account")
 
 
 def search_movies_view(request):
