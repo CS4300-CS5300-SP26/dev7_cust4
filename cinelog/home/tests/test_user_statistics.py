@@ -1,16 +1,18 @@
 from django.test import TestCase
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from django.utils.timezone import now
-from datetime import datetime, timedelta
+from datetime import timedelta
 from home.models import Movie
-from home.services import tmdb, supabase
 from home.services import user_statistics
+
 
 class StatsServiceTest(TestCase):
     def setUp(self):
         self.user_id = "11111111-1111-1111-1111-111111111111"
 
-    @patch("home.services.user_statistics.supabase.get_watchlist", return_value=[1, 2, 3])
+    @patch(
+        "home.services.user_statistics.supabase.get_watchlist", return_value=[1, 2, 3]
+    )
     def test_watchlist_size_returns_correct_count(self, mock_watchlist):
         """
         Test that the correct number of movies in the watchlist is returned.
@@ -24,7 +26,7 @@ class StatsServiceTest(TestCase):
         Test 0 is returned if no movies in watchlist
         """
         self.assertEqual(user_statistics.get_size_of_watchlist(self.user_id), 0)
-    
+
     @patch("home.services.user_statistics.supabase.get_watchlist", return_value=None)
     def test_watchlist_size_none_handling(self, mock_watchlist):
         """
@@ -62,7 +64,7 @@ class StatsServiceTest(TestCase):
         ]
         result = user_statistics.get_num_hours_in_library(self.user_id)
         self.assertEqual(result, "3h 20m")
-    
+
     @patch("home.services.user_statistics.tmdb.fetch_movie_detail")
     def test_runtime_missing_runtime(self, mock_tmdb):
         """
@@ -83,7 +85,6 @@ class StatsServiceTest(TestCase):
         self.assertEqual(result, "0h 0m")
         mock_tmdb.assert_not_called()
 
-
     def test_monthly_logged_movies_shape(self):
         """
         Test the correct form of data that is returned.
@@ -93,7 +94,7 @@ class StatsServiceTest(TestCase):
         for item in result:
             self.assertIn("height", item)
             self.assertIn("value", item)
-        
+
     def test_monthly_logged_movies_all_zero_edge(self):
         """
         Test if there are no movies logged, but still should have default values.
@@ -107,16 +108,24 @@ class StatsServiceTest(TestCase):
         """
         Test calculation of monthly average logged movies.
         """
-        with patch("home.services.user_statistics.get_library_months_for_year", return_value=[1, 2, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1]):
-            self.assertEqual(user_statistics.get_logged_monthly_average(self.user_id), 1) # 16 // 12 = 1
+        with patch(
+            "home.services.user_statistics.get_library_months_for_year",
+            return_value=[1, 2, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        ):
+            self.assertEqual(
+                user_statistics.get_logged_monthly_average(self.user_id), 1
+            )  # 16 // 12 = 1
 
     def test_logged_monthly_average_empty(self):
         """
         Test no movies in library, so 0 average.
         """
-        with patch("home.services.user_statistics.get_library_months_for_year", return_value=[]):
-            self.assertEqual(user_statistics.get_logged_monthly_average(self.user_id), 0)
-
+        with patch(
+            "home.services.user_statistics.get_library_months_for_year", return_value=[]
+        ):
+            self.assertEqual(
+                user_statistics.get_logged_monthly_average(self.user_id), 0
+            )
 
     def test_days_logged_counts_one_day(self):
         """
@@ -131,8 +140,12 @@ class StatsServiceTest(TestCase):
         Test days logged returns correct number of unique days when movies are logged on different dates.
         """
         Movie.objects.create(user=self.user_id, tmdb_id=1, created_at=now())
-        Movie.objects.create(user=self.user_id, tmdb_id=2, created_at=now() - timedelta(days=1))
-        Movie.objects.create(user=self.user_id, tmdb_id=3, created_at=now() - timedelta(days=2))
+        Movie.objects.create(
+            user=self.user_id, tmdb_id=2, created_at=now() - timedelta(days=1)
+        )
+        Movie.objects.create(
+            user=self.user_id, tmdb_id=3, created_at=now() - timedelta(days=2)
+        )
 
         self.assertEqual(user_statistics.get_days_logged(self.user_id), 3)
 
@@ -164,7 +177,6 @@ class StatsServiceTest(TestCase):
         """
         self.assertEqual(user_statistics.get_average_rating(self.user_id), 0)
 
-
     @patch("home.services.user_statistics.tmdb.fetch_movie_detail")
     def test_genre_statistics_no_other_when_exact_100(self, mock_tmdb):
         """
@@ -187,7 +199,10 @@ class StatsServiceTest(TestCase):
         self.assertIn("Drama", genre_names)
         self.assertNotIn("Other", genre_names)
 
-    @patch("home.services.user_statistics.tmdb.fetch_movie_detail", return_value={"genres": []})
+    @patch(
+        "home.services.user_statistics.tmdb.fetch_movie_detail",
+        return_value={"genres": []},
+    )
     def test_genre_statistics_no_genres(self, mock_tmdb):
         """
         Test if no generes for the movies.
@@ -226,14 +241,12 @@ class StatsServiceTest(TestCase):
         """
         Test top 5 rated movies returned if several movies.
         """
-        movies = [
-            Movie.objects.create(user=self.user_id, tmdb_id=1, rating=1),
-            Movie.objects.create(user=self.user_id, tmdb_id=2, rating=2),
-            Movie.objects.create(user=self.user_id, tmdb_id=3, rating=3),
-            Movie.objects.create(user=self.user_id, tmdb_id=4, rating=4),
-            Movie.objects.create(user=self.user_id, tmdb_id=5, rating=5),
-            Movie.objects.create(user=self.user_id, tmdb_id=6, rating=2),
-        ]
+        Movie.objects.create(user=self.user_id, tmdb_id=1, rating=1)
+        Movie.objects.create(user=self.user_id, tmdb_id=2, rating=2)
+        Movie.objects.create(user=self.user_id, tmdb_id=3, rating=3)
+        Movie.objects.create(user=self.user_id, tmdb_id=4, rating=4)
+        Movie.objects.create(user=self.user_id, tmdb_id=5, rating=5)
+        Movie.objects.create(user=self.user_id, tmdb_id=6, rating=2)
 
         mock_tmdb.side_effect = [
             {"id": 5, "title": "Movie 5"},
@@ -273,7 +286,7 @@ class StatsServiceTest(TestCase):
         result = user_statistics.get_top_five_movies(self.user_id)
         self.assertEqual(result, [])
         mock_tmdb.assert_not_called()
-    
+
     @patch("home.services.user_statistics.tmdb.fetch_movie_detail")
     def test_skips_movies_when_tmdb_returns_none(self, mock_tmdb):
         """

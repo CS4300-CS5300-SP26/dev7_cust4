@@ -7,66 +7,115 @@ TEST_USER_ID = "550e8400-e29b-41d4-a716-446655440000"
 TEST_MOVIE_ID = 550
 TEST_MOVIE_TITLE = "Black Panther"
 
-@given('I am on the Watchlist page')
+
+@given("I am on the Watchlist page")
 def step_impl(context):
     with patch("home.views.supabase.get_user_id", return_value="user123"):
         with patch("home.views.supabase.get_watchlist", return_value=[550]):
-            with patch("home.views.fetch_movies", return_value={"id": 550, "title": "Black Panther"}):
+            with patch(
+                "home.views.fetch_movies",
+                return_value={"id": 550, "title": "Black Panther"},
+            ):
                 context.response = context.test.client.get(reverse("watchlist"))
 
     assert context.response.status_code == 200
+
 
 @given('"{movie}" is on my watchlist')
 def step_impl(context, movie):
     context.movie_id = 550
     context.movie_name = movie
 
-@given('I am on the Movie Details page')
+
+@given("I am on the Movie Details page")
 def step_impl(context):
     context.movie_id = TEST_MOVIE_ID
-    with patch("home.views.supabase.get_user_id", return_value=TEST_USER_ID), \
-         patch("home.views.supabase.get_watchlist", return_value=[TEST_MOVIE_ID]), \
-         patch("home.views.supabase.get_hidden_movies", return_value=[]), \
-         patch("home.views.fetch_movies", return_value={"id": TEST_MOVIE_ID, "title": TEST_MOVIE_TITLE}):
-        context.response = context.test.client.get(reverse("movie_detail", args=[context.movie_id]))
+    with (
+        patch("home.views.supabase.get_user_id", return_value=TEST_USER_ID),
+        patch("home.views.supabase.get_watchlist", return_value=[TEST_MOVIE_ID]),
+        patch("home.views.supabase.get_hidden_movies", return_value=[]),
+        patch(
+            "home.views.fetch_movies",
+            return_value={"id": TEST_MOVIE_ID, "title": TEST_MOVIE_TITLE},
+        ),
+    ):
+        context.response = context.test.client.get(
+            reverse("movie_detail", args=[context.movie_id])
+        )
 
     assert context.response.status_code == 200
+
 
 @given('I have added the movies "{movie1}", "{movie2}", "{movie3}" in this order')
 def step_impl(context, movie1, movie2, movie3):
     context.movies = [
-        {"id": 101, "user_id": "ABC123", "title": movie1, "movie_id": 1, "date_added": "2026-04-01T10:00:00Z"},
-        {"id": 102, "user_id": "ABC123", "title": movie2, "movie_id": 2, "date_added": "2026-04-01T10:05:00Z"},
-        {"id": 103, "user_id": "111-111", "title": movie3, "movie_id": 3, "date_added": "2026-04-01T10:10:00Z"},
+        {
+            "id": 101,
+            "user_id": "ABC123",
+            "title": movie1,
+            "movie_id": 1,
+            "date_added": "2026-04-01T10:00:00Z",
+        },
+        {
+            "id": 102,
+            "user_id": "ABC123",
+            "title": movie2,
+            "movie_id": 2,
+            "date_added": "2026-04-01T10:05:00Z",
+        },
+        {
+            "id": 103,
+            "user_id": "111-111",
+            "title": movie3,
+            "movie_id": 3,
+            "date_added": "2026-04-01T10:10:00Z",
+        },
     ]
 
 
-@when('I select the view details button')
+@when("I select the view details button")
 def step_impl(context):
-    with patch("home.views.supabase.get_user_id", return_value=TEST_USER_ID), \
-         patch("home.views.supabase.get_watchlist", return_value=[TEST_MOVIE_ID]), \
-         patch("home.views.supabase.get_hidden_movies", return_value=[]), \
-         patch("home.views.fetch_movies", return_value={"id": TEST_MOVIE_ID, "title": context.movie_name}):
+    with (
+        patch("home.views.supabase.get_user_id", return_value=TEST_USER_ID),
+        patch("home.views.supabase.get_watchlist", return_value=[TEST_MOVIE_ID]),
+        patch("home.views.supabase.get_hidden_movies", return_value=[]),
+        patch(
+            "home.views.fetch_movies",
+            return_value={"id": TEST_MOVIE_ID, "title": context.movie_name},
+        ),
+    ):
         context.response = context.test.client.get(
             reverse("movie_detail", args=[context.movie_id])
-    )
+        )
 
-@when('I select the remove from list button')
+
+@when("I select the remove from list button")
 def step_impl(context):
-    with patch("home.views.supabase.get_user_id", return_value="user123") as mock_user_id:
-        with patch("home.views.supabase.delete_in_watchlist", return_value=True) as mock_delete:
+    with patch(
+        "home.views.supabase.get_user_id", return_value="user123"
+    ) as mock_user_id:
+        with patch(
+            "home.views.supabase.delete_in_watchlist", return_value=True
+        ) as mock_delete:
             context.response = context.test.client.post(
                 reverse("remove_from_watchlist", args=[context.movie_id]),
-                HTTP_REFERER="/watchlist/"
+                HTTP_REFERER="/watchlist/",
             )
 
-@when('I select add to watchlist')
+
+@when("I select add to watchlist")
 def step_impl(context):
-    with patch("home.views.supabase.get_user_id", return_value="user123") as mock_user_id:
-        with patch("home.views.supabase.insert_in_watchlist", return_value=(False, "Error: Movie is already in watchlist.")):
+    with patch(
+        "home.views.supabase.get_user_id", return_value="user123"
+    ) as mock_user_id:
+        with patch(
+            "home.views.supabase.insert_in_watchlist",
+            return_value=(False, "Error: Movie is already in watchlist."),
+        ):
             context.response = context.test.client.post(
                 reverse("add_to_watchlist", args=[context.movie_id])
             )
+
 
 @when('I select to order by "{criteria}"')
 def step_impl(context, criteria):
@@ -76,21 +125,28 @@ def step_impl(context, criteria):
     if criteria.lower() == "date (oldest to newest)":
         context.movies.sort(key=lambda m: m["date_added"])
 
+
 @then('I can view "{movie}" in my watchlist')
 def step_impl(context, movie):
-    with patch("home.views.supabase.get_user_id", return_value="user123") as mock_user_id:
+    with patch(
+        "home.views.supabase.get_user_id", return_value="user123"
+    ) as mock_user_id:
         with patch("home.views.supabase.get_watchlist", return_value=[550]):
-            with patch("home.views.fetch_movies", return_value={"id": 550, "title": movie}):
+            with patch(
+                "home.views.fetch_movies", return_value={"id": 550, "title": movie}
+            ):
                 response = context.test.client.get(reverse("watchlist"))
 
     assert response.status_code == 200
     assert "movies" in response.context
     assert response.context["movies"][0]["title"] == context.movie_name
 
+
 @then('I am redirected to the movie details page for "{movie}"')
 def step_impl(context, movie):
     assert context.response.status_code == 200
     assert "movie" in context.response.context
+
 
 @then('"Black Panther" is no longer in my watchlist')
 def step_impl(context):
@@ -100,34 +156,44 @@ def step_impl(context):
 
     assert response.context["movies"] == []
 
-@then('I am shown an error')
+
+@then("I am shown an error")
 def step_impl(context):
     messages = list(get_messages(context.response.wsgi_request))
     assert any("already in watchlist" in str(m) for m in messages)
 
-@then('the movies are reordered by the selected criteria')
+
+@then("the movies are reordered by the selected criteria")
 def step_impl(context):
     sorted_movies = context.movies  # already sorted in previous @when step
 
     # Mock Supabase and fetch_movies
-    with patch("home.views.supabase.get_user_id", return_value=TEST_USER_ID), \
-         patch("home.views.supabase.get_watchlist", return_value=[m["movie_id"] for m in sorted_movies]), \
-         patch(
-             "home.views.fetch_movies",
-             side_effect=lambda movie_id, *args, **kwargs: next(
-                 m for m in sorted_movies if m["movie_id"] == movie_id
-             )
-         ):
+    with (
+        patch("home.views.supabase.get_user_id", return_value=TEST_USER_ID),
+        patch(
+            "home.views.supabase.get_watchlist",
+            return_value=[m["movie_id"] for m in sorted_movies],
+        ),
+        patch(
+            "home.views.fetch_movies",
+            side_effect=lambda movie_id, *args, **kwargs: next(
+                m for m in sorted_movies if m["movie_id"] == movie_id
+            ),
+        ),
+    ):
         response = context.test.client.get(reverse("watchlist"))
 
     template_titles = [m["title"] for m in response.context["movies"]]
     sorted_titles = [m["title"] for m in sorted_movies]
-    assert template_titles == sorted_titles, f"Expected {sorted_titles}, got {template_titles}"
+    assert template_titles == sorted_titles, (
+        f"Expected {sorted_titles}, got {template_titles}"
+    )
 
 
 @then('"{movie1}" will be displayed first')
 def step_impl(context, movie1):
     assert context.movies[0]["title"] == movie1
+
 
 @then('"{movie3}" will be shown last')
 def step_impl(context, movie3):

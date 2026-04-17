@@ -7,30 +7,27 @@ from django.contrib.messages import get_messages
 
 
 MOCK_SIGN_UP = {
-  "user": {
-    "id": "11111111-1111-1111-1111-111111111111",
-    "user_metadata": {
-        "username": "user1234"
-    },
-    "aud": "authenticated",
-    "email": "email@example.com",
-  }
+    "user": {
+        "id": "11111111-1111-1111-1111-111111111111",
+        "user_metadata": {"username": "user1234"},
+        "aud": "authenticated",
+        "email": "email@example.com",
+    }
 }
 
 MOCK_GET_USER = {
-  "user": {
-    "id": "11111111-1111-1111-1111-111111111111",
-    "app_metadata": {
-      "provider": "email",
-      "providers": []
-    },
-    "email": "email@example.com",
-  }
+    "user": {
+        "id": "11111111-1111-1111-1111-111111111111",
+        "app_metadata": {"provider": "email", "providers": []},
+        "email": "email@example.com",
+    }
 }
 
 MOCK_USERNAME = MOCK_SIGN_UP["user"]["user_metadata"]["username"]
 MOCK_EMAIL = MOCK_SIGN_UP["user"]["email"]
 MOCK_PASSWORD = "Test1234!!"
+
+
 class AuthenticationTesting(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
@@ -53,16 +50,23 @@ class AuthenticationTesting(TestCase):
         Test that user is successfully signed in.
         """
         mock_sign_up.return_value = MOCK_SIGN_UP
-        result = supabase.supabase_sign_up(self.request, MOCK_USERNAME, MOCK_EMAIL, MOCK_PASSWORD)
+        result = supabase.supabase_sign_up(
+            self.request, MOCK_USERNAME, MOCK_EMAIL, MOCK_PASSWORD
+        )
         self.assertTrue(result)
         mock_sign_up.assert_called_once()
-    
-    @patch("home.services.supabase.supabase_client.auth.sign_up", side_effect=Exception("fail"))
+
+    @patch(
+        "home.services.supabase.supabase_client.auth.sign_up",
+        side_effect=Exception("fail"),
+    )
     def test_signup_exception(self, mock_signup):
         """
         Test that error is given if signup is unsuccessful.
         """
-        result = supabase.supabase_sign_up(self.request, MOCK_USERNAME, MOCK_EMAIL, MOCK_PASSWORD)
+        result = supabase.supabase_sign_up(
+            self.request, MOCK_USERNAME, MOCK_EMAIL, MOCK_PASSWORD
+        )
         messages = list(get_messages(result))
         self.assertTrue(any("Error") in str(m) for m in messages)
         self.assertFalse(result)
@@ -82,13 +86,15 @@ class AuthenticationTesting(TestCase):
         self.assertTrue(result)
         self.assertEqual(self.request.session["access_token"], "token123")
         self.assertEqual(self.request.session["supabase_username"], "user1234")
-        
-    @patch("home.services.supabase.supabase_client.auth.sign_in_with_password", side_effect=Exception("fail"))
+
+    @patch(
+        "home.services.supabase.supabase_client.auth.sign_in_with_password",
+        side_effect=Exception("fail"),
+    )
     def test_login_exception(self, mock_login):
         """
         Test that false is returned if error occurs on sign in.
         """
-        request = self.client.request().wsgi_request
         result = supabase.supabase_log_in(self.request, MOCK_EMAIL, MOCK_PASSWORD)
         self.assertFalse(result)
 
@@ -112,7 +118,7 @@ class AuthenticationTesting(TestCase):
         """
         result = supabase.is_valid_email(self.request, "invalid@")
         self.assertFalse(result)
-    
+
     def test_is_valid_email_no_ending_of_email(self):
         """
         Test that False is returned if invalid email entered.
@@ -146,7 +152,10 @@ class AuthenticationTesting(TestCase):
         supabase.send_magic_link_login(self.request, MOCK_EMAIL)
         mock_sign_in_otp.assert_called_once()
 
-    @patch("home.services.supabase.supabase_client.auth.sign_in_with_otp", side_effect=Exception("fail"))
+    @patch(
+        "home.services.supabase.supabase_client.auth.sign_in_with_otp",
+        side_effect=Exception("fail"),
+    )
     def test_magic_link_exception(self, mock_otp):
         """
         Test exception is thrown if magic link fails to send.
@@ -182,7 +191,6 @@ class AuthenticationTesting(TestCase):
         self.assertEqual(self.request.session["access_token"], "token123")
         self.assertEqual(self.request.session["supabase_username"], "user1234")
 
-    
     @patch("home.services.supabase.supabase_client.auth.verify_otp")
     def test_get_user_magic_link_unsuccessful(self, mock_verify_otp):
         """
@@ -229,7 +237,7 @@ class SupabaseWatchlistTest(TestCase):
         self.request.session = {}
         self.user_id = MOCK_GET_USER["user"]["id"]
         self.movie_id = 550
-    
+
     @patch("home.services.supabase.supabase_client")
     def test_insert_in_watchlist_success(self, mock_client):
         """
@@ -241,7 +249,6 @@ class SupabaseWatchlistTest(TestCase):
         success, msg = supabase.insert_in_watchlist(self.user_id, self.movie_id)
         self.assertTrue(success)
         self.assertIn("Succesfully added", msg)
-
 
     @patch("home.services.supabase.supabase_client")
     def test_insert_in_watchlist_duplicate(self, mock_client):
@@ -274,7 +281,9 @@ class SupabaseWatchlistTest(TestCase):
         Test that False is returned if there is an error with deletion.
         """
         mock_table = mock_client.table.return_value
-        mock_table.delete.return_value.eq.return_value.eq.return_value.execute.side_effect = Exception("DB error")
+        mock_table.delete.return_value.eq.return_value.eq.return_value.execute.side_effect = Exception(
+            "DB error"
+        )
 
         result = supabase.delete_in_watchlist(self.user_id, self.movie_id)
         self.assertFalse(result)
@@ -287,7 +296,9 @@ class SupabaseWatchlistTest(TestCase):
         mock_table = mock_client.table.return_value
         mock_response = MagicMock()
         mock_response.data = [{"movie_id": 1}, {"movie_id": 2}]
-        mock_table.select.return_value.eq.return_value.execute.return_value = mock_response
+        mock_table.select.return_value.eq.return_value.execute.return_value = (
+            mock_response
+        )
 
         movies = supabase.get_watchlist(self.user_id)
         self.assertEqual(movies, [1, 2])
@@ -305,14 +316,15 @@ class SupabaseWatchlistTest(TestCase):
         movies = supabase.get_watchlist(self.user_id, movie_id=self.movie_id)
         self.assertEqual(movies, [self.movie_id])
 
-    
     @patch("home.services.supabase.supabase_client")
     def test_get_watchlist_exception_returns_empty(self, mock_client):
         """
         Test that empty list is returned if there is an error.
         """
         mock_table = mock_client.table.return_value
-        mock_table.select.return_value.eq.return_value.execute.side_effect = Exception("DB error")
+        mock_table.select.return_value.eq.return_value.execute.side_effect = Exception(
+            "DB error"
+        )
 
         movies = supabase.get_watchlist(self.user_id)
         self.assertEqual(movies, [])
@@ -323,6 +335,8 @@ class SupabaseWatchlistTest(TestCase):
         Test empty list is returned when no movies in watchlist.
         """
         mock_table = mock_client.table.return_value
-        mock_table.select.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
+        mock_table.select.return_value.eq.return_value.execute.return_value = MagicMock(
+            data=[]
+        )
         result = supabase.get_watchlist(self.user_id)
         assert result == []
