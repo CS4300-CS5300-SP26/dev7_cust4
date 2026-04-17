@@ -1,6 +1,6 @@
 from django.db import models
-from django.conf import settings
 from django.utils import timezone
+
 
 class Movie(models.Model):
     user = models.UUIDField()
@@ -8,7 +8,7 @@ class Movie(models.Model):
     poster_url = models.URLField(max_length=500, null=True, blank=True)
     tmdb_id = models.IntegerField()
     rating = models.IntegerField(default=0)
-    notes = models.TextField(blank=True, default='')
+    notes = models.TextField(blank=True, default="")
     created_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):

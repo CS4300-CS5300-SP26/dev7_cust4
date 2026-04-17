@@ -1,5 +1,4 @@
-import os
-from supabase import create_client, Client
+from supabase import create_client
 from django.conf import settings
 from django.contrib import messages
 from django.core.cache import cache
@@ -11,9 +10,10 @@ import logging
 # Set a max for number of links user can recieve.
 MAX_EMAILS_1_HOUR = 4
 
+
 def get_supabase_client():
     """
-    Creates a supabase client. 
+    Creates a supabase client.
 
     Returns:
         Client: The supabase client that can be used to access Supabase.
@@ -21,15 +21,17 @@ def get_supabase_client():
     url = getattr(settings, "SUPABASE_URL", None)
     key = getattr(settings, "SUPABASE_KEY", None)
     if not url or not key:
-        supabase_client = MagicMock()
+        client = MagicMock()
 
     else:
-        supabase_client = create_client(url, key)
-    
-    return supabase_client
+        client = create_client(url, key)
+
+    return client
+
 
 # Create the client.
 supabase_client = get_supabase_client()
+
 
 def create_session(request, response, email, access_token):
     """
@@ -45,6 +47,7 @@ def create_session(request, response, email, access_token):
     request.session["supabase_username"] = response.user.user_metadata.get("username")
     request.session["supabase_user_id"] = response.user.id
 
+
 def supabase_sign_up(request, username, email, password):
     """
     Sign the user up through Supabase.
@@ -54,21 +57,22 @@ def supabase_sign_up(request, username, email, password):
         username (str): Username entered by the user.
         email (str): Email entered by the user.
         password (str): Password entered by the user.
-    
+
     Returns:
         boolean: Represents if user was sucessfully signed in or not.
     """
     try:
-        data = supabase_client.auth.sign_up({
-            'email': email,
-            'password': password,
-            'options': {
-                'data': {
-                    "username": username
-                }
+        data = supabase_client.auth.sign_up(
+            {
+                "email": email,
+                "password": password,
+                "options": {"data": {"username": username}},
             }
-        })
-        
+        )
+
+        if not data:
+            return False
+
         # Log user in too.
         if not supabase_log_in(request, email, password):
             messages.error(request, "Account created. Please login to account.")
@@ -101,12 +105,13 @@ def supabase_log_in(request, email, password):
 
         if response.session:
             create_session(request, response, email, response.session.access_token)
-        
+
         return True
-        
+
     except Exception as e:
         messages.error(request, f"Error: {e}")
         return False
+
 
 def is_valid_email(request, email):
     """
@@ -126,6 +131,7 @@ def is_valid_email(request, email):
         messages.error(request, "Please enter a valid email address.")
         return False
 
+
 def is_authenticated(request):
     """
     Determines if a user is logged in.
@@ -137,13 +143,16 @@ def is_authenticated(request):
         boolean: Represents if user is logged in or not.
     """
     access_token = request.session.get("access_token")
-    
+    if not access_token:
+        return False
+
     try:
         user = supabase_client.auth.get_user(access_token)
         return user is not None
-    
+
     except Exception:
         return False
+
 
 def send_magic_link_login(request, email):
     """
@@ -155,16 +164,21 @@ def send_magic_link_login(request, email):
     """
     redirect_url = request.build_absolute_uri("/callback/")
     try:
-        response = supabase_client.auth.sign_in_with_otp({
-            'email': email,
-            'options': {
-                'should_create_user': False, # User must have an account.
-                'email_redirect_to': redirect_url,
-            },
-        })
+        response = supabase_client.auth.sign_in_with_otp(
+            {
+                "email": email,
+                "options": {
+                    "should_create_user": False,  # User must have an account.
+                    "email_redirect_to": redirect_url,
+                },
+            }
+        )
+
+        if not response:
+            return messages.error("Error occured.")
 
         messages.success(request, f"Link sent to {email}!")
-    
+
     except Exception as e:
         messages.error(request, f"Error: {e}")
 
@@ -207,10 +221,12 @@ def get_user_magic_link(request):
 
     try:
         # Use token hash to authenticate the user.
-        response = supabase_client.auth.verify_otp({
-            "token_hash": token_hash,
-            "type": "email",
-        })
+        response = supabase_client.auth.verify_otp(
+            {
+                "token_hash": token_hash,
+                "type": "email",
+            }
+        )
         access_token = response.session.access_token
         user = response.user
 
@@ -221,15 +237,17 @@ def get_user_magic_link(request):
             return True
 
         else:
-            messages.error(request, "Login failed. Please try again or login with password.")
+            messages.error(
+                request, "Login failed. Please try again or login with password."
+            )
             return False
 
     except Exception as e:
         messages.error(request, f"Error: {e}")
         return False
-            
 
-def logout(request):   
+
+def logout(request):
     """
     Log the user out through Supabase.
 
@@ -246,11 +264,12 @@ def logout(request):
     try:
         if access_token:
             supabase_client.auth.sign_out()
-    
+
     except Exception as e:
         messages.error(request, f"Error: {e}")
-    
+
     request.session.flush()
+
 
 def get_user_id(request):
     """
@@ -266,6 +285,7 @@ def get_user_id(request):
     else:
         return None
 
+
 def insert_in_watchlist(user_id, movie_id):
     """
     Add movie to user's watchlist.
@@ -280,20 +300,21 @@ def insert_in_watchlist(user_id, movie_id):
     try:
         response = (
             supabase_client.table("Watchlist")
-            .insert({
-                "user_id": user_id,
-                "movie_id": movie_id
-            })
+            .insert({"user_id": user_id, "movie_id": movie_id})
             .execute()
         )
+        if not response:
+            return False, "Error occured."
+
         return True, "Succesfully added movie to watchlist."
-        
+
     except Exception as e:
         # Display specific error if movie is already in the watchlist.
         if "duplicate key value violates unique constraint" in str(e):
             return False, "Error: Movie is already in watchlist."
         else:
             return False, f"Error: {e}"
+
 
 def delete_in_watchlist(user_id, movie_id):
     """
@@ -314,9 +335,12 @@ def delete_in_watchlist(user_id, movie_id):
             .eq("movie_id", movie_id)
             .execute()
         )
+        if not response:
+            return False
+
         return True
-        
-    except Exception as e:
+
+    except Exception:
         return False
 
 
@@ -332,26 +356,24 @@ def get_watchlist(user_id, movie_id=None, order=False, descending=False):
         list: Contains movie ids of movies in watchlist. Returns empty list if none or if an error.
     """
     try:
-        query = (
-            supabase_client.table("Watchlist")
-            .select("*")
-            .eq("user_id", user_id)
-        )
+        query = supabase_client.table("Watchlist").select("*").eq("user_id", user_id)
 
         if movie_id is not None:
             query = query.eq("movie_id", movie_id)
-        
+
         if order:
             query = query.order("date_added", desc=descending)
-        
+
         response = query.execute()
 
         # Go through response and retrieve each movie_id
         movie_ids = [row["movie_id"] for row in response.data]
         return movie_ids
 
-    except Exception as e:
+    except Exception:
         return []
+
+
 def insert_hidden_movie(user_id, movie_id):
     """
     Add movie to user's hidden movies list.
@@ -366,15 +388,15 @@ def insert_hidden_movie(user_id, movie_id):
     try:
         response = (
             supabase_client.table("HiddenMovies")
-            .insert({
-                "user_id": user_id,
-                "movie_id": movie_id
-            })
+            .insert({"user_id": user_id, "movie_id": movie_id})
             .execute()
         )
         if hasattr(response, "error") and response.error:
             error_str = str(response.error)
-            if "23505" in error_str or "duplicate key value violates unique constraint" in error_str:
+            if (
+                "23505" in error_str
+                or "duplicate key value violates unique constraint" in error_str
+            ):
                 return False, "Movie is already hidden."
             logging.error(f"insert_hidden_movie supabase error: {response.error}")
             return False, "An error occurred while hiding the movie."
@@ -382,9 +404,14 @@ def insert_hidden_movie(user_id, movie_id):
 
     except Exception as e:
         error_str = str(e)
-        if "23505" in error_str or "duplicate key value violates unique constraint" in error_str:
+        if (
+            "23505" in error_str
+            or "duplicate key value violates unique constraint" in error_str
+        ):
             return False, "Movie is already hidden."
-        logging.error(f"insert_hidden_movie exception for user {user_id}, movie {movie_id}: {e}")
+        logging.error(
+            f"insert_hidden_movie exception for user {user_id}, movie {movie_id}: {e}"
+        )
         return False, "An error occurred while hiding the movie."
 
 
@@ -415,7 +442,9 @@ def delete_hidden_movie(user_id, movie_id):
         return False
 
     except Exception as e:
-        logging.error(f"delete_hidden_movie exception for user {user_id}, movie {movie_id}: {e}")
+        logging.error(
+            f"delete_hidden_movie exception for user {user_id}, movie {movie_id}: {e}"
+        )
         return False
 
 
@@ -431,11 +460,7 @@ def get_hidden_movies(user_id, movie_id=None):
         list: Contains movie_ids of hidden movies. Returns empty list on error.
     """
     try:
-        query = (
-            supabase_client.table("HiddenMovies")
-            .select("*")
-            .eq("user_id", user_id)
-        )
+        query = supabase_client.table("HiddenMovies").select("*").eq("user_id", user_id)
 
         if movie_id is not None:
             query = query.eq("movie_id", movie_id)
@@ -443,7 +468,9 @@ def get_hidden_movies(user_id, movie_id=None):
         response = query.execute()
 
         if hasattr(response, "error") and response.error:
-            logging.error(f"get_hidden_movies supabase error for user {user_id}: {response.error}")
+            logging.error(
+                f"get_hidden_movies supabase error for user {user_id}: {response.error}"
+            )
             return []
 
         if not response.data:

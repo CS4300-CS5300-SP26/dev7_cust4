@@ -1,0 +1,143 @@
+<!-- Overview statistics -->
+<!-- Header -->
+<div class="px-8 py-6 text-white">
+  <div class="flex justify-between items-center pb-4 border-b border-white/10">
+    <h2 class="text-xs tracking-widest text-gray-400 uppercase">
+        Overview
+    </h2>
+  </div>
+</div>
+<div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-4 mx-8">
+    <div class="rounded-lg border border-gray-800 bg-[#1A1A1A] p-6 text-center text-[#06b6d4]">
+      <p class="text-5xl font-light">{{ num_in_watchlist }}</p>
+      <p class="text-gray-400 text-sm mt-2">Movies in Watchlist</p>
+    </div>
+    <div class="rounded-lg border border-gray-800 bg-[#1A1A1A] p-6 text-center text-[#06b6d4]">
+      <p class="text-5xl font-light">{{ num_in_library }}</p>
+      <p class="text-gray-400 text-sm mt-2">Movies Logged</p>
+    </div>
+    <div class="rounded-lg border border-gray-800 bg-[#1A1A1A] p-6 text-center text-[#06b6d4]">
+      <p class="text-5xl font-light">{{ total_hours }}</p>
+      <p class="text-gray-400 text-sm mt-2">Hours Logged</p>
+    </div>
+    <div class="rounded-lg border border-gray-800 bg-[#1A1A1A] p-6 text-center text-[#06b6d4]">
+      <h4 class="text-5xl font-light">{{ average_rating }}★</h4>
+      <p class="text-gray-400 text-sm mt-2">Average Rating</p>
+    </div>
+</div>
+
+
+<!-- Films by month section. ChatGPT was used to get the general tailwind classes, but adjustments were made to fit desired look. -->
+<div class="px-8 py-6 text-white">
+
+  <!-- Month Header. -->
+  <div class="flex justify-between items-center pb-4 border-b border-white/10">
+      <h2 class="text-xs tracking-widest text-gray-400 uppercase">
+          By Month
+      </h2>
+  </div>
+
+  <!-- Bar graph with month distribution. -->
+  <div class="max-w-3xl mx-auto">
+
+    <div class="flex items-end gap-2 h-32 mt-6">
+      {% for item in weekly_data %}
+        <div class="relative group flex-1 min-w-[6px] rounded-md transition-all duration-300 hover:scale-105"
+             style="height: {{ item.height }}%; background: linear-gradient(to top, #7c3aed, #06b6d4);">
+    
+          <div class="absolute -top-6 left-1/2 -translate-x-1/2 hidden group-hover:block text-xs text-black bg-white/80 px-2 py-1 rounded">
+            {{ item.value }}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+    <div class="flex justify-between text-xs text-gray-500 mt-2 pb-6">
+        <span>Jan</span>
+        <span>Dec</span>
+    </div>
+  </div>
+
+  <!-- Year distribution statistics. -->
+  <div class="max-w-3xl mx-auto">
+    <div class="grid grid-cols-1 grid-cols-3 min-gap-[8px] text-center">
+      
+      <div>
+        <p class="text-5xl font-light">{{ total_films }}</p>
+        <p class="text-gray-400 text-sm mt-2">Films logged for Year</p>
+      </div>
+
+      <div>
+        <p class="text-5xl font-light">{{ avg_month }}</p>
+        <p class="text-gray-400 text-sm mt-2">Average per month</p>
+      </div>
+
+      <div>
+        <p class="text-5xl font-light">{{ days_logged }}</p>
+        <p class="text-gray-400 text-sm mt-2">Days Logged</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Genre statistics. -->
+<div class="px-8 py-6 text-white">
+
+  <!-- Month Header. -->
+  <div class="flex justify-between items-center pb-4 border-b border-white/10">
+      <h2 class="text-xs tracking-widest text-gray-400 uppercase">
+          By Genre
+      </h2>
+  </div>
+
+  <div class="max-w-5xl mx-auto py-10 text-white grid grid-cols-1 md:grid-cols-3 gap-8">
+
+    <!-- Top Genre -->
+    <div class="flex flex-col justify-center items-center text-center mr-12">
+      <p class="text-5xl font-light">{{ top_genre }}</p>
+      <p class="text-gray-400 text-sm mt-2">Top Genre</p>
+    </div>
+
+    
+    <!-- Bar list -->
+    <div class="md:col-span-2 space-y-4">
+      {% for genre in genres %}
+        <div>
+          <div class="flex justify-between text-sm text-gray-300 mb-1">
+            <span>{{ genre.genre_name }}</span>
+            <span>{{ genre.percent }}%</span>
+          </div>
+          <div class="relative flex items-center w-full bg-gray-500/20 h-5 rounded-full">
+            <div class="bg-blue-600 h-5 rounded-full" style="width: {{ genre.percent }}%; background: linear-gradient(to right, #7c3aed, #06b6d4);">
+                <span class="absolute inset-0 flex items-center justify-center text-xs font-semibold text-white">
+                  {{ genre.percent }}%
+                </span>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+
+    </div>
+  </div>
+</div>
+
+<!-- Top rated films. -->
+<div class="px-8 py-6 text-white">
+  <div class="flex justify-between items-center pb-4 border-b border-white/10">
+    <h2 class="text-xs tracking-widest text-gray-400 uppercase">
+        Top 5 Rated Movies
+    </h2>
+  </div>
+</div>
+
+<section class="flex gap-6 overflow-x-auto px-12 py-6">
+  {% for movie in top_five %}
+    <div class="flex flex-wrap items-center px-6">
+      <div class="relative">
+        <!-- Ranking number -->
+        <span class="absolute z-10 -left-10 bottom-0 text-8xl font-extrabold text-white/50"> {{ forloop.counter }}</span>
+        <img src="https://image.tmdb.org/t/p/w500{{ movie.poster_path }}" alt="{{ movie.title }}" class="movie-card"/>
+      </div>
+    </div>
+  {% endfor %}
+</section>

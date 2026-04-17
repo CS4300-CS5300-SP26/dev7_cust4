@@ -1,5 +1,6 @@
 from home.services import supabase
 
+
 def supabase_context_processor(request):
     is_authenticated = supabase.is_authenticated(request)
     username = ""

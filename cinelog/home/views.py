@@ -1,14 +1,15 @@
 from django.shortcuts import render, redirect
-from django.conf import settings
-import requests
-from django.http import HttpResponse
-from django.contrib.auth.views import LoginView
-from django.contrib.auth import login
 from django.contrib.auth.forms import UserCreationForm
-from .services.tmdb import fetch_movies, fetch_movie_detail, get_cast, get_director, search_movies, get_movie_trailer
-from .services import supabase
+from .services.tmdb import (
+    fetch_movies,
+    fetch_movie_detail,
+    get_cast,
+    get_director,
+    search_movies,
+    get_movie_trailer,
+)
+from .services import supabase, user_statistics
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from .models import Movie
 from django.urls import reverse
 
@@ -22,7 +23,8 @@ def landing_page(request):
     Returns:
         HTTPResponse: A rendering of the landing.html page.
     """
-    return render(request, 'landing.html')
+    return render(request, "landing.html")
+
 
 # anyone can see this (no login required)
 def movies_view(request):
@@ -35,13 +37,20 @@ def movies_view(request):
 
     popular = [m for m in fetch_movies("popular") if m.get("id") not in hidden_ids]
     top_rated = [m for m in fetch_movies("top_rated") if m.get("id") not in hidden_ids]
-    now_playing = [m for m in fetch_movies("now_playing") if m.get("id") not in hidden_ids]
+    now_playing = [
+        m for m in fetch_movies("now_playing") if m.get("id") not in hidden_ids
+    ]
 
-    return render(request, "movies.html", {
-        "movies": popular,
-        "top_rated_movies": top_rated,
-        "now_playing_movies": now_playing,
-    })
+    return render(
+        request,
+        "movies.html",
+        {
+            "movies": popular,
+            "top_rated_movies": top_rated,
+            "now_playing_movies": now_playing,
+        },
+    )
+
 
 def movie_detail_view(request, movie_id):
     """
@@ -66,13 +75,28 @@ def movie_detail_view(request, movie_id):
     else:
         in_watchlist = False
 
-    is_hidden = bool(supabase.get_hidden_movies(user_id, movie_id=movie_id)) if user_id else False
+    is_hidden = (
+        bool(supabase.get_hidden_movies(user_id, movie_id=movie_id))
+        if user_id
+        else False
+    )
 
     # fetch the movie trailer
     trailer = get_movie_trailer(movie_id)
 
-    return render(request, "movie_detail.html",
-    {"movie": movie, "cast": get_cast(movie), "director": get_director(movie), "in_watchlist": in_watchlist, "is_hidden": is_hidden, "trailer": trailer,})
+    return render(
+        request,
+        "movie_detail.html",
+        {
+            "movie": movie,
+            "cast": get_cast(movie),
+            "director": get_director(movie),
+            "in_watchlist": in_watchlist,
+            "is_hidden": is_hidden,
+            "trailer": trailer,
+        },
+    )
+
 
 def signup_view(request):
     """
@@ -91,13 +115,13 @@ def signup_view(request):
         username = request.POST.get("username")
         password1 = request.POST.get("password1")
         password2 = request.POST.get("password2")
-    
+
         form = UserCreationForm(request.POST)
-        
+
         # Check if email is a valid email.
         if not supabase.is_valid_email(request, email):
             return redirect("signup")
-        
+
         if password1 != password2:
             messages.error(request, "Passwords do not match.")
             return redirect("signup")
@@ -106,14 +130,17 @@ def signup_view(request):
         if form.is_valid():
             password = request.POST.get("password1")
             if not supabase.supabase_sign_up(request, username, email, password):
-                return redirect("signup") 
+                return redirect("signup")
             return redirect("movies")
 
     # Display form.
     else:
         form = UserCreationForm()
 
-    return render(request, "signup.html", {"form": form, "movies": fetch_movies("popular")})
+    return render(
+        request, "signup.html", {"form": form, "movies": fetch_movies("popular")}
+    )
+
 
 def login_view(request):
     """
@@ -132,11 +159,11 @@ def login_view(request):
 
         if not supabase.is_valid_email(request, email):
             return redirect("login")
-        
+
         if not email or not password:
             messages.error(request, "Please enter fill in each field.")
             return redirect("login")
-        
+
         if supabase.supabase_log_in(request, email, password):
             return redirect("movies")
 
@@ -158,7 +185,10 @@ def magic_login(request):
         email = request.POST.get("email")
 
         if supabase.reached_limit_magic_login(email):
-            messages.error(request, "Reached max limit of magic logins for the hour. Try later or login with password.")
+            messages.error(
+                request,
+                "Reached max limit of magic logins for the hour. Try later or login with password.",
+            )
             return redirect("magic_login")
 
         # User must enter an email. If not, display error.
@@ -217,15 +247,16 @@ def add_to_watchlist(request, movie_id):
         if not user_id:
             messages.error(request, "Must be logged in to add movie to watchlist.")
             return redirect("login")
-        
+
         # Insert movie into watchlist table in database.
         success, message = supabase.insert_in_watchlist(user_id, movie_id)
         if success:
             messages.success(request, message)
         else:
             messages.error(request, message)
-        
+
         return redirect("movie_detail", movie_id=movie_id)
+
 
 def remove_from_watchlist(request, movie_id):
     """
@@ -243,13 +274,14 @@ def remove_from_watchlist(request, movie_id):
         if not user_id:
             messages.error(request, "Must be logged in to remove movie from watchlist.")
             return redirect("login")
-        
+
         # Remove movie into watchlist table in database.
         success = supabase.delete_in_watchlist(user_id, movie_id)
         if not success:
             messages.error(request, "Unable to remove movie. Please try again.")
-        
+
         return redirect(request.META.get("HTTP_REFERER", f"/movies/{movie_id}/"))
+
 
 def watchlist_view(request):
     """
@@ -264,7 +296,7 @@ def watchlist_view(request):
     user_id = supabase.get_user_id(request)
     sort = request.GET.get("sort", "")
     if not user_id:
-        return render(request, 'watchlist.html')
+        return render(request, "watchlist.html")
 
     movie_ids = supabase.get_watchlist(user_id)
     if "date" in sort:
@@ -275,11 +307,12 @@ def watchlist_view(request):
         movie = fetch_movies(movie, single=True)
         if movie.get("id"):
             movies.append(movie)
-    
+
     if "title" in sort:
         movies = sort_movies_title(movies, sort)
 
-    return render(request, 'watchlist.html', {"movies": movies})
+    return render(request, "watchlist.html", {"movies": movies})
+
 
 def sort_movies_title(movies, sort_method):
     """
@@ -298,6 +331,7 @@ def sort_movies_title(movies, sort_method):
     elif sort_method == "descending_title":
         movies.sort(key=lambda x: x.get("title", "").lower(), reverse=True)
     return movies
+
 
 def sort_movies_date(user_id, sort_method):
     """
@@ -318,6 +352,7 @@ def sort_movies_date(user_id, sort_method):
 
     return movie_ids
 
+
 def library_view(request):
     """
     Renders the My Library page, displaying all movies the user
@@ -325,7 +360,7 @@ def library_view(request):
     """
     user_id = supabase.get_user_id(request)
     if not user_id:
-        return redirect('login')
+        return redirect("login")
 
     # each user only sees their OWN movies
     movies = Movie.objects.filter(user=user_id)
@@ -338,22 +373,27 @@ def library_view(request):
     if query:
         search_results = search_movies(query)
 
-    return render(request, "library.html", {
-        "movies": movies,
-        "search_results": search_results,
-    })
-    
+    return render(
+        request,
+        "library.html",
+        {
+            "movies": movies,
+            "search_results": search_results,
+        },
+    )
+
+
 def add_movie_view(request):
     user_id = supabase.get_user_id(request)
     if not user_id:
-        return redirect('login')
+        return redirect("login")
 
     if request.method == "POST":
-        title   = request.POST.get("title", "").strip()
-        poster  = request.POST.get("poster", "").strip()
+        title = request.POST.get("title", "").strip()
+        poster = request.POST.get("poster", "").strip()
         tmdb_id = request.POST.get("tmdb_id", "").strip()
-        rating  = request.POST.get("rating", 3)
-        notes   = request.POST.get("notes", "").strip()
+        rating = request.POST.get("rating", 3)
+        notes = request.POST.get("notes", "").strip()
 
         if not tmdb_id:
             messages.error(request, "Invalid movie selection.")
@@ -364,11 +404,11 @@ def add_movie_view(request):
             user=user_id,
             tmdb_id=tmdb_id,
             defaults={
-                "title":      title,
+                "title": title,
                 "poster_url": poster,
-                "rating":     rating,
-                "notes":      notes,
-            }
+                "rating": rating,
+                "notes": notes,
+            },
         )
 
         if created:
@@ -378,11 +418,12 @@ def add_movie_view(request):
 
     return redirect("library")
 
+
 def edit_movie_view(request):
     """
     Update the rating and notes for a movie already in user's library.
 
-    Args: 
+    Args:
     request: POST request containing movie_id, rating, and notes.
 
     Returns: Redirect user back to library page after saving changes.
@@ -390,23 +431,24 @@ def edit_movie_view(request):
 
     user_id = supabase.get_user_id(request)
     if not user_id:
-        return redirect('login')
+        return redirect("login")
 
     if request.method == "POST":
         movie_id = request.POST.get("movie_id")
-        rating   = request.POST.get("rating", 3)
-        notes    = request.POST.get("notes", "").strip()
+        rating = request.POST.get("rating", 3)
+        notes = request.POST.get("notes", "").strip()
 
         movie = Movie.objects.filter(id=movie_id, user=user_id).first()
         if movie:
             movie.rating = rating
-            movie.notes  = notes
+            movie.notes = notes
             movie.save()
             messages.success(request, f'"{movie.title}" updated.')
         else:
             messages.error(request, "Movie not found.")
 
     return redirect("library")
+
 
 def remove_movie_view(request, movie_id):
     """
@@ -415,7 +457,7 @@ def remove_movie_view(request, movie_id):
 
     user_id = supabase.get_user_id(request)
     if not user_id:
-        return redirect('login')
+        return redirect("login")
 
     if request.method == "POST":
         movie = Movie.objects.filter(id=movie_id, user=user_id).first()
@@ -426,6 +468,7 @@ def remove_movie_view(request, movie_id):
             messages.error(request, "Movie not found.")
 
     return redirect("library")
+
 
 def hide_movie(request, movie_id):
     """
@@ -446,7 +489,7 @@ def hide_movie(request, movie_id):
 
         success, message = supabase.insert_hidden_movie(user_id, movie_id)
         if success:
-            messages.success(request, 'Movie hidden successfully.')
+            messages.success(request, "Movie hidden successfully.")
         else:
             messages.error(request, message)
 
@@ -476,22 +519,56 @@ def unhide_movie(request, movie_id):
         else:
             messages.error(request, "Unable to unhide movie. Please try again.")
 
-        return redirect(request.META.get("HTTP_REFERER", "/movies/"))
+        next_url = request.POST.get("next")
+        if next_url:
+            return redirect(next_url)
+
+        return redirect("account")
 
 
-def hidden_movies_view(request):
+def search_movies_view(request):
     """
-    Renders a page showing all movies the user has hidden.
+    Search for movies with TMDB search API
+    """
 
+    query = request.GET.get("q", "").strip()
+
+    if not query:
+        # If no query, just show the search page with no results
+        return render(
+            request,
+            "search_results.html",
+            {"movies": [], "search_query": "", "is_search": True},
+        )
+
+    # Search for movies
+    search_results = search_movies(query)
+
+    return render(
+        request,
+        "search_results.html",
+        {
+            "movies": search_results,
+            "search_query": query,
+            "is_search": True,
+            "result_count": len(search_results),
+        },
+    )
+
+
+def account_view(request):
+    """
+    Renders the account page of the web application.
     Args:
         request (HTTP request): Contains information about the request.
 
     Returns:
-        HTTPResponse: A rendering of the hidden_movies.html page.
+        HTTPResponse: A rendering of the account page with the neccessary information to display.
     """
     user_id = supabase.get_user_id(request)
     if not user_id:
-        return render(request, "hidden_movies.html")
+        messages.error(request, "Must be logged in.")
+        return render(request, "movies.html")
 
     hidden_ids = supabase.get_hidden_movies(user_id)
     movies = []
@@ -500,29 +577,20 @@ def hidden_movies_view(request):
         if movie.get("id"):
             movies.append(movie)
 
-    return render(request, "hidden_movies.html", {"movies": movies})
+    top_genre, genre_data = user_statistics.get_genre_statistics(user_id)
 
-def search_movies_view(request):
-    """
-    Search for movies with TMDB search API
-    """
-
-    query = request.GET.get('q', '').strip()
-    
-    if not query:
-        # If no query, just show the search page with no results
-        return render(request, 'search_results.html', {
-            'movies': [],
-            'search_query': '',
-            'is_search': True
-        })
-    
-    # Search for movies
-    search_results = search_movies(query)
-    
-    return render(request, 'search_results.html', {
-        'movies': search_results,
-        'search_query': query,
-        'is_search': True,
-        'result_count': len(search_results)
-    })
+    context = {
+        "num_in_watchlist": user_statistics.get_size_of_watchlist(user_id),
+        "num_in_library": user_statistics.get_size_of_library(user_id),
+        "total_hours": user_statistics.get_num_hours_in_library(user_id),
+        "average_rating": user_statistics.get_average_rating(user_id),
+        "weekly_data": user_statistics.get_monthly_logged_movies(user_id),
+        "total_films": sum(user_statistics.get_library_months_for_year(user_id)),
+        "avg_month": user_statistics.get_logged_monthly_average(user_id),
+        "days_logged": user_statistics.get_days_logged(user_id),
+        "genres": genre_data,
+        "top_genre": top_genre,
+        "top_five": user_statistics.get_top_five_movies(user_id),
+        "movies": movies,
+    }
+    return render(request, "account.html", context)

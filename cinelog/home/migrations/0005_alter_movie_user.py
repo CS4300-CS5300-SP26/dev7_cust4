@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('home', '0004_alter_movie_user'),
+        ("home", "0004_alter_movie_user"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='movie',
-            name='user',
+            model_name="movie",
+            name="user",
             field=models.UUIDField(),
         ),
     ]

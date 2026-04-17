@@ -5,25 +5,32 @@ import django.utils.timezone
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
-        ('home', '0002_delete_carouselimage'),
+        ("home", "0002_delete_carouselimage"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Movie',
+            name="Movie",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('user', models.UUIDField()),
-                ('title', models.CharField(max_length=255)),
-                ('poster_url', models.URLField(blank=True, max_length=500, null=True)),
-                ('tmdb_id', models.IntegerField()),
-                ('rating', models.IntegerField(default=0)),
-                ('notes', models.TextField(blank=True, default='')),
-                ('created_at', models.DateTimeField(default=django.utils.timezone.now)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("user", models.UUIDField()),
+                ("title", models.CharField(max_length=255)),
+                ("poster_url", models.URLField(blank=True, max_length=500, null=True)),
+                ("tmdb_id", models.IntegerField()),
+                ("rating", models.IntegerField(default=0)),
+                ("notes", models.TextField(blank=True, default="")),
+                ("created_at", models.DateTimeField(default=django.utils.timezone.now)),
             ],
         ),
     ]

@@ -57,7 +57,8 @@ def fetch_movie_detail(movie_id):
         return response.json()
     except requests.RequestException:
         return {}
-        
+
+
 def get_cast(movie, limit=10):
     """
     Extract cast members from an already-fetched movie dict.
@@ -89,12 +90,7 @@ def search_movies(query):
     returns: list of movie dicts matching the search query/ empty list if there is no match
     """
     url = f"{BASE_URL}/search/movie"
-    params = {
-        "api_key": TMDB_KEY,
-        "language": "en-US",
-        "query": query,
-        "page": 1
-    }
+    params = {"api_key": TMDB_KEY, "language": "en-US", "query": query, "page": 1}
 
     try:
         response = requests.get(url, params=params, timeout=5)
@@ -104,13 +100,14 @@ def search_movies(query):
     except requests.RequestException:
         return []
 
+
 def get_movie_trailer(movie_id):
     """
     Fetch trailer for specific movie via TMDB movie ID.
 
     returns: dict OR None: The first YouTube trailer video dict, or None if not found.
     """
-    url = f"{BASE_URL}/movie/{movie_id}/videos" 
+    url = f"{BASE_URL}/movie/{movie_id}/videos"
 
     try:
         response = requests.get(url, params={"api_key": TMDB_KEY}, timeout=5)
@@ -119,10 +116,8 @@ def get_movie_trailer(movie_id):
 
         trailer = next(
             (v for v in videos if v["type"] == "Trailer" and v["site"] == "YouTube"),
-            None
+            None,
         )
         return trailer
     except requests.RequestException:
         return None
-
-
