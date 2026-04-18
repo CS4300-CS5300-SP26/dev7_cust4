@@ -619,6 +619,12 @@ def update_user_information(request):
 
     if update_field == "username":
         new_username = request.POST.get("username")
+        if not new_username:
+            messages.error(request, "Must enter at least 1 character for username.")
+            if next_url:
+                return redirect(next_url)
+            else:
+                return redirect("account")
         info_for_supabase = {
             "data": {"username": new_username},
         }

@@ -87,10 +87,6 @@
                     
                     <!-- Buttons that appear only when movie hovered over. -->
                     <div class="absolute inset-0 flex flex-col items-center justify-center text-white">
-                        <a href="#" class="group/edit invisible text-white border group-hover/item:visible hover:bg-gray-300 transition cursor-pointer px-6 py-1 rounded-full mt-5">
-                            <p class="group-hover/edit:text-gray-700">Add to Logger</p>           
-                        </a>
-
                         <form action="{% url 'remove_from_watchlist' movie.id %}" method="POST">
                             {% csrf_token %}
                             <button class="group/edit invisible text-white border group-hover/item:visible hover:bg-gray-300 transition cursor-pointer px-6 py-1 rounded-full mt-5">
