@@ -417,7 +417,6 @@ class SupabaseAccountsTests(TestCase):
 
         self.assertFalse(result)
 
-    
     @patch("home.services.supabase.Movie.objects.filter")
     @patch("home.services.supabase.supabase_admin.auth.admin.delete_user")
     def test_delete_user_success(self, mock_delete_user, mock_filter):
@@ -425,7 +424,7 @@ class SupabaseAccountsTests(TestCase):
         Test user can successfully be deleted.
         """
         self.request.session = MagicMock()
-        self.request.session.__getitem__.return_value = user=self.user_id
+        self.request.session.get.return_value = self.user_id
 
         mock_delete_user.return_value = MagicMock()
 

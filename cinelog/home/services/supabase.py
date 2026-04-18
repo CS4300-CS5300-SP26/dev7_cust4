@@ -39,7 +39,14 @@ def get_supabase_admin():
     """
     url = getattr(settings, "SUPABASE_URL", None)
     key = getattr(settings, "SERVER_KEY", None)
-    return create_client(url, key)
+
+    if not url or not key:
+        client = MagicMock()
+
+    else:
+        client = create_client(url, key)
+
+    return client
 
 
 # Create the client.
@@ -509,9 +516,17 @@ def change_user_information(new_information, request):
     Returns:
         bool: If the change was successful or not.
     """
-    try:        
-        supabase_client.auth.set_session(request.session["access_token"], request.session["refresh_token"])
+    try:
+        access_token = request.session.get("access_token")
+        refresh_token = request.session.get("refresh_token")
+
+        if not access_token or not refresh_token:
+            messages.error(request, "Session expired. Please log in again.")
+            return False    
+
+        supabase_client.auth.set_session(access_token, refresh_token)
         response = supabase_client.auth.update_user(new_information)
+
         if not response:
             return False
 
@@ -535,12 +550,15 @@ def delete_user_from_supabase(request):
         bool: If the change was successful or not.
     """
     try:        
-        supabase_admin.auth.admin.delete_user(
-            request.session["supabase_user_id"]
-        )
+        user_id = request.session.get("supabase_user_id")
+
+        if not user_id:
+            return False
+
+        supabase_admin.auth.admin.delete_user(user_id)
 
         # Remove the information stored in the database.
-        Movie.objects.filter(user=request.session["supabase_user_id"]).delete()
+        Movie.objects.filter(user=user_id).delete()
 
         # Remove user's information from session.
         request.session.flush()
