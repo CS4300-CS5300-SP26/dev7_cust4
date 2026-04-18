@@ -18,7 +18,7 @@
         <textarea name="notes" id="modal-notes"></textarea><br><br>
         <button type="submit">Save</button>
     </form>
-    <form method="POST" action="{% url 'remove_movie' movie_id=0 %}" id="delete-form">
+    <form method="POST" id="delete-form" data-url-base="/library/remove/">
         {% csrf_token %}
         <button type="submit" onclick="return confirm('Remove this movie?')">Delete</button>
     </form>
@@ -37,14 +37,16 @@ document.addEventListener('DOMContentLoaded', function() {
         events: '{% url "calendar_events" %}',
         eventClick: function(info) {
             var props = info.event.extendedProps;
+            
             document.getElementById('modal-title').textContent = info.event.title;
             document.getElementById('modal-movie-id').value = info.event.id;
-            document.getElementById('modal-date').value = info.event.startStr;
+            document.getElementById('modal-date').value = info.event.startStr.split('T')[0];
             document.getElementById('modal-rating').value = props.rating;
             document.getElementById('modal-notes').value = props.notes;
             
             // Update delete form action with correct movie id
-            document.getElementById('delete-form').action = '/library/remove/' + info.event.id + '/';
+            const base = document.getElementById('delete-form').dataset.urlBase;
+            document.getElementById('delete-form').action = base + info.event.id + '/';
             
             document.getElementById('event-modal').style.display = 'block';
             document.getElementById('modal-overlay').style.display = 'block';
