@@ -1,3 +1,4 @@
+{% include "components/alerts.html" %}
 <div class="px-8 py-6 text-white">
     <div class="flex justify-between items-center pb-4 border-b border-white/10">
         <h2 class="text-xs tracking-widest text-gray-400 uppercase">
@@ -6,43 +7,52 @@
     </div>
 
     <div class="max-w-5xl mx-auto">
-        <!-- Display user's email address. -->
-        <div class="mt-6 pb-6">
-            <p class="text-sm text-gray-400 uppercase mb-2">Email Address</p>
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                <p class="text-gray-200"><strong>john.doe@company.com</strong></p>
+        <div class="mt-6 pb-6 grid grid-cols-1 md:grid-cols-2 items-start border-b border-white/5">
+            <!-- Display user's email address. -->
+            <div>
+                <p class="text-sm text-gray-400 uppercase mb-2">Email Address</p>
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                    <p class="text-gray-200"><strong>{{ email }}</strong></p>
+                </div>
             </div>
-        </div>
 
-        <!-- Display user's username and option to change. -->
-        <div class="mt-6 pb-6">
-            <p class="text-sm text-gray-400 uppercase mb-2">Username</p>
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                <input type="text" value="john_doe" class="flex-1 bg-transparent border-b border-white/20 py-2 text-gray-200 font-bold focus:outline-none focus:border-[#06b6d4]"/>
-                <button class="mt-4 px-4 py-2 text-[#06b6d4] hover:underline">Change Username</button>
+            <!-- Display user's username and option to change. -->
+            <div>
+                <p class="text-sm text-gray-400 uppercase">Username</p>
+                <form method="POST" action="{% url 'update_user' %}" class="flex items-center gap-3">
+                    {% csrf_token %}
+                    <input type="hidden" name="type" value="username">
+                    <input type="hidden" name="next" value="{% url 'account' %}?tab=settings">
+                    <input id="username" type="text" name="username" value="{{ username }}" class="flex-1 bg-transparent border-b border-white/20 py-2 text-gray-200 font-bold focus:outline-none focus:border-[#06b6d4]"/>
+                    <button type="submit" class="px-4 py-2 text-[#06b6d4] hover:underline whitespace-nowrap">
+                        Change Username
+                    </button>
+                </form>
             </div>
         </div>
 
         <!-- Allow user to change password. -->
-        <div class="mt-6 pb-6 border-b border-white/10">
+        <div class="mt-6 pb-6 border-b border-white/5">
             <p class="text-sm text-gray-400 uppercase mb-2">Password</p>
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                <div class="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-3">
-                    <label for="login-password">
-                        <span class="text-sm text-gray-500">New Password</span>
+            <form method="POST" action="{% url 'update_user' %}" class="flex flex-col sm:flex-row sm:items-end gap-8">
+                {% csrf_token %}
+                <input type="hidden" name="type" value="password">
+                <input type="hidden" name="next" value="{% url 'account' %}?tab=settings">
+        
+                    <label for="login-password" class="flex flex-col flex-1">
+                        <span class="text-sm text-gray-500 mb-2">New Password</span>
                         <div class="relative flex overflow-hidden rounded-md border-2 transition focus-within:border-blue-600">
-                        <input type="password" id="login-password" class="w-full flex-shrink appearance-none border-gray-300 bg-white py-2 px-4 text-base text-gray-700 placeholder-gray-400 focus:outline-none" placeholder="***********" />
+                            <input type="password" name="password1" class="w-full flex-shrink appearance-none border-gray-300 bg-white py-2 px-4 text-base text-gray-700 placeholder-gray-400 focus:outline-none" placeholder="***********" />
                         </div>
                     </label>
-                    <label for="login-password">
-                        <span class="text-sm text-gray-500">Confirm Password</span>
+                    <label for="login-password" class="flex flex-col flex-1">
+                        <span class="text-sm text-gray-500 mb-2">Confirm Password</span>
                         <div class="relative flex overflow-hidden rounded-md border-2 transition focus-within:border-blue-600">
-                        <input type="password" id="login-password" class="w-full flex-shrink appearance-none border-gray-300 bg-white py-2 px-4 text-base text-gray-700 placeholder-gray-400 focus:outline-none" placeholder="***********" />
+                            <input type="password" name="password2" class="w-full flex-shrink appearance-none border-gray-300 bg-white py-2 px-4 text-base text-gray-700 placeholder-gray-400 focus:outline-none" placeholder="***********" />
                         </div>
                     </label>
-                </div>
-                <button class="mt-4 px-4 py-2 text-[#06b6d4] hover:underline">Change Password</button>
-            </div>
+                    <button type="submit" class="px-4 py-2 text-[#06b6d4] hover:underline whitespace-nowrap">Change Password</button>
+            </form>
         </div>
     </div>
     <div class="mt-20 flex justify-between items-center pb-4 border-b border-white/10">

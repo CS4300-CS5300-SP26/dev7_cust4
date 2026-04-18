@@ -33,7 +33,7 @@ def get_supabase_client():
 supabase_client = get_supabase_client()
 
 
-def create_session(request, response, email, access_token):
+def create_session(request, response, email, access_token, refresh_token):
     """
     Save information about the user to the session to be used.
 
@@ -43,6 +43,7 @@ def create_session(request, response, email, access_token):
         email (str): Email submitted in form by user.
     """
     request.session["access_token"] = access_token
+    request.session["refresh_token"] = refresh_token
     request.session["supabase_user_email"] = email
     request.session["supabase_username"] = response.user.user_metadata.get("username")
     request.session["supabase_user_id"] = response.user.id
@@ -104,7 +105,7 @@ def supabase_log_in(request, email, password):
         )
 
         if response.session:
-            create_session(request, response, email, response.session.access_token)
+            create_session(request, response, email, response.session.access_token, response.session.refresh_token)
 
         return True
 
@@ -482,3 +483,29 @@ def get_hidden_movies(user_id, movie_id=None):
     except Exception as e:
         logging.error(f"get_hidden_movies exception for user {user_id}: {e}")
         return []
+
+def change_user_information(new_information, request):
+    """
+    Change the user's information in supabase.
+
+    Args:
+        new_information (dict): Contains the formatted information to send to supabase.
+        request (HTTP request): Contains information about the request.
+
+    Returns:
+        bool: If the change was successful or not.
+    """
+    try:        
+        supabase_client.auth.set_session(request.session["access_token"], request.session["refresh_token"])
+        response = supabase_client.auth.update_user(new_information)
+        if not response:
+            return False
+
+        # Update the session's copy of the username if sucessfully updated in supabase.
+        if "username" in new_information.get("data", {}):
+            request.session["supabase_username"] = new_information["data"]["username"]
+        return True
+
+    except Exception as e:
+        messages.error(request, e)
+        return False
