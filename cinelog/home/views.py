@@ -12,6 +12,8 @@ from .services import supabase, user_statistics
 from django.contrib import messages
 from .models import Movie
 from django.urls import reverse
+import json
+from django.http import JsonResponse
 
 
 def landing_page(request):
@@ -437,11 +439,13 @@ def edit_movie_view(request):
         movie_id = request.POST.get("movie_id")
         rating = request.POST.get("rating", 3)
         notes = request.POST.get("notes", "").strip()
+        watched_date = request.POST.get("watched_date", "").strip() or None
 
         movie = Movie.objects.filter(id=movie_id, user=user_id).first()
         if movie:
             movie.rating = rating
             movie.notes = notes
+            movie.watched_date = watched_date
             movie.save()
             messages.success(request, f'"{movie.title}" updated.')
         else:
@@ -594,3 +598,31 @@ def account_view(request):
         "movies": movies,
     }
     return render(request, "account.html", context)
+
+def calendar_view(request):
+    user_id = supabase.get_user_id(request)
+    if not user_id:
+        return redirect("login")
+    
+    return render(request, "calendar.html")
+
+def calendar_events_api(request):
+    user_id = supabase.get_user_id(request)
+    if not user_id:
+        return JsonResponse([], safe=False)
+    
+    movies = Movie.objects.filter(user=user_id, watched_date__isnull=False)
+    events = [
+        {
+            "id": movie.id,
+            "title": movie.title,
+            "start": movie.watched_date.isoformat(),
+            "extendedProps": {
+                "poster": movie.poster_url,
+                "rating": movie.rating,
+                "notes": movie.notes,
+            }
+        }
+        for movie in movies
+    ]
+    return JsonResponse(events, safe=False)
