@@ -34,4 +34,6 @@ urlpatterns = [
     path("movies/hide/<int:movie_id>/", views.hide_movie, name="hide_movie"),
     path("movies/unhide/<int:movie_id>/", views.unhide_movie, name="unhide_movie"),
     path("account/", views.account_view, name="account"),
+    path('calendar/', views.calendar_view, name='calendar'),
+    path('calendar/events/', views.calendar_events_api, name='calendar_events'),    
 ]
