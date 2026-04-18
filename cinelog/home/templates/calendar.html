@@ -73,6 +73,31 @@
     </div>
 </div>
 
+<style>
+    /* Remove underlines from day names and numbers */
+    .fc-col-header-cell-cushion,
+    .fc-daygrid-day-number {
+        text-decoration: none !important;
+        color: white !important;
+    }
+
+    /* Change event color to match app's teal */
+    .fc-event {
+        background-color: #027d96 !important;
+        border-color: #027d96 !important;
+    }
+
+    .fc-event:hover {
+        background-color: #7699A9 !important;
+        border-color: #7699A9 !important;
+    }
+
+    /* Today highlight */
+    .fc-day-today {
+        background-color: rgba(2, 125, 150, 0.15) !important;
+    }
+</style>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     var calendarEl = document.getElementById('calendar');
