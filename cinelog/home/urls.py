@@ -34,5 +34,6 @@ urlpatterns = [
     path("movies/hide/<int:movie_id>/", views.hide_movie, name="hide_movie"),
     path("movies/unhide/<int:movie_id>/", views.unhide_movie, name="unhide_movie"),
     path("account/", views.account_view, name="account"),
-    path("account/update_user/", views.update_user_information, name="update_user")
+    path("account/update_user/", views.update_user_information, name="update_user"),
+    path("account/delete_user/", views.delete_user, name="delete_user")
 ]

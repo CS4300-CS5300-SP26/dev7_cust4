@@ -615,6 +615,7 @@ def update_user_information(request):
         return redirect("account")
 
     update_field = request.POST.get("type")
+    next_url = request.POST.get("next")
 
     if update_field == "username":
         new_username = request.POST.get("username")
@@ -626,6 +627,7 @@ def update_user_information(request):
         password1 = request.POST.get("password1")
         password2 = request.POST.get("password2")
 
+        # Check the passwords match.
         if password1 != password2:
             messages.error(request, "Passwords do not match.")
             if next_url:
@@ -637,6 +639,7 @@ def update_user_information(request):
 
     else:
         messages.error(request, "Unable to change account information. Please try again.")
+        return redirect(request.path)
 
     updated = supabase.change_user_information(info_for_supabase, request)
     if updated:
@@ -644,8 +647,34 @@ def update_user_information(request):
     else:
         messages.error(request, "Failed to update account.")
 
-    next_url = request.POST.get("next")
     if next_url:
         return redirect(next_url)
 
     return redirect(request.path)
+
+
+def delete_user(request):
+    """
+    Deletes the users account and any information stored.
+    Args:
+        request (HTTP request): Contains information about the request.
+
+    Returns:
+        HTTPResponse: A rendering of the correct page based on outcome of change.
+    """
+    if request.method != "POST":
+        return redirect("account")
+    
+    user_id = supabase.get_user_id(request)
+    if not user_id:
+        messages.error(request, "Must be logged in to edit account information.")
+        return redirect("account")
+
+    updated = supabase.delete_user_from_supabase(request)
+
+    if updated:
+        messages.success(request, "Your account has been deleted.")
+        return redirect("landing")
+    else:
+        messages.error(request, "Failed to update account.")
+        return redirect(request.path)

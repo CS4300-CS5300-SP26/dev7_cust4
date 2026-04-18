@@ -6,6 +6,8 @@ from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from unittest.mock import MagicMock
 import logging
+from supabase import create_client
+from home.models import Movie
 
 # Set a max for number of links user can recieve.
 MAX_EMAILS_1_HOUR = 4
@@ -28,9 +30,21 @@ def get_supabase_client():
 
     return client
 
+def get_supabase_admin():
+    """
+    Creates a supabase admin.
+
+    Returns:
+        Client: The supabase client that can be used to access Supabase admin functions.
+    """
+    url = getattr(settings, "SUPABASE_URL", None)
+    key = getattr(settings, "SERVER_KEY", None)
+    return create_client(url, key)
+
 
 # Create the client.
 supabase_client = get_supabase_client()
+supabase_admin = get_supabase_admin()
 
 
 def create_session(request, response, email, access_token, refresh_token):
@@ -234,7 +248,7 @@ def get_user_magic_link(request):
         if user:
             email = user.email
             # Save user data to session.
-            create_session(request, response, email, access_token)
+            create_session(request, response, email, access_token, response.session.refresh_token)
             return True
 
         else:
@@ -508,4 +522,30 @@ def change_user_information(new_information, request):
 
     except Exception as e:
         messages.error(request, e)
+        return False
+
+def delete_user_from_supabase(request):
+    """
+    Delete a user's account from Supabase.
+
+    Args:
+        request (HTTP request): Contains information about the request.
+
+    Returns:
+        bool: If the change was successful or not.
+    """
+    try:        
+        supabase_admin.auth.admin.delete_user(
+            request.session["supabase_user_id"]
+        )
+
+        # Remove the information stored in the database.
+        Movie.objects.filter(user=request.session["supabase_user_id"]).delete()
+
+        # Remove user's information from session.
+        request.session.flush()
+
+        return True
+
+    except Exception as e:
         return False
