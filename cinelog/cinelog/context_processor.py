@@ -9,8 +9,4 @@ def supabase_context_processor(request):
         username = request.session.get("supabase_username")
         email = request.session.get("supabase_user_email")
 
-    return {
-        "is_authenticated": is_authenticated,
-        "username": username,
-        "email": email
-    }
+    return {"is_authenticated": is_authenticated, "username": username, "email": email}

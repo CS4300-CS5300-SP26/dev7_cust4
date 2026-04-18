@@ -1,10 +1,9 @@
 from django.contrib.messages.storage.fallback import FallbackStorage
-from django.test import TestCase, RequestFactory, Client
+from django.test import TestCase, RequestFactory
 from home.services import supabase
 from unittest.mock import patch, MagicMock
 from django.core.cache import cache
 from django.contrib.messages import get_messages
-from django.urls import reverse
 
 MOCK_SIGN_UP = {
     "user": {
@@ -270,9 +269,7 @@ class SupabaseWatchlistTest(TestCase):
         Test user can successfully delete a movie from the watchlist.
         """
         mock_table = mock_client.table.return_value
-        mock_table.delete.return_value.eq.return_value.eq.return_value.execute.return_value = (
-            True
-        )
+        mock_table.delete.return_value.eq.return_value.eq.return_value.execute.return_value = True
 
         result = supabase.delete_in_watchlist(self.user_id, self.movie_id)
         self.assertTrue(result)
@@ -313,9 +310,7 @@ class SupabaseWatchlistTest(TestCase):
         mock_table = mock_client.table.return_value
         mock_response = MagicMock()
         mock_response.data = [{"movie_id": self.movie_id}]
-        mock_table.select.return_value.eq.return_value.eq.return_value.execute.return_value = (
-            mock_response
-        )
+        mock_table.select.return_value.eq.return_value.eq.return_value.execute.return_value = mock_response
 
         movies = supabase.get_watchlist(self.user_id, movie_id=self.movie_id)
         self.assertEqual(movies, [self.movie_id])
@@ -347,48 +342,56 @@ class SupabaseWatchlistTest(TestCase):
 
 
 class SupabaseAccountsTests(TestCase):
-
     def setUp(self):
         self.request = MagicMock()
         self.request.session = {
             "access_token": "access",
             "refresh_token": "refresh",
-            "supabase_username": "oldname"
+            "supabase_username": "oldname",
         }
         self.user_id = MOCK_GET_USER["user"]["id"]
 
-    @patch("home.services.supabase.supabase_client")
-    def test_change_username_success(self, mock_client):
+    @patch("home.services.supabase.get_user_supabase_client")
+    def test_change_username_success(self, mock_get_client):
         """
         Test ability to change username through supabase.
         """
-        mock_client.auth.update_user.return_value = True
+
+        mock_client = MagicMock()
+        mock_get_client.return_value = mock_client
+
+        mock_client.auth.update_user.return_value = MagicMock()
 
         result = supabase.change_user_information(
-            {"data": {"username": MOCK_USERNAME}},
-            self.request
+            {"data": {"username": MOCK_USERNAME}}, self.request
         )
 
         self.assertTrue(result)
         self.assertEqual(self.request.session["supabase_username"], MOCK_USERNAME)
-        mock_client.auth.set_session.assert_called_once_with("access", "refresh")
+
+        mock_get_client.assert_called_once_with("access", "refresh")
         mock_client.auth.update_user.assert_called_once()
 
-    @patch("home.services.supabase.supabase_client")
-    def test_change_password_success(self, mock_client):
+    @patch("home.services.supabase.get_user_supabase_client")
+    def test_change_password_success(self, mock_get_client):
         """
         Test ability to change password through supabase.
         """
-        mock_client.auth.update_user.return_value = True
+
+        mock_client = MagicMock()
+        mock_get_client.return_value = mock_client
+        mock_client.auth.update_user.return_value = MagicMock()
 
         result = supabase.change_user_information(
-            {"password": "newpass123"},
-            self.request
+            {"password": "newpass123"}, self.request
         )
 
         self.assertTrue(result)
-        self.assertEqual(self.request.session["supabase_username"], "oldname")
-    
+        mock_get_client.assert_called_once_with("access", "refresh")
+        mock_client.auth.update_user.assert_called_once()
+
+        self.assertEqual(self.request.session.get("supabase_username"), "oldname")
+
     @patch("home.services.supabase.supabase_client")
     def test_change_username_failure(self, mock_client):
         """
@@ -397,12 +400,11 @@ class SupabaseAccountsTests(TestCase):
         mock_client.auth.update_user.return_value = False
 
         result = supabase.change_user_information(
-            {"data": {"username": "fail"}},
-            self.request
+            {"data": {"username": "fail"}}, self.request
         )
 
         self.assertFalse(result)
-    
+
     @patch("home.services.supabase.supabase_client")
     def test_change_user_exception(self, mock_client):
         """
@@ -411,8 +413,7 @@ class SupabaseAccountsTests(TestCase):
         mock_client.auth.update_user.side_effect = Exception("boom")
 
         result = supabase.change_user_information(
-            {"data": {"username": "error"}},
-            self.request
+            {"data": {"username": "error"}}, self.request
         )
 
         self.assertFalse(result)
@@ -446,14 +447,12 @@ class SupabaseAccountsTests(TestCase):
         """
         Test correct resopnse if user deletion fails.
         """
-        self.request.session = {
-            "supabase_user_id": self.user_id
-        }
+        self.request.session = {"supabase_user_id": self.user_id}
 
         mock_delete.side_effect = Exception("fail")
         result = supabase.delete_user_from_supabase(self.request)
         self.assertFalse(result)
-    
+
     def test_delete_user_missing_session(self):
         """
         Test failure if missions session.

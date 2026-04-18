@@ -1241,6 +1241,7 @@ class AccountViewTest(TestCase):
 
         assert context["movies"] == []
 
+
 class AccountViewTests(TestCase):
     VALID_USER_ID = "11111111-1111-1111-1111-111111111111"
 
@@ -1255,30 +1256,34 @@ class AccountViewTests(TestCase):
         """
         Test that user's username can be updated.
         """
-        response = self.client.post(self.update_url, {
-            "type": "username",
-            "username": "newname",
-            "next": "/account/"
-        })
+        response = self.client.post(
+            self.update_url,
+            {"type": "username", "username": "newname", "next": "/account/"},
+        )
 
         self.assertRedirects(response, "/account/")
         mock_change.assert_called_once()
 
         messages = list(get_messages(response.wsgi_request))
-        self.assertTrue(any("Information updated successfully" in str(m) for m in messages))
-    
+        self.assertTrue(
+            any("Information updated successfully" in str(m) for m in messages)
+        )
+
     @patch("home.views.supabase.get_user_id", return_value=VALID_USER_ID)
     @patch("home.views.supabase.change_user_information", return_value=True)
     def test_update_password_success(self, mock_change, mock_user):
         """
         Test that user's password can be updated.
         """
-        response = self.client.post(self.update_url, {
-            "type": "password",
-            "password1": "abc123",
-            "password2": "abc123",
-            "next": "/account/"
-        })
+        response = self.client.post(
+            self.update_url,
+            {
+                "type": "password",
+                "password1": "abc123",
+                "password2": "abc123",
+                "next": "/account/",
+            },
+        )
 
         self.assertRedirects(response, "/account/")
         mock_change.assert_called_once()
@@ -1289,28 +1294,30 @@ class AccountViewTests(TestCase):
         """
         Test error if the passwords do not match.
         """
-        response = self.client.post(self.update_url, {
-            "type": "password",
-            "password1": "abc123",
-            "password2": "wrong",
-            "next": "/account/"
-        })
+        response = self.client.post(
+            self.update_url,
+            {
+                "type": "password",
+                "password1": "abc123",
+                "password2": "wrong",
+                "next": "/account/",
+            },
+        )
 
         self.assertRedirects(response, "/account/")
         mock_change.assert_not_called()
 
         messages = list(get_messages(response.wsgi_request))
         self.assertTrue(any("Passwords do not match" in str(m) for m in messages))
-    
+
     @patch("home.views.supabase.get_user_id", return_value=None)
     def test_update_not_logged_in(self, mock_user):
         """
         Test failure if user tries to update account, but not logged in.
         """
-        response = self.client.post(self.update_url, {
-            "type": "username",
-            "username": "new"
-        })
+        response = self.client.post(
+            self.update_url, {"type": "username", "username": "new"}
+        )
 
         self.assertRedirects(response, reverse("account"))
 
@@ -1323,16 +1330,15 @@ class AccountViewTests(TestCase):
         """
         Test failure if update type is invalid.
         """
-        response = self.client.post(self.update_url, {
-            "type": "invalid"
-        })
+        response = self.client.post(self.update_url, {"type": "invalid"})
 
         mock_change.assert_not_called()
 
         messages = list(get_messages(response.wsgi_request))
-        self.assertTrue(any("Unable to change account information" in str(m) for m in messages))
+        self.assertTrue(
+            any("Unable to change account information" in str(m) for m in messages)
+        )
 
-    
     @patch("home.views.supabase.get_user_id", return_value=VALID_USER_ID)
     @patch("home.views.supabase.delete_user_from_supabase", return_value=True)
     def test_delete_user_success(self, mock_delete, mock_user):
@@ -1345,7 +1351,9 @@ class AccountViewTests(TestCase):
         mock_delete.assert_called_once()
 
         messages = list(get_messages(response.wsgi_request))
-        self.assertTrue(any("account has been deleted" in str(m).lower() for m in messages))
+        self.assertTrue(
+            any("account has been deleted" in str(m).lower() for m in messages)
+        )
 
     @patch("home.views.supabase.get_user_id", return_value=VALID_USER_ID)
     @patch("home.views.supabase.delete_user_from_supabase", return_value=False)
@@ -1361,7 +1369,6 @@ class AccountViewTests(TestCase):
         messages = list(get_messages(response.wsgi_request))
         self.assertTrue(any("failed" in str(m).lower() for m in messages))
 
-    
     @patch("home.views.supabase.get_user_id", return_value=None)
     def test_delete_user_not_logged_in(self, mock_user):
         """

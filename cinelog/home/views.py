@@ -11,7 +11,6 @@ from .services.tmdb import (
 from .services import supabase, user_statistics
 from django.contrib import messages
 from .models import Movie
-from django.urls import reverse
 
 
 def landing_page(request):
@@ -640,11 +639,13 @@ def update_user_information(request):
                 return redirect(next_url)
             else:
                 return redirect("account")
-        
+
         info_for_supabase = {"password": password1}
 
     else:
-        messages.error(request, "Unable to change account information. Please try again.")
+        messages.error(
+            request, "Unable to change account information. Please try again."
+        )
         return redirect(request.path)
 
     updated = supabase.change_user_information(info_for_supabase, request)
@@ -670,7 +671,7 @@ def delete_user(request):
     """
     if request.method != "POST":
         return redirect("account")
-    
+
     user_id = supabase.get_user_id(request)
     if not user_id:
         messages.error(request, "Must be logged in to edit account information.")

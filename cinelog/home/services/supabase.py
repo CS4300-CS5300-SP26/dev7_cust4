@@ -6,7 +6,6 @@ from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from unittest.mock import MagicMock
 import logging
-from supabase import create_client
 from home.models import Movie
 
 # Set a max for number of links user can recieve.
@@ -30,6 +29,7 @@ def get_supabase_client():
 
     return client
 
+
 def get_supabase_admin():
     """
     Creates a supabase admin.
@@ -52,6 +52,12 @@ def get_supabase_admin():
 # Create the client.
 supabase_client = get_supabase_client()
 supabase_admin = get_supabase_admin()
+
+
+def get_user_supabase_client(access_token, refresh_token):
+    client = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
+    client.auth.set_session(access_token, refresh_token)
+    return client
 
 
 def create_session(request, response, email, access_token, refresh_token):
@@ -126,7 +132,13 @@ def supabase_log_in(request, email, password):
         )
 
         if response.session:
-            create_session(request, response, email, response.session.access_token, response.session.refresh_token)
+            create_session(
+                request,
+                response,
+                email,
+                response.session.access_token,
+                response.session.refresh_token,
+            )
 
         return True
 
@@ -255,7 +267,9 @@ def get_user_magic_link(request):
         if user:
             email = user.email
             # Save user data to session.
-            create_session(request, response, email, access_token, response.session.refresh_token)
+            create_session(
+                request, response, email, access_token, response.session.refresh_token
+            )
             return True
 
         else:
@@ -505,6 +519,7 @@ def get_hidden_movies(user_id, movie_id=None):
         logging.error(f"get_hidden_movies exception for user {user_id}: {e}")
         return []
 
+
 def change_user_information(new_information, request):
     """
     Change the user's information in supabase.
@@ -522,10 +537,10 @@ def change_user_information(new_information, request):
 
         if not access_token or not refresh_token:
             messages.error(request, "Session expired. Please log in again.")
-            return False    
+            return False
 
-        supabase_client.auth.set_session(access_token, refresh_token)
-        response = supabase_client.auth.update_user(new_information)
+        client = get_user_supabase_client(access_token, refresh_token)
+        response = client.auth.update_user(new_information)
 
         if not response:
             return False
@@ -539,6 +554,7 @@ def change_user_information(new_information, request):
         messages.error(request, e)
         return False
 
+
 def delete_user_from_supabase(request):
     """
     Delete a user's account from Supabase.
@@ -549,7 +565,7 @@ def delete_user_from_supabase(request):
     Returns:
         bool: If the change was successful or not.
     """
-    try:        
+    try:
         user_id = request.session.get("supabase_user_id")
 
         if not user_id:
@@ -565,5 +581,5 @@ def delete_user_from_supabase(request):
 
         return True
 
-    except Exception as e:
+    except Exception:
         return False
