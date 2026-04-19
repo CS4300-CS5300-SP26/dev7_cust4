@@ -121,3 +121,31 @@ def get_movie_trailer(movie_id):
         return trailer
     except requests.RequestException:
         return None
+
+
+def get_watch_providers(movie_id, country="US"):
+    """
+    Fetch streaming, rental, and purchase providers for a movie.
+
+    Args:
+        movie_id (int): TMDB movie ID.
+        country (str): ISO 3166-1 country code (default "US").
+
+    Returns:
+        dict: Keys 'streaming', 'rent', 'buy' — each a list of provider dicts.
+              Returns empty dict if not available or request fails.
+    """
+    url = f"{BASE_URL}/movie/{movie_id}/watch/providers"
+    try:
+        response = requests.get(url, params={"api_key": TMDB_KEY}, timeout=5)
+        response.raise_for_status()
+        results = response.json().get("results", {})
+        country_data = results.get(country, {})
+        return {
+            "streaming": country_data.get("flatrate", []),
+            "rent": country_data.get("rent", []),
+            "buy": country_data.get("buy", []),
+            "link": country_data.get("link", ""),
+        }
+    except requests.RequestException:
+        return {}
