@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.forms import UserCreationForm
 from .services.tmdb import (
+    get_watch_providers,
     fetch_movies,
     fetch_movie_detail,
     get_cast,
@@ -626,3 +627,17 @@ def calendar_events_api(request):
         for movie in movies
     ]
     return JsonResponse(events, safe=False)
+
+def where_to_watch_view(request, movie_id):
+    """
+    Return streaming, rental, and purchase options for a movie as JSON.
+
+    Args:
+        request (HTTP request): Contains information about the request.
+        movie_id (int): TMDB movie ID.
+
+    Returns:
+        JsonResponse: Dict with keys 'streaming', 'rent', 'buy', 'link'.
+    """
+    providers = get_watch_providers(movie_id)
+    return JsonResponse(providers)
