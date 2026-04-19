@@ -274,3 +274,81 @@
 }
 
 
+
+/* ---- Where to Watch Button ---- */
+.btn-where-to-watch {
+    padding: 0.5rem 1.25rem;
+    background-color: #7c3aed;
+    color: #fff;
+    border: none;
+    border-radius: 0.375rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    transition: background-color 0.2s ease;
+}
+.btn-where-to-watch:hover { background-color: #5b21b6; }
+
+/* ---- Where to Watch Modal ---- */
+.wtw-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+.wtw-modal.active { display: flex; }
+.wtw-container {
+    position: relative;
+    background: #1a1a2e;
+    border-radius: 0.75rem;
+    padding: 2rem;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    color: #fff;
+}
+.wtw-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #fff;
+    cursor: pointer;
+}
+.wtw-title { font-size: 1.5rem; font-weight: 700; margin: 0 0 1.5rem 0; }
+.wtw-loading { text-align: center; color: #9ca3af; padding: 2rem 0; }
+.wtw-category-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #d1d5db;
+    border-bottom: 1px solid #374151;
+    padding-bottom: 0.5rem;
+    margin: 1.25rem 0 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.wtw-provider-list { display: flex; flex-wrap: wrap; gap: 1rem; }
+.wtw-provider-item { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; width: 70px; }
+.wtw-provider-logo { width: 50px; height: 50px; border-radius: 0.5rem; object-fit: cover; }
+.wtw-provider-name { font-size: 0.65rem; color: #9ca3af; text-align: center; word-break: break-word; }
+.wtw-not-available { color: #6b7280; font-size: 0.85rem; font-style: italic; margin: 0; }
+.wtw-unavailable {
+    color: #fbbf24;
+    font-size: 0.9rem;
+    padding: 1rem;
+    background: rgba(251,191,36,0.1);
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+}
+.wtw-attribution { margin-top: 1.5rem; font-size: 0.75rem; color: #6b7280; text-align: right; }
+.wtw-attribution a { color: #9ca3af; }
