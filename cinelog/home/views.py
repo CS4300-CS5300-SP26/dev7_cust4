@@ -190,8 +190,7 @@ def magic_login(request):
         if supabase.reached_limit_magic_login(email):
             messages.error(
                 request,
-                "Reached max limit of magic logins for the hour. "
-                "Try later or login with password.",
+                "Reached max limit of magic logins for the hour. Try later or login with password.",
             )
             return redirect("magic_login")
 

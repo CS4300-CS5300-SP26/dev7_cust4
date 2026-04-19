@@ -1,4 +1,6 @@
 """Tests for Cinelog home app views."""
+import requests as req_module
+from home.services.tmdb import get_watch_providers
 from unittest.mock import patch, MagicMock
 from django.test import TestCase, Client
 from django.urls import reverse, resolve
