@@ -74,6 +74,10 @@
                     {% endif %}
                 {% endif %}
             </div>
+
+                <!-- Where to Watch Button -->
+                <button class="btn-where-to-watch" onclick="openWhereToWatch({{ movie.id }})">📺 Where to Watch</button>
+
         </div>
     </div>
 </div>
@@ -93,6 +97,39 @@
     </div>
 </div>
 {% endif %}
+
+<!-- Where to Watch Modal -->
+<div id="where-to-watch-modal" class="wtw-modal">
+    <div class="wtw-container">
+        <button class="wtw-close" onclick="closeWhereToWatch()">&#x2715;</button>
+        <h2 class="wtw-title">Where to Watch</h2>
+        <div id="wtw-loading" class="wtw-loading">Loading...</div>
+        <div id="wtw-content" style="display:none;">
+            <div id="wtw-unavailable" class="wtw-unavailable" style="display:none;">
+                This title is not currently available on digital platforms. Check for DVD/Blu-ray retailers.
+            </div>
+            <div id="wtw-streaming-section">
+                <h3 class="wtw-category-title">Streaming</h3>
+                <div id="wtw-streaming" class="wtw-provider-list"></div>
+                <p id="wtw-no-streaming" class="wtw-not-available" style="display:none;">Not Currently Streaming</p>
+            </div>
+            <div id="wtw-rent-section">
+                <h3 class="wtw-category-title">Rent</h3>
+                <div id="wtw-rent" class="wtw-provider-list"></div>
+                <p id="wtw-no-rent" class="wtw-not-available" style="display:none;">Not available to rent</p>
+            </div>
+            <div id="wtw-buy-section">
+                <h3 class="wtw-category-title">Buy</h3>
+                <div id="wtw-buy" class="wtw-provider-list"></div>
+                <p id="wtw-no-buy" class="wtw-not-available" style="display:none;">Not available to buy</p>
+            </div>
+            <p class="wtw-attribution">
+                Provided by
+                <a id="wtw-tmdb-link" href="https://www.themoviedb.org/" target="_blank" rel="noopener noreferrer">JustWatch via TMDB</a>
+            </p>
+        </div>
+    </div>
+</div>
 
 <!-- CREDITS section -->
 <div class="detail-credits">
@@ -147,4 +184,80 @@
         });
     </script>
     {% endif %}
+
+<script>
+    function openWhereToWatch(movieId) {
+        const modal = document.getElementById('where-to-watch-modal');
+        modal.classList.add('active');
+        document.getElementById('wtw-loading').style.display = 'block';
+        document.getElementById('wtw-content').style.display = 'none';
+
+        fetch('/movies/' + movieId + '/where-to-watch/')
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                document.getElementById('wtw-loading').style.display = 'none';
+                document.getElementById('wtw-content').style.display = 'block';
+
+                var hasAny = (data.streaming && data.streaming.length) ||
+                             (data.rent && data.rent.length) ||
+                             (data.buy && data.buy.length);
+
+                document.getElementById('wtw-unavailable').style.display = hasAny ? 'none' : 'block';
+                document.getElementById('wtw-streaming-section').style.display = hasAny ? 'block' : 'none';
+                document.getElementById('wtw-rent-section').style.display = hasAny ? 'block' : 'none';
+                document.getElementById('wtw-buy-section').style.display = hasAny ? 'block' : 'none';
+
+                if (hasAny) {
+                    renderProviders('wtw-streaming', 'wtw-no-streaming', data.streaming || []);
+                    renderProviders('wtw-rent', 'wtw-no-rent', data.rent || []);
+                    renderProviders('wtw-buy', 'wtw-no-buy', data.buy || []);
+                    if (data.link) {
+                        document.getElementById('wtw-tmdb-link').href = data.link;
+                    }
+                }
+            })
+            .catch(function() {
+                document.getElementById('wtw-loading').textContent = 'Failed to load providers.';
+            });
+    }
+
+    function renderProviders(containerId, emptyId, providers) {
+        var container = document.getElementById(containerId);
+        var emptyMsg = document.getElementById(emptyId);
+        container.innerHTML = '';
+        if (!providers.length) {
+            emptyMsg.style.display = 'block';
+            container.style.display = 'none';
+            return;
+        }
+        emptyMsg.style.display = 'none';
+        container.style.display = 'flex';
+        providers.forEach(function(p) {
+            var item = document.createElement('div');
+            item.className = 'wtw-provider-item';
+            var img = document.createElement('img');
+            img.src = 'https://image.tmdb.org/t/p/original' + p.logo_path;
+            img.alt = p.provider_name;
+            img.title = p.provider_name;
+            img.className = 'wtw-provider-logo';
+            var name = document.createElement('span');
+            name.className = 'wtw-provider-name';
+            name.textContent = p.provider_name;
+            item.appendChild(img);
+            item.appendChild(name);
+            container.appendChild(item);
+        });
+    }
+
+    function closeWhereToWatch() {
+        document.getElementById('where-to-watch-modal').classList.remove('active');
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        var modal = document.getElementById('where-to-watch-modal');
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) closeWhereToWatch();
+        });
+    });
+</script>
 {% endblock %}
