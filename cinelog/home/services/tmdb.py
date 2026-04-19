@@ -59,7 +59,7 @@ def fetch_movie_detail(movie_id):
         response.raise_for_status()
         return response.json()
     except requests.RequestException as exc:
-        logger.error("Failed to fetch watch providers for movie %s: %s", movie_id, exc)
+        logger.error("Failed to fetch movie detail for movie %s: %s", movie_id, exc)
         return {}
 
 
@@ -152,5 +152,5 @@ def get_watch_providers(movie_id, country="US"):
             "link": country_data.get("link", ""),
         }
     except requests.RequestException as exc:
-        logger.error("Failed to fetch watch providers for movie %s: %s", movie_id, exc)
+        logger.error("Failed to fetch movie detail for movie %s: %s", movie_id, exc)
         return {}
