@@ -1,3 +1,4 @@
+"""Tests for Cinelog home app views."""
 from django.test import TestCase, Client
 from django.urls import reverse, resolve
 from unittest.mock import patch, MagicMock
@@ -1243,12 +1244,16 @@ class AccountViewTest(TestCase):
 
 
 class WhereToWatchTest(TestCase):
+    """Tests for the where_to_watch_view endpoint."""
+
     def setUp(self):
+        """Set up test client and movie ID."""
         self.client = Client()
         self.movie_id = 550
 
     @patch("home.views.get_watch_providers")
     def test_where_to_watch_returns_200(self, mock_providers):
+        """Where to watch endpoint should return HTTP 200."""
         mock_providers.return_value = {
             "streaming": [{"provider_name": "Netflix", "logo_path": "/abc.jpg"}],
             "rent": [], "buy": [],
@@ -1259,6 +1264,7 @@ class WhereToWatchTest(TestCase):
 
     @patch("home.views.get_watch_providers")
     def test_where_to_watch_returns_json(self, mock_providers):
+        """Where to watch endpoint should return application/json content type."""
         mock_providers.return_value = {"streaming": [], "rent": [], "buy": [], "link": ""}
         response = self.client.get(reverse("where_to_watch", args=[self.movie_id]))
         self.assertEqual(response["Content-Type"], "application/json")
@@ -1269,6 +1275,7 @@ class WhereToWatchTest(TestCase):
 
     @patch("home.views.get_watch_providers")
     def test_where_to_watch_returns_providers(self, mock_providers):
+        """Where to watch endpoint should return provider data in response."""
         mock_providers.return_value = {
             "streaming": [{"provider_name": "Netflix", "logo_path": "/n.jpg"}],
             "rent": [{"provider_name": "Apple TV", "logo_path": "/a.jpg"}],
@@ -1282,14 +1289,18 @@ class WhereToWatchTest(TestCase):
 
     @patch("home.views.get_watch_providers")
     def test_where_to_watch_empty_when_unavailable(self, mock_providers):
+        """Where to watch endpoint should handle empty provider response gracefully."""
         mock_providers.return_value = {}
         response = self.client.get(reverse("where_to_watch", args=[self.movie_id]))
         self.assertEqual(response.status_code, 200)
 
 
 class WatchProvidersServiceTest(TestCase):
+    """Tests for the get_watch_providers TMDB service function."""
+
     @patch("home.services.tmdb.requests.get")
     def test_get_watch_providers_success(self, mock_get):
+        """get_watch_providers should return parsed provider lists on success."""
         mock_response = MagicMock()
         mock_response.json.return_value = {
             "results": {
@@ -1302,26 +1313,28 @@ class WatchProvidersServiceTest(TestCase):
         }
         mock_response.raise_for_status = MagicMock()
         mock_get.return_value = mock_response
-        from home.services.tmdb import get_watch_providers
+        from home.services.tmdb import get_watch_providers  # noqa: PLC0415
         result = get_watch_providers(550)
         self.assertEqual(len(result["streaming"]), 1)
         self.assertEqual(result["streaming"][0]["provider_name"], "Netflix")
 
     @patch("home.services.tmdb.requests.get")
     def test_get_watch_providers_request_failure(self, mock_get):
-        import requests as req
+        """get_watch_providers should return empty dict on request failure."""
+        import requests as req  # noqa: PLC0415
         mock_get.side_effect = req.RequestException("Network error")
-        from home.services.tmdb import get_watch_providers
+        from home.services.tmdb import get_watch_providers  # noqa: PLC0415
         result = get_watch_providers(550)
         self.assertEqual(result, {})
 
     @patch("home.services.tmdb.requests.get")
     def test_get_watch_providers_missing_country(self, mock_get):
+        """get_watch_providers should return empty lists when country code not in results."""
         mock_response = MagicMock()
         mock_response.json.return_value = {"results": {}}
         mock_response.raise_for_status = MagicMock()
         mock_get.return_value = mock_response
-        from home.services.tmdb import get_watch_providers
+        from home.services.tmdb import get_watch_providers  # noqa: PLC0415
         result = get_watch_providers(550)
         self.assertEqual(result["streaming"], [])
         self.assertEqual(result["rent"], [])

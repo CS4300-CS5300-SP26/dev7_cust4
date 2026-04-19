@@ -1,3 +1,4 @@
+"""Service functions for interacting with the TMDB API."""
 import requests
 from django.conf import settings
 
@@ -66,8 +67,8 @@ def get_cast(movie, limit=10):
     Returns:
         list: A list of cast member dicts.
     """
-    credits = movie.get("credits", {})
-    return credits.get("cast", [])[:limit]
+    movie_credits = movie.get("credits", {})
+    return movie_credits.get("cast", [])[:limit]
 
 
 def get_director(movie):
@@ -77,7 +78,8 @@ def get_director(movie):
     Returns:
         dict or None: Director crew member dict or None.
     """
-    crew = movie.get("credits", {}).get("crew", [])
+    movie_credits = movie.get("credits", {}).get("crew", [])
+    crew = movie_credits
     return next((member for member in crew if member["job"] == "Director"), None)
 
 
