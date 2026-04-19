@@ -1,6 +1,12 @@
-from django.shortcuts import render, redirect
+"""Views for the Cinelog home app."""
+from django.contrib import messages
 from django.contrib.auth.forms import UserCreationForm
+from django.http import JsonResponse
+from django.shortcuts import render, redirect
+from .models import Movie
+from .services import supabase, user_statistics
 from .services.tmdb import (
+    get_watch_providers,
     fetch_movies,
     fetch_movie_detail,
     get_cast,
@@ -8,12 +14,6 @@ from .services.tmdb import (
     search_movies,
     get_movie_trailer,
 )
-from .services import supabase, user_statistics
-from django.contrib import messages
-from .models import Movie
-from django.urls import reverse
-import json
-from django.http import JsonResponse
 
 
 def landing_page(request):
@@ -72,10 +72,7 @@ def movie_detail_view(request, movie_id):
     user_id = supabase.get_user_id(request)
 
     # Add to response if movie is already in watchlist.
-    if user_id and supabase.get_watchlist(user_id, movie_id=movie_id):
-        in_watchlist = True
-    else:
-        in_watchlist = False
+    in_watchlist = bool(user_id and supabase.get_watchlist(user_id, movie_id=movie_id))
 
     is_hidden = (
         bool(supabase.get_hidden_movies(user_id, movie_id=movie_id))
@@ -125,7 +122,9 @@ def signup_view(request):
             return redirect("signup")
 
         if password1 != password2:
-            messages.error(request, "Passwords do not match.")
+            messages.error(
+                request, "Passwords do not match."
+            )
             return redirect("signup")
 
         # User Django to validate other fields and ensure they meet requirements.
@@ -163,7 +162,9 @@ def login_view(request):
             return redirect("login")
 
         if not email or not password:
-            messages.error(request, "Please enter fill in each field.")
+            messages.error(
+                request, "Please enter fill in each field."
+            )
             return redirect("login")
 
         if supabase.supabase_log_in(request, email, password):
@@ -386,6 +387,15 @@ def library_view(request):
 
 
 def add_movie_view(request):
+    """
+    Add a movie to the user's personal library.
+
+    Args:
+        request (HTTP request): POST request containing movie details.
+
+    Returns:
+        HTTPResponseRedirect: Redirects to library page.
+    """
     user_id = supabase.get_user_id(request)
     if not user_id:
         return redirect("login")
@@ -600,17 +610,35 @@ def account_view(request):
     return render(request, "account.html", context)
 
 def calendar_view(request):
+    """
+    Renders the calendar page for the logged-in user.
+
+    Args:
+        request (HTTP request): Contains information about the request.
+
+    Returns:
+        HTTPResponse: A rendering of the calendar.html page.
+    """
     user_id = supabase.get_user_id(request)
     if not user_id:
         return redirect("login")
-    
+
     return render(request, "calendar.html")
 
-def calendar_events_api(request):
+def calendar_events_api(request):  # pylint: disable=unused-argument
+    """
+    Returns calendar events as JSON for the logged-in user.
+
+    Args:
+        request (HTTP request): Contains information about the request.
+
+    Returns:
+        JsonResponse: List of movie events with date, title, and metadata.
+    """
     user_id = supabase.get_user_id(request)
     if not user_id:
         return JsonResponse([], safe=False)
-    
+
     movies = Movie.objects.filter(user=user_id, watched_date__isnull=False)
     events = [
         {
@@ -626,3 +654,17 @@ def calendar_events_api(request):
         for movie in movies
     ]
     return JsonResponse(events, safe=False)
+
+def where_to_watch_view(request, movie_id):
+    """
+    Return streaming, rental, and purchase options for a movie as JSON.
+
+    Args:
+        request (HTTP request): Contains information about the request.
+        movie_id (int): TMDB movie ID.
+
+    Returns:
+        JsonResponse: Dict with keys 'streaming', 'rent', 'buy', 'link'.
+    """
+    providers = get_watch_providers(movie_id)
+    return JsonResponse(providers)
