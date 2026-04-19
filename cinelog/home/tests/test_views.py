@@ -1,13 +1,13 @@
 """Tests for Cinelog home app views."""
-import requests as req_module
-from home.services.tmdb import get_watch_providers
 from unittest.mock import patch, MagicMock
+import requests as req_module
+from django.contrib.auth import get_user_model
+from django.contrib.messages import get_messages
 from django.test import TestCase, Client
 from django.urls import reverse, resolve
-from django.contrib.auth import get_user_model
-from home.services import supabase
-from django.contrib.messages import get_messages
 from home import views
+from home.services import supabase
+from home.services.tmdb import get_watch_providers
 from django.http import HttpRequest
 
 User = get_user_model()
