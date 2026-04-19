@@ -122,7 +122,9 @@ def signup_view(request):
             return redirect("signup")
 
         if password1 != password2:
-            messages.error(request, "Passwords do not match.")
+            messages.error(
+                request, "Passwords do not match."
+            )
             return redirect("signup")
 
         # User Django to validate other fields and ensure they meet requirements.
@@ -160,7 +162,9 @@ def login_view(request):
             return redirect("login")
 
         if not email or not password:
-            messages.error(request, "Please enter fill in each field.")
+            messages.error(
+                request, "Please enter fill in each field."
+            )
             return redirect("login")
 
         if supabase.supabase_log_in(request, email, password):
@@ -186,7 +190,8 @@ def magic_login(request):
         if supabase.reached_limit_magic_login(email):
             messages.error(
                 request,
-                "Reached max limit of magic logins for the hour. Try later or login with password.",
+                "Reached max limit of magic logins for the hour. "
+                "Try later or login with password.",
             )
             return redirect("magic_login")
 
@@ -621,7 +626,7 @@ def calendar_view(request):
 
     return render(request, "calendar.html")
 
-def calendar_events_api(request):
+def calendar_events_api(request):  # pylint: disable=unused-argument
     """
     Returns calendar events as JSON for the logged-in user.
 

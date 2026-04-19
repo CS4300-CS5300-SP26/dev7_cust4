@@ -1,8 +1,10 @@
 """Service functions for interacting with the TMDB API."""
+import logging
 import requests
 from django.conf import settings
 
 BASE_URL = "https://api.themoviedb.org/3"
+logger = logging.getLogger(__name__)
 TMDB_KEY = settings.TMDB_API_KEY
 
 
@@ -56,7 +58,8 @@ def fetch_movie_detail(movie_id):
         response = requests.get(url, params=params, timeout=5)
         response.raise_for_status()
         return response.json()
-    except requests.RequestException:
+    except requests.RequestException as exc:
+        logger.error("Failed to fetch watch providers for movie %s: %s", movie_id, exc)
         return {}
 
 
@@ -78,8 +81,7 @@ def get_director(movie):
     Returns:
         dict or None: Director crew member dict or None.
     """
-    movie_credits = movie.get("credits", {}).get("crew", [])
-    crew = movie_credits
+    crew = movie.get("credits", {}).get("crew", [])
     return next((member for member in crew if member["job"] == "Director"), None)
 
 
@@ -149,5 +151,6 @@ def get_watch_providers(movie_id, country="US"):
             "buy": country_data.get("buy", []),
             "link": country_data.get("link", ""),
         }
-    except requests.RequestException:
+    except requests.RequestException as exc:
+        logger.error("Failed to fetch watch providers for movie %s: %s", movie_id, exc)
         return {}

@@ -1,7 +1,7 @@
 """Tests for Cinelog home app views."""
+from unittest.mock import patch, MagicMock
 from django.test import TestCase, Client
 from django.urls import reverse, resolve
-from unittest.mock import patch, MagicMock
 from django.contrib.auth import get_user_model
 from home.services import supabase
 from django.contrib.messages import get_messages
@@ -1313,7 +1313,6 @@ class WatchProvidersServiceTest(TestCase):
         }
         mock_response.raise_for_status = MagicMock()
         mock_get.return_value = mock_response
-        from home.services.tmdb import get_watch_providers  # noqa: PLC0415
         result = get_watch_providers(550)
         self.assertEqual(len(result["streaming"]), 1)
         self.assertEqual(result["streaming"][0]["provider_name"], "Netflix")
@@ -1321,9 +1320,7 @@ class WatchProvidersServiceTest(TestCase):
     @patch("home.services.tmdb.requests.get")
     def test_get_watch_providers_request_failure(self, mock_get):
         """get_watch_providers should return empty dict on request failure."""
-        import requests as req  # noqa: PLC0415
-        mock_get.side_effect = req.RequestException("Network error")
-        from home.services.tmdb import get_watch_providers  # noqa: PLC0415
+        mock_get.side_effect = req_module.RequestException("Network error")
         result = get_watch_providers(550)
         self.assertEqual(result, {})
 
@@ -1334,7 +1331,6 @@ class WatchProvidersServiceTest(TestCase):
         mock_response.json.return_value = {"results": {}}
         mock_response.raise_for_status = MagicMock()
         mock_get.return_value = mock_response
-        from home.services.tmdb import get_watch_providers  # noqa: PLC0415
         result = get_watch_providers(550)
         self.assertEqual(result["streaming"], [])
         self.assertEqual(result["rent"], [])
