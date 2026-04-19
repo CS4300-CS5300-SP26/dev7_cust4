@@ -1,0 +1,13 @@
+[run]
+source = .
+omit =
+    */migrations/*
+    */pycache/*
+    manage.py
+    cinelog/asgi.py
+    cinelog/wsgi.py
+    */tests.py
+
+[report]
+show_missing = True
+skip_covered = False
