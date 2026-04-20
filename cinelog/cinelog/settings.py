@@ -50,7 +50,7 @@ ALLOWED_HOSTS = [
 
 CSRF_TRUSTED_ORIGINS = [
     'https://cinelog-service-production.up.railway.app',
-    'cine-log.app', # custom domain
+    'https://cine-log.app', # custom domain
 ]
 
 # Application definition
