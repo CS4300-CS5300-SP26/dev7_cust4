@@ -45,7 +45,7 @@ ALLOWED_HOSTS = [
     'localhost', 
     '127.0.0.1',
     'cinelog-service-production.up.railway.app',
-    'PLACEHOLDER FOR CUSTOM DOMAIN NAME',
+    'cine-log.app', # custom domain
 ]
 
 CSRF_TRUSTED_ORIGINS = [
