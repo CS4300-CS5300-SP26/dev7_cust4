@@ -44,8 +44,8 @@ ALLOWED_HOSTS = [
     '.devedu.io',
     'localhost', 
     '127.0.0.1',
-    'cine-log-service-production.up.railway.app',
-    'cine-log.app',
+    'cinelog-service-production.up.railway.app',
+    'cine-log.app', # custom domain
 ]
 
 CSRF_TRUSTED_ORIGINS = [
