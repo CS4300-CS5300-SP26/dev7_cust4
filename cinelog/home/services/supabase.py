@@ -6,6 +6,7 @@ from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from unittest.mock import MagicMock
 import logging
+from home.models import Movie
 
 # Set a max for number of links user can recieve.
 MAX_EMAILS_1_HOUR = 4
@@ -29,11 +30,37 @@ def get_supabase_client():
     return client
 
 
+def get_supabase_admin():
+    """
+    Creates a supabase admin.
+
+    Returns:
+        Client: The supabase client that can be used to access Supabase admin functions.
+    """
+    url = getattr(settings, "SUPABASE_URL", None)
+    key = getattr(settings, "SERVER_KEY", None)
+
+    if not url or not key:
+        client = MagicMock()
+
+    else:
+        client = create_client(url, key)
+
+    return client
+
+
 # Create the client.
 supabase_client = get_supabase_client()
+supabase_admin = get_supabase_admin()
 
 
-def create_session(request, response, email, access_token):
+def get_user_supabase_client(access_token, refresh_token):
+    client = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
+    client.auth.set_session(access_token, refresh_token)
+    return client
+
+
+def create_session(request, response, email, access_token, refresh_token):
     """
     Save information about the user to the session to be used.
 
@@ -43,6 +70,7 @@ def create_session(request, response, email, access_token):
         email (str): Email submitted in form by user.
     """
     request.session["access_token"] = access_token
+    request.session["refresh_token"] = refresh_token
     request.session["supabase_user_email"] = email
     request.session["supabase_username"] = response.user.user_metadata.get("username")
     request.session["supabase_user_id"] = response.user.id
@@ -104,7 +132,13 @@ def supabase_log_in(request, email, password):
         )
 
         if response.session:
-            create_session(request, response, email, response.session.access_token)
+            create_session(
+                request,
+                response,
+                email,
+                response.session.access_token,
+                response.session.refresh_token,
+            )
 
         return True
 
@@ -233,7 +267,9 @@ def get_user_magic_link(request):
         if user:
             email = user.email
             # Save user data to session.
-            create_session(request, response, email, access_token)
+            create_session(
+                request, response, email, access_token, response.session.refresh_token
+            )
             return True
 
         else:
@@ -482,3 +518,68 @@ def get_hidden_movies(user_id, movie_id=None):
     except Exception as e:
         logging.error(f"get_hidden_movies exception for user {user_id}: {e}")
         return []
+
+
+def change_user_information(new_information, request):
+    """
+    Change the user's information in supabase.
+
+    Args:
+        new_information (dict): Contains the formatted information to send to supabase.
+        request (HTTP request): Contains information about the request.
+
+    Returns:
+        bool: If the change was successful or not.
+    """
+    try:
+        access_token = request.session.get("access_token")
+        refresh_token = request.session.get("refresh_token")
+
+        if not access_token or not refresh_token:
+            messages.error(request, "Session expired. Please log in again.")
+            return False
+
+        client = get_user_supabase_client(access_token, refresh_token)
+        response = client.auth.update_user(new_information)
+
+        if not response:
+            return False
+
+        # Update the session's copy of the username if sucessfully updated in supabase.
+        if "username" in new_information.get("data", {}):
+            request.session["supabase_username"] = new_information["data"]["username"]
+        return True
+
+    except Exception as e:
+        messages.error(request, e)
+        return False
+
+
+def delete_user_from_supabase(request):
+    """
+    Delete a user's account from Supabase.
+
+    Args:
+        request (HTTP request): Contains information about the request.
+
+    Returns:
+        bool: If the change was successful or not.
+    """
+    try:
+        user_id = request.session.get("supabase_user_id")
+
+        if not user_id:
+            return False
+
+        supabase_admin.auth.admin.delete_user(user_id)
+
+        # Remove the information stored in the database.
+        Movie.objects.filter(user=user_id).delete()
+
+        # Remove user's information from session.
+        request.session.flush()
+
+        return True
+
+    except Exception:
+        return False

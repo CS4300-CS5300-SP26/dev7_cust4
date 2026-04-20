@@ -14,6 +14,9 @@ from .services.tmdb import (
     search_movies,
     get_movie_trailer,
 )
+from .services import supabase, user_statistics
+from django.contrib import messages
+from .models import Movie
 
 
 def landing_page(request):
@@ -569,46 +572,6 @@ def search_movies_view(request):
         },
     )
 
-
-def account_view(request):
-    """
-    Renders the account page of the web application.
-    Args:
-        request (HTTP request): Contains information about the request.
-
-    Returns:
-        HTTPResponse: A rendering of the account page with the neccessary information to display.
-    """
-    user_id = supabase.get_user_id(request)
-    if not user_id:
-        messages.error(request, "Must be logged in.")
-        return render(request, "movies.html")
-
-    hidden_ids = supabase.get_hidden_movies(user_id)
-    movies = []
-    for mid in hidden_ids:
-        movie = fetch_movies(mid, single=True)
-        if movie.get("id"):
-            movies.append(movie)
-
-    top_genre, genre_data = user_statistics.get_genre_statistics(user_id)
-
-    context = {
-        "num_in_watchlist": user_statistics.get_size_of_watchlist(user_id),
-        "num_in_library": user_statistics.get_size_of_library(user_id),
-        "total_hours": user_statistics.get_num_hours_in_library(user_id),
-        "average_rating": user_statistics.get_average_rating(user_id),
-        "weekly_data": user_statistics.get_monthly_logged_movies(user_id),
-        "total_films": sum(user_statistics.get_library_months_for_year(user_id)),
-        "avg_month": user_statistics.get_logged_monthly_average(user_id),
-        "days_logged": user_statistics.get_days_logged(user_id),
-        "genres": genre_data,
-        "top_genre": top_genre,
-        "top_five": user_statistics.get_top_five_movies(user_id),
-        "movies": movies,
-    }
-    return render(request, "account.html", context)
-
 def calendar_view(request):
     """
     Renders the calendar page for the logged-in user.
@@ -654,6 +617,136 @@ def calendar_events_api(request):  # pylint: disable=unused-argument
         for movie in movies
     ]
     return JsonResponse(events, safe=False)
+
+def account_view(request):
+    """
+    Renders the account page of the web application.
+    Args:
+        request (HTTP request): Contains information about the request.
+
+    Returns:
+        HTTPResponse: A rendering of the account page with the neccessary information to display.
+    """
+    user_id = supabase.get_user_id(request)
+    if not user_id:
+        messages.error(request, "Must be logged in.")
+        return render(request, "movies.html")
+
+    hidden_ids = supabase.get_hidden_movies(user_id)
+    movies = []
+    for mid in hidden_ids:
+        movie = fetch_movies(mid, single=True)
+        if movie.get("id"):
+            movies.append(movie)
+
+    top_genre, genre_data = user_statistics.get_genre_statistics(user_id)
+
+    context = {
+        "num_in_watchlist": user_statistics.get_size_of_watchlist(user_id),
+        "num_in_library": user_statistics.get_size_of_library(user_id),
+        "total_hours": user_statistics.get_num_hours_in_library(user_id),
+        "average_rating": user_statistics.get_average_rating(user_id),
+        "weekly_data": user_statistics.get_monthly_logged_movies(user_id),
+        "total_films": sum(user_statistics.get_library_months_for_year(user_id)),
+        "avg_month": user_statistics.get_logged_monthly_average(user_id),
+        "days_logged": user_statistics.get_days_logged(user_id),
+        "genres": genre_data,
+        "top_genre": top_genre,
+        "top_five": user_statistics.get_top_five_movies(user_id),
+        "movies": movies,
+    }
+    return render(request, "account.html", context)
+
+def update_user_information(request):
+    """
+    Changes the user's information based on request sent.
+    Args:
+        request (HTTP request): Contains information about the request.
+
+    Returns:
+        HTTPResponse: A rendering of the correct page based on outcome of change.
+    """
+    if request.method != "POST":
+        return redirect("account")
+
+    user_id = supabase.get_user_id(request)
+
+    if not user_id:
+        messages.error(request, "Must be logged in to edit account information.")
+        return redirect("account")
+
+    update_field = request.POST.get("type")
+    next_url = request.POST.get("next")
+
+    if update_field == "username":
+        new_username = request.POST.get("username")
+        if not new_username:
+            messages.error(request, "Must enter at least 1 character for username.")
+            if next_url:
+                return redirect(next_url)
+            else:
+                return redirect("account")
+        info_for_supabase = {
+            "data": {"username": new_username},
+        }
+
+    elif update_field == "password":
+        password1 = request.POST.get("password1")
+        password2 = request.POST.get("password2")
+
+        # Check the passwords match.
+        if password1 != password2:
+            messages.error(request, "Passwords do not match.")
+            if next_url:
+                return redirect(next_url)
+            else:
+                return redirect("account")
+
+        info_for_supabase = {"password": password1}
+
+    else:
+        messages.error(
+            request, "Unable to change account information. Please try again."
+        )
+        return redirect(request.path)
+
+    updated = supabase.change_user_information(info_for_supabase, request)
+    if updated:
+        messages.success(request, "Information updated successfully.")
+    else:
+        messages.error(request, "Failed to update account.")
+
+    if next_url:
+        return redirect(next_url)
+
+    return redirect(request.path)
+
+
+def delete_user(request):
+    """
+    Deletes the users account and any information stored.
+    Args:
+        request (HTTP request): Contains information about the request.
+
+    Returns:
+        HTTPResponse: A rendering of the correct page based on outcome of change.
+    """
+    if request.method != "POST":
+        return redirect("account")
+
+    user_id = supabase.get_user_id(request)
+    if not user_id:
+        messages.error(request, "Must be logged in to edit account information.")
+        return redirect("account")
+
+    updated = supabase.delete_user_from_supabase(request)
+
+    if updated:
+        messages.success(request, "Your account has been deleted.")
+        return redirect("landing")
+    else:
+        messages.error(request, "Failed to update account.")
+        return redirect(request.path)
 
 def where_to_watch_view(request, movie_id):
     """
