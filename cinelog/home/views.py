@@ -572,45 +572,6 @@ def search_movies_view(request):
         },
     )
 
-
-def account_view(request):
-    """
-    Renders the account page of the web application.
-    Args:
-        request (HTTP request): Contains information about the request.
-
-    Returns:
-        HTTPResponse: A rendering of the account page with the neccessary information to display.
-    """
-    user_id = supabase.get_user_id(request)
-    if not user_id:
-        messages.error(request, "Must be logged in.")
-        return render(request, "movies.html")
-
-    hidden_ids = supabase.get_hidden_movies(user_id)
-    movies = []
-    for mid in hidden_ids:
-        movie = fetch_movies(mid, single=True)
-        if movie.get("id"):
-            movies.append(movie)
-
-    top_genre, genre_data = user_statistics.get_genre_statistics(user_id)
-
-    context = {
-        "num_in_watchlist": user_statistics.get_size_of_watchlist(user_id),
-        "num_in_library": user_statistics.get_size_of_library(user_id),
-        "total_hours": user_statistics.get_num_hours_in_library(user_id),
-        "average_rating": user_statistics.get_average_rating(user_id),
-        "weekly_data": user_statistics.get_monthly_logged_movies(user_id),
-        "total_films": sum(user_statistics.get_library_months_for_year(user_id)),
-        "avg_month": user_statistics.get_logged_monthly_average(user_id),
-        "days_logged": user_statistics.get_days_logged(user_id),
-        "genres": genre_data,
-        "top_genre": top_genre,
-        "top_five": user_statistics.get_top_five_movies(user_id),
-        "movies": movies,
-    }
-    return render(request, "account.html", context)
 def calendar_view(request):
     """
     Renders the calendar page for the logged-in user.
@@ -656,6 +617,45 @@ def calendar_events_api(request):  # pylint: disable=unused-argument
         for movie in movies
     ]
     return JsonResponse(events, safe=False)
+
+def account_view(request):
+    """
+    Renders the account page of the web application.
+    Args:
+        request (HTTP request): Contains information about the request.
+
+    Returns:
+        HTTPResponse: A rendering of the account page with the neccessary information to display.
+    """
+    user_id = supabase.get_user_id(request)
+    if not user_id:
+        messages.error(request, "Must be logged in.")
+        return render(request, "movies.html")
+
+    hidden_ids = supabase.get_hidden_movies(user_id)
+    movies = []
+    for mid in hidden_ids:
+        movie = fetch_movies(mid, single=True)
+        if movie.get("id"):
+            movies.append(movie)
+
+    top_genre, genre_data = user_statistics.get_genre_statistics(user_id)
+
+    context = {
+        "num_in_watchlist": user_statistics.get_size_of_watchlist(user_id),
+        "num_in_library": user_statistics.get_size_of_library(user_id),
+        "total_hours": user_statistics.get_num_hours_in_library(user_id),
+        "average_rating": user_statistics.get_average_rating(user_id),
+        "weekly_data": user_statistics.get_monthly_logged_movies(user_id),
+        "total_films": sum(user_statistics.get_library_months_for_year(user_id)),
+        "avg_month": user_statistics.get_logged_monthly_average(user_id),
+        "days_logged": user_statistics.get_days_logged(user_id),
+        "genres": genre_data,
+        "top_genre": top_genre,
+        "top_five": user_statistics.get_top_five_movies(user_id),
+        "movies": movies,
+    }
+    return render(request, "account.html", context)
 
 def update_user_information(request):
     """
@@ -747,3 +747,17 @@ def delete_user(request):
     else:
         messages.error(request, "Failed to update account.")
         return redirect(request.path)
+
+def where_to_watch_view(request, movie_id):
+    """
+    Return streaming, rental, and purchase options for a movie as JSON.
+
+    Args:
+        request (HTTP request): Contains information about the request.
+        movie_id (int): TMDB movie ID.
+
+    Returns:
+        JsonResponse: Dict with keys 'streaming', 'rent', 'buy', 'link'.
+    """
+    providers = get_watch_providers(movie_id)
+    return JsonResponse(providers)
