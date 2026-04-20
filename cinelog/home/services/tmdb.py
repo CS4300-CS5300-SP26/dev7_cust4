@@ -1,7 +1,10 @@
+"""Service functions for interacting with the TMDB API."""
+import logging
 import requests
 from django.conf import settings
 
 BASE_URL = "https://api.themoviedb.org/3"
+logger = logging.getLogger(__name__)
 TMDB_KEY = settings.TMDB_API_KEY
 
 
@@ -55,7 +58,8 @@ def fetch_movie_detail(movie_id):
         response = requests.get(url, params=params, timeout=5)
         response.raise_for_status()
         return response.json()
-    except requests.RequestException:
+    except requests.RequestException as exc:
+        logger.error("Failed to fetch movie detail for movie %s: %s", movie_id, exc)
         return {}
 
 
@@ -66,8 +70,8 @@ def get_cast(movie, limit=10):
     Returns:
         list: A list of cast member dicts.
     """
-    credits = movie.get("credits", {})
-    return credits.get("cast", [])[:limit]
+    movie_credits = movie.get("credits", {})
+    return movie_credits.get("cast", [])[:limit]
 
 
 def get_director(movie):
@@ -121,3 +125,32 @@ def get_movie_trailer(movie_id):
         return trailer
     except requests.RequestException:
         return None
+
+
+def get_watch_providers(movie_id, country="US"):
+    """
+    Fetch streaming, rental, and purchase providers for a movie.
+
+    Args:
+        movie_id (int): TMDB movie ID.
+        country (str): ISO 3166-1 country code (default "US").
+
+    Returns:
+        dict: Keys 'streaming', 'rent', 'buy' — each a list of provider dicts.
+              Returns empty dict if not available or request fails.
+    """
+    url = f"{BASE_URL}/movie/{movie_id}/watch/providers"
+    try:
+        response = requests.get(url, params={"api_key": TMDB_KEY}, timeout=5)
+        response.raise_for_status()
+        results = response.json().get("results", {})
+        country_data = results.get(country, {})
+        return {
+            "streaming": country_data.get("flatrate", []),
+            "rent": country_data.get("rent", []),
+            "buy": country_data.get("buy", []),
+            "link": country_data.get("link", ""),
+        }
+    except requests.RequestException as exc:
+        logger.error("Failed to fetch movie detail for movie %s: %s", movie_id, exc)
+        return {}

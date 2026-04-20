@@ -1,6 +1,7 @@
+"""URL configuration for the Cinelog home app."""
+from django.contrib import admin
 from django.urls import path
 from . import views
-from django.contrib import admin
 
 
 urlpatterns = [
@@ -36,4 +37,7 @@ urlpatterns = [
     path("account/", views.account_view, name="account"),
     path("account/update_user/", views.update_user_information, name="update_user"),
     path("account/delete_user/", views.delete_user, name="delete_user"),
+    path('calendar/', views.calendar_view, name='calendar'),
+    path('calendar/events/', views.calendar_events_api, name='calendar_events'),
+    path('movies/<int:movie_id>/where-to-watch/', views.where_to_watch_view, name='where_to_watch'),
 ]

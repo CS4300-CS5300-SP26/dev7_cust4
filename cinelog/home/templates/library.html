@@ -14,6 +14,11 @@
     <div class="hero-content">
         <div class="hero-text">
             <h1 class="hero-heading">My Library</h1>
+            <a href="{% url 'calendar' %}" 
+                class="btn mt-3" 
+                style="background-color: #027d96; color: white;">
+                📅 View Calendar
+            </a>
         </div>
     </div>
     <div aria-hidden="true" class="hero-blob hero-blob--bottom">
@@ -34,6 +39,7 @@
                     data-poster="{{ movie.poster_url }}"
                     data-rating="{{ movie.rating }}"
                     data-notes="{{ movie.notes }}"
+                    data-watched-date="{{ movie.watched_date|date:'Y-m-d' }}"
                     data-bs-toggle="modal"
                     data-bs-target="#editModal">
                 Edit
@@ -227,6 +233,14 @@
                                       rows="4"
                                       placeholder="What did you think?"></textarea>
                         </div>
+
+                        <div>
+                            <label class="form-label text-muted small">Date Watched <span class="text-muted fw-normal">(optional)</span></label>
+                            <input type="date"
+                                   name="watched_date"
+                                   id="edit-watched-date"
+                                   class="form-control bg-black text-white border-secondary">
+                        </div>
                     </div>
                 </div>
 
@@ -275,6 +289,7 @@
         document.getElementById('edit-poster-preview').alt      = btn.dataset.title;
         document.getElementById('edit-movie-title').textContent = btn.dataset.title;
         document.getElementById('edit-notes').value             = btn.dataset.notes;
+        document.getElementById('edit-watched-date').value = btn.dataset.watchedDate || '';
 
         const ratingInput = document.getElementById('edit-star' + btn.dataset.rating);
         if (ratingInput) ratingInput.checked = true;

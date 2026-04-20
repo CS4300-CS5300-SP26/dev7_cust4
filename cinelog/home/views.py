@@ -1,6 +1,12 @@
-from django.shortcuts import render, redirect
+"""Views for the Cinelog home app."""
+from django.contrib import messages
 from django.contrib.auth.forms import UserCreationForm
+from django.http import JsonResponse
+from django.shortcuts import render, redirect
+from .models import Movie
+from .services import supabase, user_statistics
 from .services.tmdb import (
+    get_watch_providers,
     fetch_movies,
     fetch_movie_detail,
     get_cast,
@@ -69,10 +75,7 @@ def movie_detail_view(request, movie_id):
     user_id = supabase.get_user_id(request)
 
     # Add to response if movie is already in watchlist.
-    if user_id and supabase.get_watchlist(user_id, movie_id=movie_id):
-        in_watchlist = True
-    else:
-        in_watchlist = False
+    in_watchlist = bool(user_id and supabase.get_watchlist(user_id, movie_id=movie_id))
 
     is_hidden = (
         bool(supabase.get_hidden_movies(user_id, movie_id=movie_id))
@@ -122,7 +125,9 @@ def signup_view(request):
             return redirect("signup")
 
         if password1 != password2:
-            messages.error(request, "Passwords do not match.")
+            messages.error(
+                request, "Passwords do not match."
+            )
             return redirect("signup")
 
         # User Django to validate other fields and ensure they meet requirements.
@@ -160,7 +165,9 @@ def login_view(request):
             return redirect("login")
 
         if not email or not password:
-            messages.error(request, "Please enter fill in each field.")
+            messages.error(
+                request, "Please enter fill in each field."
+            )
             return redirect("login")
 
         if supabase.supabase_log_in(request, email, password):
@@ -383,6 +390,15 @@ def library_view(request):
 
 
 def add_movie_view(request):
+    """
+    Add a movie to the user's personal library.
+
+    Args:
+        request (HTTP request): POST request containing movie details.
+
+    Returns:
+        HTTPResponseRedirect: Redirects to library page.
+    """
     user_id = supabase.get_user_id(request)
     if not user_id:
         return redirect("login")
@@ -436,11 +452,13 @@ def edit_movie_view(request):
         movie_id = request.POST.get("movie_id")
         rating = request.POST.get("rating", 3)
         notes = request.POST.get("notes", "").strip()
+        watched_date = request.POST.get("watched_date", "").strip() or None
 
         movie = Movie.objects.filter(id=movie_id, user=user_id).first()
         if movie:
             movie.rating = rating
             movie.notes = notes
+            movie.watched_date = watched_date
             movie.save()
             messages.success(request, f'"{movie.title}" updated.')
         else:
@@ -593,7 +611,51 @@ def account_view(request):
         "movies": movies,
     }
     return render(request, "account.html", context)
+def calendar_view(request):
+    """
+    Renders the calendar page for the logged-in user.
 
+    Args:
+        request (HTTP request): Contains information about the request.
+
+    Returns:
+        HTTPResponse: A rendering of the calendar.html page.
+    """
+    user_id = supabase.get_user_id(request)
+    if not user_id:
+        return redirect("login")
+
+    return render(request, "calendar.html")
+
+def calendar_events_api(request):  # pylint: disable=unused-argument
+    """
+    Returns calendar events as JSON for the logged-in user.
+
+    Args:
+        request (HTTP request): Contains information about the request.
+
+    Returns:
+        JsonResponse: List of movie events with date, title, and metadata.
+    """
+    user_id = supabase.get_user_id(request)
+    if not user_id:
+        return JsonResponse([], safe=False)
+
+    movies = Movie.objects.filter(user=user_id, watched_date__isnull=False)
+    events = [
+        {
+            "id": movie.id,
+            "title": movie.title,
+            "start": movie.watched_date.isoformat(),
+            "extendedProps": {
+                "poster": movie.poster_url,
+                "rating": movie.rating,
+                "notes": movie.notes,
+            }
+        }
+        for movie in movies
+    ]
+    return JsonResponse(events, safe=False)
 
 def update_user_information(request):
     """

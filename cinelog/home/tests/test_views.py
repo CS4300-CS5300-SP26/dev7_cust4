@@ -1,10 +1,13 @@
+"""Tests for Cinelog home app views."""
+from unittest.mock import patch, MagicMock
+import requests as req_module
+from django.contrib.auth import get_user_model
+from django.contrib.messages import get_messages
 from django.test import TestCase, Client
 from django.urls import reverse, resolve
-from unittest.mock import patch, MagicMock
-from django.contrib.auth import get_user_model
-from home.services import supabase
-from django.contrib.messages import get_messages
 from home import views
+from home.services import supabase
+from home.services.tmdb import get_watch_providers
 from django.http import HttpRequest
 
 User = get_user_model()
@@ -1380,3 +1383,95 @@ class AccountViewTests(TestCase):
 
         messages = list(get_messages(response.wsgi_request))
         self.assertTrue(any("Must be logged in" in str(m) for m in messages))
+class WhereToWatchTest(TestCase):
+    """Tests for the where_to_watch_view endpoint."""
+
+    def setUp(self):
+        """Set up test client and movie ID."""
+        self.client = Client()
+        self.movie_id = 550
+
+    @patch("home.views.get_watch_providers")
+    def test_where_to_watch_returns_200(self, mock_providers):
+        """Where to watch endpoint should return HTTP 200."""
+        mock_providers.return_value = {
+            "streaming": [{"provider_name": "Netflix", "logo_path": "/abc.jpg"}],
+            "rent": [], "buy": [],
+            "link": "https://www.themoviedb.org/movie/550/watch",
+        }
+        response = self.client.get(reverse("where_to_watch", args=[self.movie_id]))
+        self.assertEqual(response.status_code, 200)
+
+    @patch("home.views.get_watch_providers")
+    def test_where_to_watch_returns_json(self, mock_providers):
+        """Where to watch endpoint should return application/json content type."""
+        mock_providers.return_value = {"streaming": [], "rent": [], "buy": [], "link": ""}
+        response = self.client.get(reverse("where_to_watch", args=[self.movie_id]))
+        self.assertEqual(response["Content-Type"], "application/json")
+        data = response.json()
+        self.assertIn("streaming", data)
+        self.assertIn("rent", data)
+        self.assertIn("buy", data)
+
+    @patch("home.views.get_watch_providers")
+    def test_where_to_watch_returns_providers(self, mock_providers):
+        """Where to watch endpoint should return provider data in response."""
+        mock_providers.return_value = {
+            "streaming": [{"provider_name": "Netflix", "logo_path": "/n.jpg"}],
+            "rent": [{"provider_name": "Apple TV", "logo_path": "/a.jpg"}],
+            "buy": [],
+            "link": "https://www.themoviedb.org/movie/550/watch",
+        }
+        response = self.client.get(reverse("where_to_watch", args=[self.movie_id]))
+        data = response.json()
+        self.assertEqual(len(data["streaming"]), 1)
+        self.assertEqual(data["streaming"][0]["provider_name"], "Netflix")
+
+    @patch("home.views.get_watch_providers")
+    def test_where_to_watch_empty_when_unavailable(self, mock_providers):
+        """Where to watch endpoint should handle empty provider response gracefully."""
+        mock_providers.return_value = {}
+        response = self.client.get(reverse("where_to_watch", args=[self.movie_id]))
+        self.assertEqual(response.status_code, 200)
+
+
+class WatchProvidersServiceTest(TestCase):
+    """Tests for the get_watch_providers TMDB service function."""
+
+    @patch("home.services.tmdb.requests.get")
+    def test_get_watch_providers_success(self, mock_get):
+        """get_watch_providers should return parsed provider lists on success."""
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "results": {
+                "US": {
+                    "flatrate": [{"provider_name": "Netflix", "logo_path": "/n.jpg"}],
+                    "rent": [], "buy": [],
+                    "link": "https://example.com",
+                }
+            }
+        }
+        mock_response.raise_for_status = MagicMock()
+        mock_get.return_value = mock_response
+        result = get_watch_providers(550)
+        self.assertEqual(len(result["streaming"]), 1)
+        self.assertEqual(result["streaming"][0]["provider_name"], "Netflix")
+
+    @patch("home.services.tmdb.requests.get")
+    def test_get_watch_providers_request_failure(self, mock_get):
+        """get_watch_providers should return empty dict on request failure."""
+        mock_get.side_effect = req_module.RequestException("Network error")
+        result = get_watch_providers(550)
+        self.assertEqual(result, {})
+
+    @patch("home.services.tmdb.requests.get")
+    def test_get_watch_providers_missing_country(self, mock_get):
+        """get_watch_providers should return empty lists when country code not in results."""
+        mock_response = MagicMock()
+        mock_response.json.return_value = {"results": {}}
+        mock_response.raise_for_status = MagicMock()
+        mock_get.return_value = mock_response
+        result = get_watch_providers(550)
+        self.assertEqual(result["streaming"], [])
+        self.assertEqual(result["rent"], [])
+        self.assertEqual(result["buy"], [])
