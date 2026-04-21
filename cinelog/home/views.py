@@ -17,6 +17,8 @@ from .services.tmdb import (
 from .services.ai_rec import get_movie_recommendation
 from django.contrib import messages
 from .models import Movie
+import hashlib
+
 
 
 def landing_page(request):
