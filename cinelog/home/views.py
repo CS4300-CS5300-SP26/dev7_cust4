@@ -14,7 +14,7 @@ from .services.tmdb import (
     search_movies,
     get_movie_trailer,
 )
-from .services import supabase, user_statistics
+from .services.ai_rec import get_movie_recommendation
 from django.contrib import messages
 from .models import Movie
 
@@ -761,3 +761,31 @@ def where_to_watch_view(request, movie_id):
     """
     providers = get_watch_providers(movie_id)
     return JsonResponse(providers)
+
+def recommendations(request):
+    return render(request, 'rec.html')
+
+def recommendations_result(request):
+    """
+    Handles generating movie recommendations via AI.
+    Accepts either a POST request with user preferences,
+    or a GET request with ?mode=surprise for no preferences.
+    """
+    movies = []  # safe default in case something goes wrong
+
+    if request.method == 'POST':
+        genres = request.POST.getlist('genres')
+        era    = request.POST.get('era', '')
+        awards = request.POST.getlist('awards') 
+        person = request.POST.get('person', '')
+        movies = get_movie_recommendation(genres, era, awards, person)
+        print("RESULT:", movies)
+
+    elif request.GET.get('mode') == 'surprise':
+        movies = get_movie_recommendation([], '', '')
+        print("SURPRISE RESULT:", movies)
+
+    else:
+        return redirect('recommendations')
+
+    return render(request, 'rec_result.html', {'movies': movies})
