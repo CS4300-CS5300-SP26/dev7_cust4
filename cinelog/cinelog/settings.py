@@ -33,6 +33,11 @@ SUPABASE_KEY = config("SUPABASE_KEY", default="")
 
 OPENAI_API_KEY = config("OPENAI_API_KEY", default="")
 
+if not OPENAI_API_KEY:
+    raise ImproperlyConfigured(
+        "OPENAI_API_KEY is not set. Add it to your .env file and restart the server."
+    )
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
