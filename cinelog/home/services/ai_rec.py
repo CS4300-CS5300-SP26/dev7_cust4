@@ -32,7 +32,7 @@ def get_movie_recommendation(genres, era, person, awards=None, excluded_titles=N
     client = OpenAI(api_key=settings.OPENAI_API_KEY)
     message = client.chat.completions.create(
         model="gpt-5-mini",
-        max_completion_tokens=4000,
+        max_completion_tokens=3000,
         messages=[
             {
                 "role": "system",
@@ -46,7 +46,7 @@ def get_movie_recommendation(genres, era, person, awards=None, excluded_titles=N
             {
                 "role": "user",
                 "content": (
-                    f"Recommend exactly 3 perfect movies for someone with these preferences: {preferences}. "
+                    f"Recommend exactly 3 perfect movies for someone with these preferences: {preferences}.{liked_note}{exclusion_note}"
                     "Reply with ONLY a JSON array in this format, no extra text, no code fences: "
                     '[{"title": "...", "year": "...", "reason": "..."}, {"title": "...", "year": "...", "reason": "1 sentence max"}]'
                 )
