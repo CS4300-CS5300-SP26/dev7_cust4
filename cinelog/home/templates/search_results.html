@@ -7,109 +7,265 @@
     <div aria-hidden="true" class="hero-blob hero-blob--top">
         <div class="hero-blob__shape hero-blob__shape--top"></div>
     </div>
-
     <div class="hero-content">
         <div class="hero-text">
             <h1 class="hero-heading">
-                {% if search_query %}
-                    Search Results
-                {% else %}
-                    Search Movies
-                {% endif %}
+                {% if search_query %}Search Results{% else %}Search Movies{% endif %}
             </h1>
         </div>
     </div>
-
     <div aria-hidden="true" class="hero-blob hero-blob--bottom">
         <div class="hero-blob__shape hero-blob__shape--bottom"></div>
     </div>
 </div>
 
 <!-- Search Form -->
-<div class="search-container" style="max-width: 600px; margin: 20px auto; padding: 0 20px;">
-    <form method="GET" action="{% url 'search_movies' %}" class="search-form" style="display: flex; gap: 10px; background: white; border-radius: 50px; padding: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-        <input 
-            type="text" 
-            name="q" 
-            class="search-input" 
-            placeholder="Search for any movie by title" 
-            value="{{ search_query }}"
-            style="flex: 1; padding: 12px 20px; border: none; border-radius: 50px; font-size: 16px; outline: none; color: black; background: white;"
-        >
-        <button type="submit" class="search-button" style="background: #367588; color: white; border: none; border-radius: 50px; padding: 0 25px; cursor: pointer; font-weight: bold;">
+<div class="search-container" style="max-width:600px;margin:20px auto;padding:0 20px;">
+    <form method="GET" action="{% url 'search_movies' %}" class="search-form"
+          style="display:flex;gap:10px;background:white;border-radius:50px;padding:5px;box-shadow:0 2px 10px rgba(0,0,0,0.1);">
+        <input type="hidden" name="rating_mode" id="form-rating-mode" value="{{ rating_mode }}">
+        <input type="text" name="q" class="search-input"
+               placeholder="Search for any movie by title"
+               value="{{ search_query }}"
+               style="flex:1;padding:12px 20px;border:none;border-radius:50px;font-size:16px;outline:none;color:black;background:white;">
+        <button type="submit" class="search-button"
+                style="background:#367588;color:white;border:none;border-radius:50px;padding:0 25px;cursor:pointer;font-weight:bold;">
             Search
         </button>
     </form>
 </div>
 
+<!-- Rating Mode Toggle -->
+<div id="rating-toggle" style="max-width:700px;margin:16px auto 0;padding:0 20px;text-align:center;">
+    <p style="color:#aaa;font-size:13px;margin-bottom:10px;letter-spacing:.05em;">SHOW RATINGS AS</p>
+    <div style="display:inline-flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+        {% for mode, label in ratings_modes %}
+        <button
+            class="rating-mode-btn {% if rating_mode == mode %}active{% endif %}"
+            data-mode="{{ mode }}"
+            style="padding:8px 18px;border-radius:20px;border:2px solid #367588;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;
+                   {% if rating_mode == mode %}background:#367588;color:white;{% else %}background:transparent;color:#367588;{% endif %}">
+            {{ label }}
+        </button>
+        {% endfor %}
+    </div>
+    <p style="color:#888;font-size:11px;margin-top:8px;">
+        <input type="checkbox" id="remember-mode" style="cursor:pointer;margin-right:4px;"
+               {% if remember_mode %}checked{% endif %}>
+        <label for="remember-mode" style="cursor:pointer;">Remember my choice</label>
+    </p>
+</div>
+
 <!-- Search Results Grid -->
 {% if search_query %}
-<div class="results-container" style="max-width: 1200px; margin: 0 auto; padding: 20px;">
-    <h2 class="row-title" style="margin-bottom: 20px;">
+<div class="results-container" style="max-width:1200px;margin:20px auto 0;padding:20px;">
+    <h2 class="row-title" style="margin-bottom:20px;">
         Showing {{ result_count }} result{{ result_count|pluralize }} for "{{ search_query }}"
     </h2>
-    
+
     {% if movies %}
-        <div class="movie-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 20px;">
-            {% for movie in movies %}
-                <a href="{% url 'movie_detail' movie.id %}" class="movie-card-link" style="text-decoration: none;">
-                    <div class="movie-card" style="background: #1a1a1a; border-radius: 8px; overflow: hidden; transition: transform 0.2s; height: 100%;">
-                        {% if movie.poster_path %}
-                            <img src="https://image.tmdb.org/t/p/w200{{ movie.poster_path }}" 
-                                 alt="{{ movie.title }}"
-                                 style="width: 100%; height: auto; display: block;">
+    <div class="movie-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:20px;">
+        {% for movie in movies %}
+        <a href="{% url 'movie_detail' movie.id %}" class="movie-card-link" style="text-decoration:none;">
+            <div class="movie-card" style="background:#1a1a1a;border-radius:8px;overflow:hidden;transition:transform .2s;height:100%;display:flex;flex-direction:column;">
+                {% if movie.poster_path %}
+                <img src="https://image.tmdb.org/t/p/w200{{ movie.poster_path }}"
+                     alt="{{ movie.title }}"
+                     style="width:100%;height:auto;display:block;">
+                {% else %}
+                <div style="width:100%;height:225px;background:#333;display:flex;align-items:center;justify-content:center;color:#666;">
+                    No Image
+                </div>
+                {% endif %}
+
+                <div class="movie-info" style="padding:10px;flex:1;display:flex;flex-direction:column;gap:4px;">
+                    <h3 style="font-size:14px;font-weight:600;margin:0;color:white;line-height:1.3;">{{ movie.title }}</h3>
+
+                    {% if movie.release_date %}
+                    <p style="font-size:11px;margin:0;color:#999;">{{ movie.release_date|slice:":4" }}</p>
+                    {% endif %}
+
+                    <!-- Rating display: Fan Favorites -->
+                    {% if rating_mode == "fan" %}
+                        {% if movie.audience_score %}
+                        <p style="font-size:13px;margin:4px 0 0;color:#ffd700;">
+                            🎬 {{ movie.audience_score }}<span style="font-size:10px;color:#aaa;">/10</span>
+                            <span style="font-size:10px;color:#aaa;display:block;">Fan Score</span>
+                        </p>
                         {% else %}
-                            <div class="no-poster" style="width: 100%; height: 225px; background: #333; display: flex; align-items: center; justify-content: center; color: #666;">
-                                No Image
-                            </div>
+                        <p style="font-size:11px;color:#666;margin:4px 0 0;">Fan score unavailable</p>
                         {% endif %}
-                        <div class="movie-info" style="padding: 10px;">
-                            <h3 style="font-size: 14px; font-weight: 600; margin: 0 0 5px 0; color: white; line-height: 1.3;">{{ movie.title }}</h3>
-                            <p style="font-size: 12px; margin: 0; color: #ffd700;">★ {{ movie.vote_average|floatformat:1 }}</p>
-                            {% if movie.release_date %}
-                                <p style="font-size: 11px; margin: 5px 0 0 0; color: #999;">{{ movie.release_date|slice:":4" }}</p>
+
+                    <!-- Rating display: Critic's Choice -->
+                    {% elif rating_mode == "critic" %}
+                        {% if movie.critic_score_display %}
+                        <p style="font-size:13px;margin:4px 0 0;
+                            {% if movie.critic_score >= 60 %}color:#fa320a;{% else %}color:#67b346;{% endif %}">
+                            🍅 {{ movie.critic_score_display }}
+                            <span style="font-size:10px;color:#aaa;display:block;">Rotten Tomatoes</span>
+                        </p>
+                        {% else %}
+                        <p style="font-size:11px;color:#666;margin:4px 0 0;">Critic score unavailable</p>
+                        {% endif %}
+
+                    <!-- Rating display: Aggregate (average of both) -->
+                    {% elif rating_mode == "aggregate" %}
+                        {% if movie.audience_score and movie.critic_score %}
+                        {% with avg=movie.audience_score %}
+                        <p style="font-size:13px;margin:4px 0 0;color:#a78bfa;">
+                            ⭐ {{ movie.audience_score }} &nbsp;🍅 {{ movie.critic_score_display }}
+                            <span style="font-size:10px;color:#aaa;display:block;">Fan &amp; Critic</span>
+                        </p>
+                        {% endwith %}
+                        {% elif movie.audience_score %}
+                        <p style="font-size:13px;margin:4px 0 0;color:#ffd700;">
+                            🎬 {{ movie.audience_score }}/10
+                            <span style="font-size:10px;color:#666;display:block;">Critic score N/A</span>
+                        </p>
+                        {% elif movie.critic_score_display %}
+                        <p style="font-size:13px;margin:4px 0 0;color:#fa320a;">
+                            🍅 {{ movie.critic_score_display }}
+                            <span style="font-size:10px;color:#666;display:block;">Fan score N/A</span>
+                        </p>
+                        {% else %}
+                        <p style="font-size:11px;color:#666;margin:4px 0 0;">Ratings unavailable</p>
+                        {% endif %}
+
+                    <!-- Rating display: Comparison (both side by side with visual gap) -->
+                    {% elif rating_mode == "comparison" %}
+                    <div style="margin-top:6px;display:flex;flex-direction:column;gap:3px;">
+                        <div style="display:flex;align-items:center;gap:4px;">
+                            <span style="font-size:11px;color:#aaa;width:28px;">🎬</span>
+                            {% if movie.audience_score %}
+                            <span style="font-size:12px;color:#ffd700;font-weight:600;">{{ movie.audience_score }}<span style="font-size:9px;color:#aaa;">/10</span></span>
+                            {% else %}
+                            <span style="font-size:11px;color:#555;">N/A</span>
+                            {% endif %}
+                        </div>
+                        <div style="display:flex;align-items:center;gap:4px;">
+                            <span style="font-size:11px;color:#aaa;width:28px;">🍅</span>
+                            {% if movie.critic_score_display %}
+                            <span style="font-size:12px;font-weight:600;
+                                {% if movie.critic_score >= 60 %}color:#fa320a;{% else %}color:#67b346;{% endif %}">
+                                {{ movie.critic_score_display }}
+                            </span>
+                            {% else %}
+                            <span style="font-size:11px;color:#555;">N/A</span>
                             {% endif %}
                         </div>
                     </div>
-                </a>
-            {% endfor %}
-        </div>
+                    {% endif %}
+
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
     {% else %}
-        <div class="no-results" style="text-align: center; padding: 50px;">
-            <p>No movies found for "{{ search_query }}"</p>
-            <p>Try different keywords or browse our popular movies.</p>
-        </div>
+    <div style="text-align:center;padding:50px;">
+        <p>No movies found for "{{ search_query }}"</p>
+        <p>Try different keywords or browse our popular movies.</p>
+    </div>
     {% endif %}
 </div>
 {% else %}
-<div class="results-container" style="max-width: 1200px; margin: 0 auto; padding: 50px 20px;">
-    <div style="text-align: center;">
-        <p>Enter a movie title above to search for a movie!</p>
-        <p style="margin-top: 10px; color: #999;">Examples: "Inception", "The Matrix", "Toy Story"</p>
-    </div>
+<div style="max-width:1200px;margin:0 auto;padding:50px 20px;text-align:center;">
+    <p>Enter a movie title above to search for a movie!</p>
+    <p style="margin-top:10px;color:#999;">Examples: "Inception", "The Matrix", "Toy Story"</p>
 </div>
 {% endif %}
 
 <style>
-    .movie-card:hover {
-        transform: scale(1.05);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-    }
-    
-    .movie-card-link {
-        text-decoration: none;
-    }
-    
-    @media (max-width: 768px) {
-        .movie-grid {
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)) !important;
-            gap: 15px !important;
-        }
-        
-        .movie-info h3 {
-            font-size: 12px !important;
-        }
-    }
+.movie-card:hover { transform:scale(1.05);box-shadow:0 4px 15px rgba(0,0,0,.3); }
+.movie-card-link { text-decoration:none; }
+.rating-mode-btn:hover { opacity:.85; }
+@media (max-width:768px) {
+    .movie-grid { grid-template-columns:repeat(auto-fill,minmax(120px,1fr)) !important;gap:15px !important; }
+    .movie-info h3 { font-size:12px !important; }
+}
 </style>
 
+<script>
+(function() {
+    const STORAGE_KEY = "cinelog_rating_mode";
+
+    // On load: if remember is set, restore from localStorage
+    const saved = localStorage.getItem(STORAGE_KEY);
+    const rememberBox = document.getElementById("remember-mode");
+    const formMode = document.getElementById("form-rating-mode");
+    const currentMode = formMode ? formMode.value : "fan";
+
+    if (rememberBox) {
+        // If localStorage has a saved mode and it differs from current, it will
+        // have already been applied via session on page load — just sync checkbox
+        rememberBox.checked = !!saved;
+
+        rememberBox.addEventListener("change", function() {
+            if (this.checked) {
+                localStorage.setItem(STORAGE_KEY, currentMode);
+            } else {
+                localStorage.removeItem(STORAGE_KEY);
+            }
+        });
+    }
+
+    // Rating mode button clicks
+    document.querySelectorAll(".rating-mode-btn").forEach(function(btn) {
+        btn.addEventListener("click", function() {
+            const mode = this.dataset.mode;
+
+            // Update hidden form field so next search uses this mode
+            if (formMode) formMode.value = mode;
+
+            // Visual feedback
+            document.querySelectorAll(".rating-mode-btn").forEach(function(b) {
+                b.style.background = "transparent";
+                b.style.color = "#367588";
+            });
+            this.style.background = "#367588";
+            this.style.color = "white";
+
+            // Persist to session via AJAX
+            fetch("{% url 'set_rating_mode' %}", {
+                method: "POST",
+                headers: {"Content-Type": "application/json", "X-CSRFToken": getCookie("csrftoken")},
+                body: JSON.stringify({rating_mode: mode})
+            });
+
+            // Persist to localStorage if remember is checked
+            if (rememberBox && rememberBox.checked) {
+                localStorage.setItem(STORAGE_KEY, mode);
+            }
+
+            // Re-run the current search with the new mode if there's a query
+            const urlParams = new URLSearchParams(window.location.search);
+            const q = urlParams.get("q");
+            if (q) {
+                window.location.href = "{% url 'search_movies' %}?q=" + encodeURIComponent(q) + "&rating_mode=" + mode;
+            }
+        });
+    });
+
+    // On page load, if remember is checked and localStorage has a mode, use it
+    if (saved && saved !== currentMode) {
+        // Redirect to apply saved mode (only if no explicit mode in URL)
+        const urlParams = new URLSearchParams(window.location.search);
+        if (!urlParams.get("rating_mode")) {
+            const q = urlParams.get("q");
+            if (q) {
+                window.location.replace("{% url 'search_movies' %}?q=" + encodeURIComponent(q) + "&rating_mode=" + saved);
+            }
+        }
+    }
+
+    function getCookie(name) {
+        let v = null;
+        document.cookie.split(";").forEach(function(c) {
+            const [k, val] = c.trim().split("=");
+            if (k === name) v = decodeURIComponent(val);
+        });
+        return v;
+    }
+})();
+</script>
 {% endblock %}
