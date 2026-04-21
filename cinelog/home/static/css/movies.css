@@ -22,6 +22,7 @@
   overflow: hidden;
   transform: translateZ(0);
   filter: blur(48px);
+  pointer-events: none;
 }
 
 .hero-blob--top {
@@ -206,3 +207,32 @@
   text-decoration: none;
   color: inherit;
 }
+
+@media (max-width: 1200px) {
+  .rec-banner {
+    margin: 1.5rem 10rem !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .rec-banner {
+    margin: 1.5rem 4rem !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .rec-banner {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    margin: 1.5rem 1rem !important;
+  }
+
+  .rec-banner-actions {
+    width: 100%;
+  }
+
+  .rec-banner-actions button {
+    flex: 1;
+  }
+}
+

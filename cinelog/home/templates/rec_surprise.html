@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+<!-- Note: this just displays a loading screen and cancel button while AI generates movie picks -->
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+.film-card {
+    width: 60px;
+    height: 90px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.film-card:nth-child(2) { animation-delay: 0.2s; }
+.film-card:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.3; }
+    50%       { opacity: 0.8; }
+}
+
+.cancel-btn {
+    font-size: 13px;
+    color: rgba(255,255,255,0.3);
+    border: 1px solid rgba(255,255,255,0.1);
+    background: transparent;
+    padding: 7px 18px;
+    border-radius: 7px;
+    cursor: pointer;
+    margin-top: 4px;
+}
+
+.cancel-btn:hover { color: rgba(255,255,255,0.6); }
+</style>
+
+<div style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:60vh; gap:14px;">
+
+    <!-- pulsing movie cards -->
+    <div style="display:flex; gap:8px; margin-bottom:4px;">
+        <div class="film-card"></div>
+        <div class="film-card"></div>
+        <div class="film-card"></div>
+    </div>
+
+    <p style="font-size:15px; font-weight:500; color:white;">Searching for your perfect match…</p>
+    <p style="font-size:13px; color:rgba(255,255,255,0.3);">Based on your watch history and ratings</p>
+
+    <a href="{% url 'watchlist' %}" class="cancel-btn">Cancel</a>
+</div>
+
+<!-- auto redirect to result once page loads -->
+<script>
+    window.onload = function() {
+        window.location.href = "{% url 'recommendations_result' %}?mode=surprise";
+    }
+</script>
+
+{% endblock %}

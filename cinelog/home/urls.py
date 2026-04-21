@@ -40,4 +40,7 @@ urlpatterns = [
     path('calendar/', views.calendar_view, name='calendar'),
     path('calendar/events/', views.calendar_events_api, name='calendar_events'),
     path('movies/<int:movie_id>/where-to-watch/', views.where_to_watch_view, name='where_to_watch'),
+    path('recommendations/', views.recommendations, name='recommendations'),
+    path('recommendations/surprise/', views.recommendations_surprise, name='recommendations_surprise'),
+    path('recommendations/result/', views.recommendations_result, name='recommendations_result'),
 ]

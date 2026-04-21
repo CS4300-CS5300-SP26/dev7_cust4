@@ -18,7 +18,7 @@ from .services.tmdb import (
     discover_movies_by_filters_only,
     search_person_id,
 )
-from .services import supabase, user_statistics
+from .services.ai_rec import get_movie_recommendation
 from django.contrib import messages
 from .models import Movie
 
@@ -806,3 +806,97 @@ def where_to_watch_view(request, movie_id):
     """
     providers = get_watch_providers(movie_id)
     return JsonResponse(providers)
+
+def recommendations(request):
+    user_id = supabase.get_user_id(request)
+    if not user_id:
+        messages.error(request, "Must be logged in to generate recommendations.")
+        return redirect('signup')
+    return render(request, 'rec.html')
+
+def recommendations_surprise(request):
+    user_id = supabase.get_user_id(request)
+    if not user_id:
+        messages.error(request, "Must be logged in to generate recommendations.")
+        return redirect('signup')
+    return render(request, 'rec_surprise.html')
+
+def recommendations_result(request):
+    """
+    Handles generating movie recommendations via AI.
+    Accepts either a POST request with user preferences,
+    or a GET request with ?mode=surprise for no preferences.
+    """
+    user_id = supabase.get_user_id(request)
+    if not user_id:
+        messages.error(request, "Must be logged in to generate recommendations.")
+        return redirect('signup')
+
+    ai_results = [] # this stores raw AI output
+    user_id = supabase.get_user_id(request)
+    excluded_titles = []
+    liked_movies = []
+        
+    # rate limiting (5 requests/hr per user)
+    if user_id:
+        cache_key = f"rec_rate_limit_{user_id}"
+        request_count = cache.get(cache_key, 0)
+
+        if request_count >= 5:
+            messages.error(request, "You've reached the recommendation limit (5 per hour). Please try again later.")
+            return redirect('recommendations')
+
+        # resets after 1 hour
+        cache.set(cache_key, request_count + 1, timeout=3600)
+
+    if user_id:
+        # library movies  excluded but also used for AI context 
+        library_movies = Movie.objects.filter(user=user_id)
+        for m in library_movies:
+            excluded_titles.append(m.title)
+            liked_movies.append({'title': m.title, 'rating': m.rating})
+
+        # movies in watchlist will be excluded
+        watchlist_ids = supabase.get_watchlist(user_id)
+        for movie_id in watchlist_ids:
+            movie = fetch_movies(movie_id, single=True)
+            if movie.get('title'):
+                excluded_titles.append(movie['title'])
+
+    if request.method == 'POST':
+        genres = request.POST.getlist('genres')
+        era    = request.POST.get('era', '')
+        person = request.POST.get('person', '')
+        awards = request.POST.getlist('awards') 
+
+        # skip API call if same preferences were used for the same user (caching)
+        prefs = f"{user_id}{sorted(genres)}{era}{person}{sorted(awards)}"
+        cache_key = "rec_" + hashlib.md5(prefs.encode()).hexdigest()
+
+        ai_results = cache.get(cache_key)
+        if not ai_results:
+            ai_results = get_movie_recommendation(genres, era, person, awards, excluded_titles)
+            cache.set(cache_key, ai_results, timeout=3600)
+            print("RESULT FROM AI:", ai_results)
+        else:
+            print("RESULT FROM CACHE:", ai_results)
+
+    elif request.GET.get('mode') == 'surprise':
+        ai_results = get_movie_recommendation([], '', '', [], excluded_titles, liked_movies)
+        print("SURPRISE RESULT:", ai_results)
+
+    else:
+        return redirect('recommendations')
+    
+    # loop through AI recommended movies
+    for movie in ai_results:
+        # search TMDB using the title the AI returned
+        results = search_movies(movie['title'])
+        if results:
+            tmdb = results[0] # this grabs the first result
+            movie['poster'] = tmdb.get('poster_path', '')
+            movie['tmdb_id'] = tmdb.get('id', '')
+            movie['overview'] = tmdb.get('overview', '')
+            movie['vote_average'] = tmdb.get('vote_average', '')
+
+    return render(request, 'rec_result.html', {'movies': ai_results})
