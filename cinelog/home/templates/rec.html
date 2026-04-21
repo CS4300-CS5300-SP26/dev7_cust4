@@ -79,6 +79,11 @@
 }
 
 .submit-btn:hover { opacity: 0.85; }
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+} 
+
 </style>
 
 <div class="hero-container relative">
@@ -133,7 +138,20 @@
     <p class="field-label">ACTOR / DIRECTOR (optional)</p>
     <input class="text-input" type="text" name="person" placeholder="e.g. director, actor, keyword…" />
 
-    <button type="submit" class="submit-btn">Generate my recommendations →</button>
+    <button type="submit" class="submit-btn" onclick="showLoading()">Generate my recommendations →</button>
 </form>
+
+<!-- add loading screen so users know the AI is generating recs -->
+<div id="loading" style="display:none; flex-direction:column; align-items:center; justify-content:center; padding: 40px; gap: 16px;">
+    <div style="width:48px; height:48px; border-radius:50%; border:3px solid rgba(77,217,192,0.2); border-top-color:#4dd9c0; animation:spin 0.9s linear infinite;"></div>
+    <p style="color:rgba(255,255,255,0.5); font-size:14px;">Finding your perfect picks…</p>
+</div>
+
+<script>
+function showLoading() {
+    document.querySelector('form').style.display = 'none';
+    document.getElementById('loading').style.display = 'flex';
+}
+</script>
 
 {% endblock %}
