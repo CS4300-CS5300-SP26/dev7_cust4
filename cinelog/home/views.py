@@ -545,32 +545,81 @@ def unhide_movie(request, movie_id):
 
 def search_movies_view(request):
     """
-    Search for movies with TMDB search API
+    Search for movies with TMDB search API.
+    Supports rating_mode: fan | critic | aggregate | comparison
     """
+    from .services.tmdb import fetch_ratings
+    import json as _json
 
     query = request.GET.get("q", "").strip()
+    # Rating mode: fan | critic | aggregate | comparison
+    # Priority: GET param > session > default 'fan'
+    rating_mode = request.GET.get("rating_mode") or request.session.get("rating_mode", "fan")
+    # Persist in session
+    request.session["rating_mode"] = rating_mode
+
+    RATING_MODES = [
+        ("fan", "🎬 Fan Favorites"),
+        ("critic", "🍅 Critic's Choice"),
+        ("aggregate", "⭐ Both / Aggregate"),
+        ("comparison", "📊 Comparison"),
+    ]
 
     if not query:
-        # If no query, just show the search page with no results
         return render(
             request,
             "search_results.html",
-            {"movies": [], "search_query": "", "is_search": True},
+            {"movies": [], "search_query": "", "is_search": True,
+             "rating_mode": rating_mode, "ratings_modes": RATING_MODES,
+             "remember_mode": bool(request.session.get("remember_rating_mode"))},
         )
 
-    # Search for movies
-    search_results = search_movies(query)
+    raw_results = search_movies(query)
+
+    # Enrich with ratings when critic data is needed
+    needs_critic = rating_mode in ("critic", "aggregate", "comparison")
+    movies = []
+    for m in raw_results:
+        if needs_critic:
+            m = fetch_ratings(m)
+        else:
+            # Just attach audience score from TMDB
+            raw = m.get("vote_average")
+            m = dict(m)
+            m["audience_score"] = round(float(raw), 1) if raw else None
+            m["critic_score"] = None
+            m["critic_score_display"] = None
+        movies.append(m)
 
     return render(
         request,
         "search_results.html",
         {
-            "movies": search_results,
+            "movies": movies,
             "search_query": query,
             "is_search": True,
-            "result_count": len(search_results),
+            "result_count": len(movies),
+            "rating_mode": rating_mode,
+            "ratings_modes": RATING_MODES,
+            "remember_mode": bool(request.session.get("remember_rating_mode")),
         },
     )
+
+
+def set_rating_mode(request):
+    """AJAX endpoint to persist rating mode preference in session."""
+    import json as _json
+    from django.http import JsonResponse
+    if request.method == "POST":
+        try:
+            data = _json.loads(request.body)
+            mode = data.get("rating_mode", "fan")
+            if mode in ("fan", "critic", "aggregate", "comparison"):
+                request.session["rating_mode"] = mode
+                return JsonResponse({"status": "ok", "rating_mode": mode})
+        except (ValueError, KeyError):
+            pass
+    return JsonResponse({"status": "error"}, status=400)
 
 def calendar_view(request):
     """
