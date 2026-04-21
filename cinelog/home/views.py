@@ -13,6 +13,10 @@ from .services.tmdb import (
     get_director,
     search_movies,
     get_movie_trailer,
+    get_genre_list,
+    search_movies_with_filters,
+    discover_movies_by_filters_only,
+    search_person_id,
 )
 from .services import supabase, user_statistics
 from django.contrib import messages
@@ -545,32 +549,73 @@ def unhide_movie(request, movie_id):
 
 def search_movies_view(request):
     """
-    Search for movies with TMDB search API
+    Search for movies by title OR by filters only.
+    Supports both simple search (for tests) and advanced filters.
     """
-
-    query = request.GET.get("q", "").strip()
-
-    if not query:
-        # If no query, just show the search page with no results
-        return render(
-            request,
-            "search_results.html",
-            {"movies": [], "search_query": "", "is_search": True},
-        )
-
-    # Search for movies
-    search_results = search_movies(query)
-
-    return render(
-        request,
-        "search_results.html",
-        {
-            "movies": search_results,
-            "search_query": query,
-            "is_search": True,
-            "result_count": len(search_results),
-        },
-    )
+    query = request.GET.get('q', '').strip()
+    
+    # Collect filters from request
+    filters = {
+        'genres': request.GET.getlist('genres'),
+        'actor': request.GET.get('actor', '').strip(),
+        'rating_min': request.GET.get('rating_min'),
+        'rating_max': request.GET.get('rating_max'),
+        'year': request.GET.get('year'),
+    }
+    # Remove empty filters
+    filters = {k: v for k, v in filters.items() if v}
+    
+    # Check if user has provided ANY search criteria (title OR filters)
+    has_search_criteria = bool(query) or bool(filters)
+    
+    if not has_search_criteria:
+        # No search criteria - show empty state with filter UI
+        genres = get_genre_list()
+        current_year = 2026
+        years = range(current_year - 20, current_year + 1)
+        
+        return render(request, 'search_results.html', {
+            'movies': [],
+            'search_query': '',
+            'has_search_criteria': False,
+            'genres': genres,
+            'years': years,
+            'filters': filters,
+            'is_filter_only': False,
+            # Add these for test compatibility
+            'result_count': 0,
+            'is_search': False,
+        })
+    
+    # Search with filters (with or without title query)
+    if query and filters:
+        # Both title and filters
+        search_results = search_movies_with_filters(query, filters)
+    elif query:
+        # Just title search (matches original search_movies behavior)
+        search_results = search_movies(query)
+    else:
+        # Filter-only search: discover movies without title
+        search_results = discover_movies_by_filters_only(filters)
+    
+    # Get genre list for filter UI
+    genres = get_genre_list()
+    current_year = 2026
+    years = range(current_year - 20, current_year + 1)
+    
+    # For test compatibility, add 'is_search' flag and 'result_count'
+    return render(request, 'search_results.html', {
+        'movies': search_results,
+        'search_query': query,
+        'has_search_criteria': True,
+        'result_count': len(search_results),
+        'genres': genres,
+        'years': years,
+        'filters': filters,
+        'is_filter_only': not bool(query) and bool(filters),
+        # Add these for test compatibility
+        'is_search': bool(query),  # True when there's a search query
+    })
 
 def calendar_view(request):
     """
