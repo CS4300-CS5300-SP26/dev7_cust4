@@ -154,3 +154,54 @@ def get_watch_providers(movie_id, country="US"):
     except requests.RequestException as exc:
         logger.error("Failed to fetch movie detail for movie %s: %s", movie_id, exc)
         return {}
+
+
+def fetch_ratings(tmdb_movie):
+    """
+    Fetch audience (TMDB) and critic (Rotten Tomatoes via OMDB) ratings
+    for a movie. Attaches them to the movie dict as:
+      - audience_score: float (0-10 scale) or None
+      - critic_score: int (RT % 0-100) or None
+      - critic_score_display: str like "74%" or None
+
+    Args:
+        tmdb_movie (dict): A TMDB movie result dict (must have 'title' and optionally 'release_date').
+
+    Returns:
+        dict: The same dict with rating keys added.
+    """
+    from django.conf import settings as django_settings
+
+    movie = dict(tmdb_movie)
+
+    # Audience score from TMDB (already 0-10)
+    raw = movie.get("vote_average")
+    movie["audience_score"] = round(float(raw), 1) if raw else None
+
+    # Critic score from OMDB (Rotten Tomatoes %)
+    omdb_key = getattr(django_settings, "OMDB_API_KEY", "")
+    movie["critic_score"] = None
+    movie["critic_score_display"] = None
+
+    if omdb_key:
+        title = movie.get("title", "")
+        year = movie.get("release_date", "")[:4] if movie.get("release_date") else ""
+        params = {"apikey": omdb_key, "t": title, "type": "movie"}
+        if year:
+            params["y"] = year
+        try:
+            resp = requests.get("https://www.omdbapi.com/", params=params, timeout=5)
+            resp.raise_for_status()
+            data = resp.json()
+            if data.get("Response") == "True":
+                for rating in data.get("Ratings", []):
+                    if rating.get("Source") == "Rotten Tomatoes":
+                        val = rating["Value"].replace("%", "").strip()
+                        if val.isdigit():
+                            movie["critic_score"] = int(val)
+                            movie["critic_score_display"] = f"{val}%"
+                        break
+        except requests.RequestException as exc:
+            logger.error("OMDB fetch failed for '%s': %s", title, exc)
+
+    return movie
