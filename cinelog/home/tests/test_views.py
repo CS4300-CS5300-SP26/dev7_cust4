@@ -1473,3 +1473,144 @@ class WatchProvidersServiceTest(TestCase):
         self.assertEqual(result["streaming"], [])
         self.assertEqual(result["rent"], [])
         self.assertEqual(result["buy"], [])
+        
+
+
+
+
+class SearchMoviesWithFiltersTest(TestCase):
+    """Tests for the search_movies_with_filters service function."""
+    
+    def setUp(self):
+        self.mock_movie_data = {
+            "results": [
+                {"id": 1, "title": "Test Movie", "vote_average": 8.5}
+            ]
+        }
+    
+    @patch("home.services.tmdb.requests.get")
+    @patch("home.services.tmdb.get_genre_list")
+    @patch("home.services.tmdb.search_person_id")
+    def test_search_with_genre_filter(self, mock_person, mock_genres, mock_get):
+        """Test search_movies_with_filters with genre filter."""
+        from home.services.tmdb import search_movies_with_filters
+        
+        mock_genres.return_value = [{"id": 28, "name": "Action"}]
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = self.mock_movie_data
+        mock_get.return_value = mock_response
+        
+        results = search_movies_with_filters("test", {"genres": ["Action"]})
+        
+        self.assertEqual(len(results), 1)
+        # Verify API was called with genre parameter
+        args, kwargs = mock_get.call_args
+        self.assertEqual(kwargs["params"]["with_genres"], "28")
+        
+    @patch("home.services.tmdb.requests.get")
+    @patch("home.services.tmdb.search_person_id")
+    def test_search_with_actor_filter(self, mock_person, mock_get):
+        """Test search_movies_with_filters with actor filter."""
+        from home.services.tmdb import search_movies_with_filters
+        
+        mock_person.return_value = 287  # Brad Pitt's ID
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = self.mock_movie_data
+        mock_get.return_value = mock_response
+        
+        results = search_movies_with_filters("fight club", {"actor": "Brad Pitt"})
+        
+        self.assertEqual(len(results), 1)
+        args, kwargs = mock_get.call_args
+        self.assertEqual(kwargs["params"]["with_cast"], 287)
+        
+    @patch("home.services.tmdb.requests.get")
+    def test_search_with_empty_query(self, mock_get):
+        """Test search_movies_with_filters with empty query returns empty list."""
+        from home.services.tmdb import search_movies_with_filters
+        
+        results = search_movies_with_filters("", {})
+        
+        self.assertEqual(results, [])
+        mock_get.assert_not_called()
+
+
+class DiscoverMoviesByFiltersOnlyTest(TestCase):
+    """Tests for the discover_movies_by_filters_only service function."""
+    
+    def setUp(self):
+        self.mock_movie_data = {
+            "results": [
+                {"id": 1, "title": "Action Movie 2024", "vote_average": 7.5}
+            ]
+        }
+    
+    @patch("home.services.tmdb.requests.get")
+    @patch("home.services.tmdb.get_genre_list")
+    def test_discover_by_genre_and_year(self, mock_genres, mock_get):
+        """Test discovering movies by genre and year only."""
+        from home.services.tmdb import discover_movies_by_filters_only
+        
+        mock_genres.return_value = [{"id": 28, "name": "Action"}]
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = self.mock_movie_data
+        mock_get.return_value = mock_response
+        
+        results = discover_movies_by_filters_only({
+            'genres': ['Action'],
+            'year': '2024'
+        })
+        
+        self.assertEqual(len(results), 1)
+        args, kwargs = mock_get.call_args
+        self.assertEqual(kwargs["params"]["primary_release_year"], 2024)
+        
+    @patch("home.services.tmdb.requests.get")
+    def test_discover_by_rating_range(self, mock_get):
+        """Test discovering movies by rating range."""
+        from home.services.tmdb import discover_movies_by_filters_only
+        
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = self.mock_movie_data
+        mock_get.return_value = mock_response
+        
+        results = discover_movies_by_filters_only({
+            'rating_min': '7',
+            'rating_max': '9'
+        })
+        
+        self.assertEqual(len(results), 1)
+        args, kwargs = mock_get.call_args
+        self.assertEqual(kwargs["params"]["vote_average.gte"], 7.0)
+        self.assertEqual(kwargs["params"]["vote_average.lte"], 9.0)
+        
+    @patch("home.services.tmdb.requests.get")
+    def test_discover_empty_filters(self, mock_get):
+        """Test discover_movies_by_filters_only with empty filters."""
+        from home.services.tmdb import discover_movies_by_filters_only
+        
+        # Mock a successful response
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"results": []}
+        mock_get.return_value = mock_response
+        
+        results = discover_movies_by_filters_only({})
+        
+        # Should return a list (empty or with results)
+        self.assertIsInstance(results, list)
+        
+    @patch("home.services.tmdb.requests.get")
+    def test_discover_api_failure(self, mock_get):
+        """Test discover_movies_by_filters_only handles API failure."""
+        from home.services.tmdb import discover_movies_by_filters_only
+        
+        mock_get.side_effect = Exception("API Error")
+        
+        results = discover_movies_by_filters_only({'genres': ['Action']})
+        
+        self.assertEqual(results, [])
