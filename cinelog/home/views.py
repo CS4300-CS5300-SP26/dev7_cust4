@@ -829,6 +829,7 @@ def recommendations_result(request):
     or a GET request with ?mode=surprise for no preferences.
     """
     user_id = supabase.get_user_id(request)
+    
     if not user_id:
         messages.error(request, "Must be logged in to generate recommendations.")
         return redirect('signup')
@@ -846,8 +847,8 @@ def recommendations_result(request):
             messages.error(request, "You've reached the recommendation limit (5 per hour). Please try again later.")
             return redirect('recommendations')
 
-        # resets after 1 hour
-        cache.set(cache_key, request_count + 1, timeout=3600)
+        # resets after 1 hour 
+        cache.set(cache_key, request_count + 1, timeout=200) # change back to 3600 after demo
 
     if user_id:
         # library movies  excluded but also used for AI context 
