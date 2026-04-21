@@ -31,6 +31,8 @@ TMDB_API_KEY = config("TMDB_API_KEY", default="")
 SUPABASE_URL = config("SUPABASE_URL", default="")
 SUPABASE_KEY = config("SUPABASE_KEY", default="")
 
+OPENAI_API_KEY = config("OPENAI_API_KEY", default="")
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
@@ -65,6 +67,7 @@ INSTALLED_APPS = [
 
     'home',
     'behave_django',
+    'ratelimit'
 ]
 
 MIDDLEWARE = [
