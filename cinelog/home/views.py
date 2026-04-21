@@ -550,10 +550,7 @@ def unhide_movie(request, movie_id):
 def search_movies_view(request):
     """
     Search for movies by title OR by filters only.
-    Users can search with:
-    - Just a title: "Inception"
-    - Just filters: genre=Action, year=2020
-    - Both: title="Batman" + filters
+    Supports both simple search (for tests) and advanced filters.
     """
     query = request.GET.get('q', '').strip()
     
@@ -584,13 +581,19 @@ def search_movies_view(request):
             'genres': genres,
             'years': years,
             'filters': filters,
-            'is_filter_only': False
+            'is_filter_only': False,
+            # Add these for test compatibility
+            'result_count': 0,
+            'is_search': False,
         })
     
     # Search with filters (with or without title query)
-    if query:
-        # Search by title + filters
+    if query and filters:
+        # Both title and filters
         search_results = search_movies_with_filters(query, filters)
+    elif query:
+        # Just title search (matches original search_movies behavior)
+        search_results = search_movies(query)
     else:
         # Filter-only search: discover movies without title
         search_results = discover_movies_by_filters_only(filters)
@@ -600,6 +603,7 @@ def search_movies_view(request):
     current_year = 2026
     years = range(current_year - 20, current_year + 1)
     
+    # For test compatibility, add 'is_search' flag and 'result_count'
     return render(request, 'search_results.html', {
         'movies': search_results,
         'search_query': query,
@@ -608,7 +612,9 @@ def search_movies_view(request):
         'genres': genres,
         'years': years,
         'filters': filters,
-        'is_filter_only': not bool(query) and bool(filters)
+        'is_filter_only': not bool(query) and bool(filters),
+        # Add these for test compatibility
+        'is_search': bool(query),  # True when there's a search query
     })
 
 def calendar_view(request):

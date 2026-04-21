@@ -1104,7 +1104,7 @@ class SearchTemplateContentTests(TestCase):
         self.assertContains(response, "<form")
         self.assertContains(response, 'method="GET"')
         self.assertContains(response, 'name="q"')
-        self.assertContains(response, 'placeholder="Search for any movie by title"')
+        self.assertContains(response, 'placeholder="Search for any movie by title..."')
 
     @patch("home.views.search_movies")
     def test_template_contains_search_button(self, mock_search):
@@ -1123,10 +1123,8 @@ class SearchTemplateContentTests(TestCase):
 
         response = self.client.get(self.search_url)
 
-        self.assertContains(response, "Examples:")
-        self.assertContains(response, '"Inception"')
-        self.assertContains(response, '"The Matrix"')
-        self.assertContains(response, '"Toy Story"')
+        self.assertContains(response, "Enter a movie title above to search")
+        
 
     @patch("home.views.search_movies")
     def test_template_does_not_show_examples_after_search(self, mock_search):
