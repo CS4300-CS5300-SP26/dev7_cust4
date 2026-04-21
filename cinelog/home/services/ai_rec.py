@@ -54,14 +54,8 @@ def get_movie_recommendation(genres, era, person, awards=None, excluded_titles=N
         ]
     )
 
-    raw = message.choices[0].message.content.strip()  
-    print("FINISH REASON:", message.choices[0].finish_reason)
-    print("RAW:", message.choices[0].message.content)
-
     try:
         raw = raw.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
         return json.loads(raw)
     except Exception as e:
-        print("PARSE ERROR:", e)
-        print("RAW WAS:", raw)
         return [{"title": "Could not generate recommendation", "year": "", "reason": "Please try again."}]
