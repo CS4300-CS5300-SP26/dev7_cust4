@@ -27,7 +27,6 @@ urlpatterns = [
     path("watchlist/", views.watchlist_view, name="watchlist"),
     path("library/", views.library_view, name="library"),
     path("add-movie/", views.add_movie_view, name="add_movie"),
-    path("admin/", admin.site.urls),
     path("library/edit/", views.edit_movie_view, name="edit_movie"),
     path(
         "library/remove/<int:movie_id>/", views.remove_movie_view, name="remove_movie"
