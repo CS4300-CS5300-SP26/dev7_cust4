@@ -765,13 +765,33 @@ def where_to_watch_view(request, movie_id):
 def recommendations(request):
     return render(request, 'rec.html')
 
+def recommendations_surprise(request):
+    return render(request, 'rec_surprise.html')
+
 def recommendations_result(request):
     """
     Handles generating movie recommendations via AI.
     Accepts either a POST request with user preferences,
     or a GET request with ?mode=surprise for no preferences.
     """
-    movies = []  # safe default in case something goes wrong
+    ai_results = [] # this stores raw AI output
+    user_id = supabase.get_user_id(request)
+    excluded_titles = []
+    liked_movies = []
+
+    if user_id:
+        # library movies  excluded but also used for AI context 
+        library_movies = Movie.objects.filter(user=user_id)
+        for m in library_movies:
+            excluded_titles.append(m.title)
+            liked_movies.append({'title': m.title, 'rating': m.rating})
+
+        # movies in watchlist will be excluded
+        watchlist_ids = supabase.get_watchlist(user_id)
+        for movie_id in watchlist_ids:
+            movie = fetch_movies(movie_id, single=True)
+            if movie.get('title'):
+                excluded_titles.append(movie['title'])
 
     if request.method == 'POST':
         genres = request.POST.getlist('genres')
@@ -779,14 +799,25 @@ def recommendations_result(request):
         person = request.POST.get('person', '')
         awards = request.POST.getlist('awards') 
 
-        movies = get_movie_recommendation(genres, era, person, awards)
-        print("RESULT:", movies)
+        ai_results = get_movie_recommendation(genres, era, person, awards, excluded_titles)
+        print("RESULT:", ai_results)
 
     elif request.GET.get('mode') == 'surprise':
-        movies = get_movie_recommendation([], '', '')
-        print("SURPRISE RESULT:", movies)
+        ai_results = get_movie_recommendation([], '', '', [], excluded_titles, liked_movies)
+        print("SURPRISE RESULT:", ai_results)
 
     else:
         return redirect('recommendations')
+    
+    # loop through AI recommended movies
+    for movie in ai_results:
+        # search TMDB using the title the AI returned
+        results = search_movies(movie['title'])
+        if results:
+            tmdb = results[0] # this grabs the first result
+            movie['poster'] = tmdb.get('poster_path', '')
+            movie['tmdb_id'] = tmdb.get('id', '')
+            movie['overview'] = tmdb.get('overview', '')
+            movie['vote_average'] = tmdb.get('vote_average', '')
 
-    return render(request, 'rec_result.html', {'movies': movies})
+    return render(request, 'rec_result.html', {'movies': ai_results})
