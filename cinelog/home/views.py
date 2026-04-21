@@ -776,9 +776,10 @@ def recommendations_result(request):
     if request.method == 'POST':
         genres = request.POST.getlist('genres')
         era    = request.POST.get('era', '')
-        awards = request.POST.getlist('awards') 
         person = request.POST.get('person', '')
-        movies = get_movie_recommendation(genres, era, awards, person)
+        awards = request.POST.getlist('awards') 
+
+        movies = get_movie_recommendation(genres, era, person, awards)
         print("RESULT:", movies)
 
     elif request.GET.get('mode') == 'surprise':
