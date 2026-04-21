@@ -16,6 +16,7 @@ from .services.tmdb import (
 )
 from .services.ai_rec import get_movie_recommendation
 from django.contrib import messages
+from ratelimit.decorators import ratelimit
 from .models import Movie
 
 
@@ -768,6 +769,7 @@ def recommendations(request):
 def recommendations_surprise(request):
     return render(request, 'rec_surprise.html')
 
+@ratelimit(key='user', rate='5/h', method=['GET', 'POST'], block=True)
 def recommendations_result(request):
     """
     Handles generating movie recommendations via AI.
@@ -778,7 +780,7 @@ def recommendations_result(request):
     user_id = supabase.get_user_id(request)
     excluded_titles = []
     liked_movies = []
-
+        
     if user_id:
         # library movies  excluded but also used for AI context 
         library_movies = Movie.objects.filter(user=user_id)
