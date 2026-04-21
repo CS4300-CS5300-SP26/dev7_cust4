@@ -21,6 +21,7 @@
     </div>
 </div>
 
+{% if is_authenticated %}
 <!-- ── Recommendation Banner ── -->
 <div class="rec-banner" style="position: relative; display: flex; align-items: center; gap: 18px; margin: 1.5rem 20rem; padding: 18px 24px; background: rgba(255,255,255,0.03); border: 1px solid rgba(77,217,192,0.3); border-radius: 12px; overflow: hidden;">
 
@@ -42,8 +43,6 @@
         </button>
     </div>
 </div>
-
-{% if is_authenticated %}
 <!-- Sort dropdown. -->
     <div class="flex justify-start mx-14 z-50">
     <div

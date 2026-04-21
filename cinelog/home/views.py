@@ -763,9 +763,17 @@ def where_to_watch_view(request, movie_id):
     return JsonResponse(providers)
 
 def recommendations(request):
+    user_id = supabase.get_user_id(request)
+    if not user_id:
+        messages.error(request, "Must be logged in to generate recommendations.")
+        return redirect('signup')
     return render(request, 'rec.html')
 
 def recommendations_surprise(request):
+    user_id = supabase.get_user_id(request)
+    if not user_id:
+        messages.error(request, "Must be logged in to generate recommendations.")
+        return redirect('signup')
     return render(request, 'rec_surprise.html')
 
 def recommendations_result(request):
@@ -774,6 +782,11 @@ def recommendations_result(request):
     Accepts either a POST request with user preferences,
     or a GET request with ?mode=surprise for no preferences.
     """
+    user_id = supabase.get_user_id(request)
+    if not user_id:
+        messages.error(request, "Must be logged in to generate recommendations.")
+        return redirect('signup')
+
     ai_results = [] # this stores raw AI output
     user_id = supabase.get_user_id(request)
     excluded_titles = []
