@@ -824,8 +824,17 @@ def recommendations_result(request):
         person = request.POST.get('person', '')
         awards = request.POST.getlist('awards') 
 
-        ai_results = get_movie_recommendation(genres, era, person, awards, excluded_titles)
-        print("RESULT:", ai_results)
+        # skip API call if same preferences were used for the same user (caching)
+        prefs = f"{user_id}{sorted(genres)}{era}{person}{sorted(awards)}"
+        cache_key = "rec_" + hashlib.md5(prefs.encode()).hexdigest()
+
+        ai_results = cache.get(cache_key)
+        if not ai_results:
+            ai_results = get_movie_recommendation(genres, era, person, awards, excluded_titles)
+            cache.set(cache_key, ai_results, timeout=3600)
+            print("RESULT FROM AI:", ai_results)
+        else:
+            print("RESULT FROM CACHE:", ai_results)
 
     elif request.GET.get('mode') == 'surprise':
         ai_results = get_movie_recommendation([], '', '', [], excluded_titles, liked_movies)
