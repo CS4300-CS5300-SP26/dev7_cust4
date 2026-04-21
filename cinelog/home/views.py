@@ -16,7 +16,6 @@ from .services.tmdb import (
 )
 from .services.ai_rec import get_movie_recommendation
 from django.contrib import messages
-from ratelimit.decorators import ratelimit
 from .models import Movie
 
 
@@ -769,7 +768,6 @@ def recommendations(request):
 def recommendations_surprise(request):
     return render(request, 'rec_surprise.html')
 
-@ratelimit(key='user', rate='5/h', method=['GET', 'POST'], block=True)
 def recommendations_result(request):
     """
     Handles generating movie recommendations via AI.
@@ -781,6 +779,18 @@ def recommendations_result(request):
     excluded_titles = []
     liked_movies = []
         
+    # rate limiting (5 requests/hr per user)
+    if user_id:
+        cache_key = f"rec_rate_limit_{user_id}"
+        request_count = cache.get(cache_key, 0)
+
+        if request_count >= 5:
+            messages.error(request, "You've reached the recommendation limit (5 per hour). Please try again later.")
+            return redirect('recommendations')
+
+        # resets after 1 hour
+        cache.set(cache_key, request_count + 1, timeout=3600)
+
     if user_id:
         # library movies  excluded but also used for AI context 
         library_movies = Movie.objects.filter(user=user_id)
