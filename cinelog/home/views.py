@@ -548,9 +548,6 @@ def search_movies_view(request):
     Search for movies with TMDB search API.
     Supports rating_mode: fan | critic | aggregate | comparison
     """
-    from .services.tmdb import fetch_ratings
-    import json as _json
-
     query = request.GET.get("q", "").strip()
     # Rating mode: fan | critic | aggregate | comparison
     # Priority: GET param > session > default 'fan'
@@ -608,11 +605,9 @@ def search_movies_view(request):
 
 def set_rating_mode(request):
     """AJAX endpoint to persist rating mode preference in session."""
-    import json as _json
-    from django.http import JsonResponse
     if request.method == "POST":
         try:
-            data = _json.loads(request.body)
+            data = json.loads(request.body)
             mode = data.get("rating_mode", "fan")
             if mode in ("fan", "critic", "aggregate", "comparison"):
                 request.session["rating_mode"] = mode
