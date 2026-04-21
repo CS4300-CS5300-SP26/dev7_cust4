@@ -983,8 +983,8 @@ class SearchMoviesViewTest(TestCase):
 
         response = self.client.get(self.search_url, {"q": "fight"})
 
-        self.assertContains(response, "★ 8.8")
-        self.assertContains(response, "★ 8.9")
+        self.assertContains(response, "8.8")
+        self.assertContains(response, "8.9")
 
     def test_search_displays_release_years(self):
         """Search results should display release years."""

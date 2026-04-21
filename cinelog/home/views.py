@@ -1,4 +1,5 @@
 """Views for the Cinelog home app."""
+import json
 from django.contrib import messages
 from django.contrib.auth.forms import UserCreationForm
 from django.http import JsonResponse
@@ -13,6 +14,7 @@ from .services.tmdb import (
     get_director,
     search_movies,
     get_movie_trailer,
+    fetch_ratings,
 )
 from .services import supabase, user_statistics
 from django.contrib import messages
