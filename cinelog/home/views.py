@@ -21,9 +21,8 @@ from .services.tmdb import (
 from .services.ai_rec import get_movie_recommendation
 from django.contrib import messages
 from .models import Movie
+from django.core.cache import cache
 import hashlib
-
-
 
 def landing_page(request):
     """
@@ -835,7 +834,6 @@ def recommendations_result(request):
         return redirect('signup')
 
     ai_results = [] # this stores raw AI output
-    user_id = supabase.get_user_id(request)
     excluded_titles = []
     liked_movies = []
         
