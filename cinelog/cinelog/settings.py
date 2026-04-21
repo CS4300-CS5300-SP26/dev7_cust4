@@ -33,7 +33,7 @@ SUPABASE_KEY = config("SUPABASE_KEY", default="")
 
 OPENAI_API_KEY = config("OPENAI_API_KEY", default="")
 
-if not OPENAI_API_KEY:
+if not OPENAI_API_KEY and not os.environ.get("CI"):
     raise ImproperlyConfigured(
         "OPENAI_API_KEY is not set. Add it to your .env file and restart the server."
     )
