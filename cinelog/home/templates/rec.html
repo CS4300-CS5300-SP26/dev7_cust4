@@ -152,6 +152,13 @@ function showLoading() {
     document.querySelector('form').style.display = 'none';
     document.getElementById('loading').style.display = 'flex';
 }
+
+// when user hits back button, reset to show form 
+window.addEventListener('pageshow', function(event) {
+    document.querySelector('form').style.display = 'block';
+    document.getElementById('loading').style.display = 'none';
+});
+
 </script>
 
 {% endblock %}

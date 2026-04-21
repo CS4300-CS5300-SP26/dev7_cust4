@@ -21,7 +21,6 @@
     </div>
 </div>
 
-
 <!-- ── Recommendation Banner ── -->
 <div class="rec-banner" style="position: relative; display: flex; align-items: center; gap: 18px; margin: 1.5rem 20rem; padding: 18px 24px; background: rgba(255,255,255,0.03); border: 1px solid rgba(77,217,192,0.3); border-radius: 12px; overflow: hidden;">
 
@@ -35,14 +34,13 @@
     </div>
 
     <div class="rec-banner-actions" style="position: relative; z-index: 1; display: flex; gap: 10px; flex-shrink: 0;">
-        <button onclick="window.location.href='{% url 'recommendations' %}?mode=surprise'" style="padding: 9px 18px; border-radius: 7px; font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; background: transparent; color: #2ab8c1; border: 1px solid rgba(77,217,192,0.4);">
+        <button onclick="window.location.href='{% url 'recommendations_surprise' %}?mode=surprise'" style="padding: 9px 18px; border-radius: 7px; font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; background: transparent; color: #2ab8c1; border: 1px solid rgba(77,217,192,0.4);">
             Surprise me
         </button>
         <button onclick="window.location.href='{% url 'recommendations' %}'" style="padding: 9px 18px; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; background: #2ab8c1; color: #08161a; border: none;">
             Get a recommendation →
         </button>
     </div>
-
 </div>
 
 {% if is_authenticated %}
