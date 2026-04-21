@@ -27,6 +27,7 @@ else:
     config = AutoConfig()
 
 TMDB_API_KEY = config("TMDB_API_KEY", default="")
+OMDB_API_KEY = config("OMDB_API_KEY", default="")
 
 SUPABASE_URL = config("SUPABASE_URL", default="")
 SUPABASE_KEY = config("SUPABASE_KEY", default="")
