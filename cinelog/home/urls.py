@@ -40,4 +40,5 @@ urlpatterns = [
     path('calendar/', views.calendar_view, name='calendar'),
     path('calendar/events/', views.calendar_events_api, name='calendar_events'),
     path('movies/<int:movie_id>/where-to-watch/', views.where_to_watch_view, name='where_to_watch'),
+    path('movies/set-rating-mode/', views.set_rating_mode, name='set_rating_mode'),
 ]
