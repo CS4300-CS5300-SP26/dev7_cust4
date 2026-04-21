@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="{% static 'css/movies.css' %}" rel="stylesheet">
+
+<style>
+.field-label {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    color: rgba(255,255,255,0.4);
+    margin: 20px 0 8px;
+    padding-left: 3.5rem;
+}
+
+.chip-row, .pill-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 0 3.5rem;
+    margin-bottom: 8px;
+}
+
+.chip, .pill {
+    padding: 7px 16px;
+    border-radius: 999px;
+    font-size: 16px;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.6);
+    transition: all 0.15s ease;
+    user-select: none;
+}
+
+.chip:has(input:checked) {
+    background: rgba(77,217,192,0.12);
+    border-color: rgba(77,217,192,0.4);
+    color: #4dd9c0;
+}
+
+.pill:has(input:checked) {
+    background: #e8e6ff;
+    border-color: #a09de8;
+    color: #3b3699;
+    font-weight: 500;
+}
+
+.text-input {
+    width: 600px;
+    margin: 0 3.5rem;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 16px;
+    color: rgba(255,255,255,0.7);
+    outline: none;
+}
+
+.text-input::placeholder {
+    color: rgba(255,255,255,0.25);
+}
+
+.submit-btn {
+    display: block;
+    margin: 24px 3.5rem;
+    padding: 11px 32px;
+    background:rgb(59, 145, 164);
+    color:rgb(237, 237, 237);
+    border: none;
+    border-radius: 8px;
+    font-size: 17px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.11s ease;
+}
+
+.submit-btn:hover { opacity: 0.85; }
+</style>
+
+<div class="hero-container relative">
+    <div aria-hidden="true" class="hero-blob hero-blob--top absolute z-0">
+        <div class="hero-blob__shape hero-blob__shape--top"></div>
+    </div>
+    <div class="hero-content">
+        <div class="hero-text">
+            <h1 class="hero-heading">Find something to watch</h1>
+            <p class="text-gray-400 text-lg">Tell us what you're in the mood for and we'll find your perfect pick</p>
+        </div>
+    </div>
+    <div aria-hidden="true" class="hero-blob hero-blob--bottom">
+        <div class="hero-blob__shape hero-blob__shape--bottom"></div>
+    </div>
+</div>
+
+<form method="POST" action="{% url 'recommendations_result' %}">
+    {% csrf_token %}
+
+    <!-- Genre chips (multi-select) -->
+    <p class="field-label">GENRE</p>
+    <div class="chip-row">
+        <label class="chip"><input type="checkbox" name="genres" value="Thriller" hidden> Thriller</label>
+        <label class="chip"><input type="checkbox" name="genres" value="Drama" hidden> Drama</label>
+        <label class="chip"><input type="checkbox" name="genres" value="Comedy" hidden> Comedy</label>
+        <label class="chip"><input type="checkbox" name="genres" value="Sci-fi" hidden> Sci-fi</label>
+        <label class="chip"><input type="checkbox" name="genres" value="Horror" hidden> Horror</label>
+        <label class="chip"><input type="checkbox" name="genres" value="Action" hidden> Action</label>
+    </div>
+
+    <!-- Era pills (these are single-select) -->
+    <p class="field-label">ERA</p>
+    <div class="pill-group">
+        <label class="pill"><input type="radio" name="era" value="classic" hidden> Classic (pre-1980)</label>
+        <label class="pill"><input type="radio" name="era" value="modern" hidden> Modern (1980–2010)</label>
+        <label class="pill"><input type="radio" name="era" value="recent" hidden> Recent (2010+)</label>
+        <label class="pill"><input type="radio" name="era" value="any" hidden> Any</label>
+    </div>
+
+    <!-- Awards chips (multi-select) -->
+    <p class="field-label">AWARDS</p>
+    <div class="chip-row">
+        <label class="chip"><input type="checkbox" name="awards" value="Academy Award Winner" hidden> Oscar Winner</label>
+        <label class="chip"><input type="checkbox" name="awards" value="Academy Award Nominated" hidden> Oscar Nominated</label>
+        <label class="chip"><input type="checkbox" name="awards" value="Cannes Film Festival" hidden> Cannes</label>
+        <label class="chip"><input type="checkbox" name="awards" value="Golden Globe Winner" hidden> Golden Globe</label>
+        <label class="chip"><input type="checkbox" name="awards" value="BAFTA Winner" hidden> BAFTA</label>
+    </div>
+
+    <!-- Person -->
+    <p class="field-label">ACTOR / DIRECTOR (optional)</p>
+    <input class="text-input" type="text" name="person" placeholder="e.g. director, actor, keyword…" />
+
+    <button type="submit" class="submit-btn">Generate my recommendations →</button>
+</form>
+
+{% endblock %}
