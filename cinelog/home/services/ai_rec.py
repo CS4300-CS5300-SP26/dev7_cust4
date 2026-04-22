@@ -1,3 +1,4 @@
+""" Talks to OpenAI and prompts AI recommended movie results """
 from openai import OpenAI
 from django.conf import settings
 import json
