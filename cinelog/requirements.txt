@@ -12,7 +12,7 @@ cffi==2.0.0
 charset-normalizer==3.4.6
 click==8.3.1
 colorama==0.4.6
-coverage==7.13.4
+coverage==7.13.5
 cryptography==46.0.6
 cucumber-expressions==19.0.0
 cucumber-tag-expressions==9.1.0
