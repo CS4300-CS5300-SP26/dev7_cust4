@@ -1,3 +1,4 @@
+# pylint: disable=not-callable
 from behave import given, when, then
 from django.urls import reverse
 from unittest.mock import patch

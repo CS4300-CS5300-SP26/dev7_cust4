@@ -1,3 +1,4 @@
+# pylint: disable=not-callable
 from behave import given, when, then
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User

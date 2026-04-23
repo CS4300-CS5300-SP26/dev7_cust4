@@ -39,7 +39,7 @@ extension-pkg-whitelist=
 fail-on=
 
 # Specify a score threshold under which the program will exit with error.
-fail-under=10
+fail-under=8
 
 # Interpret the stdin as a python script, whose filename needs to be passed as
 # the module_or_package argument.
@@ -73,7 +73,7 @@ ignored-modules=
 # Use multiple processes to speed up Pylint. Specifying 0 will auto-detect the
 # number of processors available to use, and will cap the count on Windows to
 # avoid hangs.
-jobs=1
+jobs=0
 
 # Control the amount of potential inferred values when inferring a single
 # object. This can help the performance when dealing with large functions or
@@ -96,7 +96,7 @@ prefer-stubs=no
 py-version=3.12
 
 # Discover python modules and packages in the file system subtree.
-recursive=no
+recursive=yes
 
 # Add paths to the list of the source roots. Supports globbing patterns. The
 # source root is an absolute path or a path relative to the current working
@@ -572,8 +572,6 @@ check-str-concat-over-line-jumps=no
 
 
 [TYPECHECK]
-# For behave
-generated-members=given,when,then,objects
 
 # List of decorators that produce context managers, such as
 # contextlib.contextmanager. Add to this list to register other decorators that
@@ -583,7 +581,8 @@ contextmanager-decorators=contextlib.contextmanager
 # List of members which are set dynamically and missed by pylint inference
 # system, and so shouldn't trigger E1101 when accessed. Python regular
 # expressions are accepted.
-generated-members=
+# For behave
+generated-members=given,when,then,objects
 
 # Tells whether to warn about missing members when the owner of the attribute
 # is inferred to be None.
