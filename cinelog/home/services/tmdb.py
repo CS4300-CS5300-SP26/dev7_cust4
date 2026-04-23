@@ -173,14 +173,12 @@ def discover_movies_by_filters_only(filters):
         list: A list of movie dicts matching the filters
     """
     url = f"{BASE_URL}/discover/movie"
-    
     params = {
         "api_key": TMDB_KEY,
         "language": "en-US",
         "page": 1,
         "sort_by": "popularity.desc"
     }
-    
     # Add genre filter
     if filters.get('genres'):
         all_genres = get_genre_list()
@@ -191,23 +189,19 @@ def discover_movies_by_filters_only(filters):
                 genre_ids.append(str(genre_map[genre_name.lower()]))
         if genre_ids:
             params["with_genres"] = ",".join(genre_ids)
-    
     # Add actor filter
     if filters.get('actor'):
         person_id = search_person_id(filters['actor'])
         if person_id:
             params["with_cast"] = person_id
-    
     # Add rating filter
     if filters.get('rating_min'):
         params["vote_average.gte"] = float(filters['rating_min'])
     if filters.get('rating_max'):
         params["vote_average.lte"] = float(filters['rating_max'])
-    
     # Add year filter
     if filters.get('year'):
         params["primary_release_year"] = int(filters['year'])
-    
     try:
         response = requests.get(url, params=params, timeout=5)
         data = response.json()
@@ -215,9 +209,7 @@ def discover_movies_by_filters_only(filters):
     except:
         return []
 
-
 # ========== HELPER FUNCTIONS FOR ADVANCED SEARCH ==========
-
 def get_genre_list():
     """
     Get list of all TMDB genres with their IDs.
@@ -228,14 +220,13 @@ def get_genre_list():
         "api_key": TMDB_KEY,
         "language": "en-US"
     }
-    
+
     try:
         response = requests.get(url, params=params, timeout=5)
         data = response.json()
         return data.get("genres", [])
     except:
         return []
-
 
 def search_person_id(person_name):
     """
@@ -261,7 +252,6 @@ def search_person_id(person_name):
     except:
         pass
     return None
-
 
 def search_movies_with_filters(query, filters=None):
     """
