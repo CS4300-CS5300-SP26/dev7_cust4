@@ -22,7 +22,7 @@ Feature: User Authentication
         Given I have an account with "user5678@email.com", "user5678", and "password.5678"
         And I am on the "Log in" page
         When I fill in the "Email" field with "user5678@email.com"
-        And I fill in the "Password" field with the wrong password "1234" instead of "password.5678"
+        And I fill in the "Password" field with the wrong password "1234"
         Then the form will not be submitted
 
 
