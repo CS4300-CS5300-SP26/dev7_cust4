@@ -37,7 +37,8 @@ jobs:
         id: pylint
         continue-on-error: true
         run: |
-          python -m pylint --recursive=y --output=pylint-report.txt cinelog/
+          cd cinelog
+          python -m pylint --recursive=y --output=pylint-report.txt .
 
       - name: Always post-process report
         if: always()
