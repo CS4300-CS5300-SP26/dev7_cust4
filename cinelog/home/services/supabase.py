@@ -1,11 +1,11 @@
+import logging
+from unittest.mock import MagicMock
 from supabase import create_client
 from django.conf import settings
 from django.contrib import messages
 from django.core.cache import cache
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
-from unittest.mock import MagicMock
-import logging
 from home.models import Movie
 
 # Set a max for number of links user can recieve.
@@ -55,6 +55,16 @@ supabase_admin = get_supabase_admin()
 
 
 def get_user_supabase_client(access_token, refresh_token):
+    """
+    Create a Supabase client with an authenticated user session.
+
+    Args:
+        access_token (str): Supabase user access token.
+        refresh_token (str): Supabase refresh token used to maintain session.
+
+    Returns:
+        Client: An authenticated Supabase client instance with the user session set.
+    """
     client = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
     client.auth.set_session(access_token, refresh_token)
     return client
@@ -209,7 +219,7 @@ def send_magic_link_login(request, email):
         )
 
         if not response:
-            return messages.error("Error occured.")
+            messages.error(request, "Error occured.")
 
         messages.success(request, f"Link sent to {email}!")
 
@@ -272,11 +282,10 @@ def get_user_magic_link(request):
             )
             return True
 
-        else:
-            messages.error(
-                request, "Login failed. Please try again or login with password."
-            )
-            return False
+        messages.error(
+            request, "Login failed. Please try again or login with password."
+        )
+        return False
 
     except Exception as e:
         messages.error(request, f"Error: {e}")
@@ -318,8 +327,8 @@ def get_user_id(request):
     """
     if request.session.get("supabase_user_id"):
         return request.session.get("supabase_user_id")
-    else:
-        return None
+
+    return None
 
 
 def insert_in_watchlist(user_id, movie_id):
@@ -348,8 +357,8 @@ def insert_in_watchlist(user_id, movie_id):
         # Display specific error if movie is already in the watchlist.
         if "duplicate key value violates unique constraint" in str(e):
             return False, "Error: Movie is already in watchlist."
-        else:
-            return False, f"Error: {e}"
+
+        return False, f"Error: {e}"
 
 
 def delete_in_watchlist(user_id, movie_id):
@@ -386,7 +395,8 @@ def get_watchlist(user_id, movie_id=None, order=False, descending=False):
 
     Args:
         user_id (str): Unique id that can be used to reference a user.
-        movie_id (int, optional): If provided, specifies a certain movie to check if is in watchlist.
+        movie_id (int, optional): If provided, specifies a certain movie to 
+            check if is in watchlist.
 
     Returns:
         list: Contains movie ids of movies in watchlist. Returns empty list if none or if an error.
@@ -434,7 +444,7 @@ def insert_hidden_movie(user_id, movie_id):
                 or "duplicate key value violates unique constraint" in error_str
             ):
                 return False, "Movie is already hidden."
-            logging.error(f"insert_hidden_movie supabase error: {response.error}")
+            logging.error("insert_hidden_movie supabase error %s:", response.error)
             return False, "An error occurred while hiding the movie."
         return True, "Movie hidden successfully."
 
@@ -446,7 +456,8 @@ def insert_hidden_movie(user_id, movie_id):
         ):
             return False, "Movie is already hidden."
         logging.error(
-            f"insert_hidden_movie exception for user {user_id}, movie {movie_id}: {e}"
+            "insert_hidden_movie exception for user %s, movie %s: %s",
+            user_id, movie_id, e
         )
         return False, "An error occurred while hiding the movie."
 
@@ -471,7 +482,7 @@ def delete_hidden_movie(user_id, movie_id):
             .execute()
         )
         if hasattr(response, "error") and response.error:
-            logging.error(f"delete_hidden_movie supabase error: {response.error}")
+            logging.error("delete_hidden_movie supabase error: %s", response.error)
             return False
         if response.data:
             return True
@@ -479,7 +490,8 @@ def delete_hidden_movie(user_id, movie_id):
 
     except Exception as e:
         logging.error(
-            f"delete_hidden_movie exception for user {user_id}, movie {movie_id}: {e}"
+            "delete_hidden_movie exception for user %s, movie %s: %s",
+            user_id, movie_id, e
         )
         return False
 
@@ -505,7 +517,8 @@ def get_hidden_movies(user_id, movie_id=None):
 
         if hasattr(response, "error") and response.error:
             logging.error(
-                f"get_hidden_movies supabase error for user {user_id}: {response.error}"
+                "get_hidden_movies supabase error for user %s: %s",
+                user_id, response.error
             )
             return []
 
@@ -516,7 +529,9 @@ def get_hidden_movies(user_id, movie_id=None):
         return movie_ids
 
     except Exception as e:
-        logging.error(f"get_hidden_movies exception for user {user_id}: {e}")
+        logging.error("get_hidden_movies exception for user %s: %s",
+            user_id, e
+        )
         return []
 
 
