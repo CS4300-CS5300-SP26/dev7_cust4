@@ -36,13 +36,11 @@ jobs:
       - name: Generate Pylint Report
         id: pylint
         continue-on-error: true
-        working-directory: cinelog
         run: |
-          python -m pylint --recursive=y --output=pylint-report.txt .
+          python -m pylint --recursive=y --output=pylint-report.txt cinelog/
 
       - name: Always post-process report
         if: always()
-        working-directory: cinelog
         run: |
           sed -i '1i ```' pylint-report.txt
           sed -i '$a ```' pylint-report.txt
@@ -50,7 +48,6 @@ jobs:
 
       - name: Upload linter results
         if: always()
-        working-directory: cinelog
         uses: actions/upload-artifact@v4
         with:
           name: pylint-results
