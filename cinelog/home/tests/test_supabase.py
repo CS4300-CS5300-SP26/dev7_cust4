@@ -1,9 +1,9 @@
+from unittest.mock import patch, MagicMock
 from django.contrib.messages.storage.fallback import FallbackStorage
 from django.test import TestCase, RequestFactory
-from home.services import supabase
-from unittest.mock import patch, MagicMock
 from django.core.cache import cache
 from django.contrib.messages import get_messages
+from home.services import supabase
 
 MOCK_SIGN_UP = {
     "user": {
@@ -28,14 +28,20 @@ MOCK_PASSWORD = "Test1234!!"
 
 
 class AuthenticationTesting(TestCase):
+    """
+    Testing for authentication.
+    """
     def setUp(self):
         self.factory = RequestFactory()
         self.request = self.factory.post("/")
         self.request.session = {}
-        self.request._messages = FallbackStorage(self.request)
+        setattr(self.request, "_messages", FallbackStorage(self.request))
 
     @patch("home.services.supabase.settings")
     def test_get_supabase_client_missing_env(self, mock_settings):
+        """
+        Test getting client when environment variables are not present.
+        """
         mock_settings.SUPABASE_URL = None
         mock_settings.SUPABASE_KEY = None
 
@@ -43,8 +49,7 @@ class AuthenticationTesting(TestCase):
         self.assertIsInstance(client, MagicMock)
 
     @patch("home.services.supabase.supabase_client.auth.sign_up")
-    @patch("home.services.supabase.supabase_log_in", return_value=True)
-    def test_supabase_sign_in_successful(self, mock_log_in, mock_sign_up):
+    def test_supabase_sign_in_successful(self, mock_sign_up):
         """
         Test that user is successfully signed in.
         """
@@ -59,7 +64,7 @@ class AuthenticationTesting(TestCase):
         "home.services.supabase.supabase_client.auth.sign_up",
         side_effect=Exception("fail"),
     )
-    def test_signup_exception(self, mock_signup):
+    def test_signup_exception(self, _mock_signup):
         """
         Test that error is given if signup is unsuccessful.
         """
@@ -90,7 +95,7 @@ class AuthenticationTesting(TestCase):
         "home.services.supabase.supabase_client.auth.sign_in_with_password",
         side_effect=Exception("fail"),
     )
-    def test_login_exception(self, mock_login):
+    def test_login_exception(self, _mock_login):
         """
         Test that false is returned if error occurs on sign in.
         """
@@ -155,7 +160,7 @@ class AuthenticationTesting(TestCase):
         "home.services.supabase.supabase_client.auth.sign_in_with_otp",
         side_effect=Exception("fail"),
     )
-    def test_magic_link_exception(self, mock_otp):
+    def test_magic_link_exception(self, _mock_otp):
         """
         Test exception is thrown if magic link fails to send.
         """
@@ -170,7 +175,7 @@ class AuthenticationTesting(TestCase):
         """
         email = MOCK_EMAIL
         cache.clear()
-        for i in range(supabase.MAX_EMAILS_1_HOUR):
+        for _ in range(supabase.MAX_EMAILS_1_HOUR):
             self.assertFalse(supabase.reached_limit_magic_login(email))
         self.assertTrue(supabase.reached_limit_magic_login(email))
 
@@ -230,6 +235,9 @@ class AuthenticationTesting(TestCase):
 
 
 class SupabaseWatchlistTest(TestCase):
+    """
+    Testing the watchlist feature that is implemented in Supabase storage.
+    """
     def setUp(self):
         self.factory = RequestFactory()
         self.request = self.factory.get("/")
@@ -280,10 +288,10 @@ class SupabaseWatchlistTest(TestCase):
         Test that False is returned if there is an error with deletion.
         """
         mock_table = mock_client.table.return_value
-        mock_table.delete.return_value.eq.return_value.eq.return_value.execute.side_effect = Exception(
-            "DB error"
+        delete_chain = (
+            mock_table.delete.return_value.eq.return_value.eq.return_value.execute
         )
-
+        delete_chain.side_effect = Exception("DB error")
         result = supabase.delete_in_watchlist(self.user_id, self.movie_id)
         self.assertFalse(result)
 
@@ -310,7 +318,8 @@ class SupabaseWatchlistTest(TestCase):
         mock_table = mock_client.table.return_value
         mock_response = MagicMock()
         mock_response.data = [{"movie_id": self.movie_id}]
-        mock_table.select.return_value.eq.return_value.eq.return_value.execute.return_value = mock_response
+        select_chain = mock_table.select.return_value.eq.return_value.eq.return_value.execute
+        select_chain.return_value = mock_response
 
         movies = supabase.get_watchlist(self.user_id, movie_id=self.movie_id)
         self.assertEqual(movies, [self.movie_id])
@@ -342,6 +351,9 @@ class SupabaseWatchlistTest(TestCase):
 
 
 class SupabaseAccountsTests(TestCase):
+    """
+    Testing for supabase accounts through integreation and unit tests.
+    """
     def setUp(self):
         self.request = MagicMock()
         self.request.session = {
@@ -426,6 +438,7 @@ class SupabaseAccountsTests(TestCase):
         """
         self.request.session = MagicMock()
         self.request.session.get.return_value = self.user_id
+        self.request.session.flush = MagicMock()
 
         mock_delete_user.return_value = MagicMock()
 
