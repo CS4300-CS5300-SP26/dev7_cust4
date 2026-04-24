@@ -1,11 +1,12 @@
 # pylint: disable=no-member
-from . import supabase, tmdb
-from home.models import Movie
+from collections import defaultdict
 from django.db.models.functions import TruncMonth
 from django.db.models import Count
 from django.utils.timezone import now
 from django.db.models import Avg
-from collections import defaultdict
+from home.models import Movie
+from . import supabase, tmdb
+
 
 
 def get_size_of_watchlist(user_id):
@@ -137,8 +138,8 @@ def get_logged_monthly_average(user_id):
     months = get_library_months_for_year(user_id)
     if months:
         return sum(months) // len(months)
-    else:
-        return 0
+
+    return 0
 
 
 def get_days_logged(user_id):
