@@ -1,3 +1,4 @@
+# pylint: disable=invalid-name
 """
 Django settings for cinelog project.
 
@@ -20,7 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 env_file = BASE_DIR / ".env"
 
-# use .env file if it exists (local), 
+# use .env file if it exists (local),
 # otherwise fall back to environment variables (CI/production)
 if env_file.exists():
     config = Config(RepositoryEnv(env_file))
@@ -203,8 +204,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 LOGIN_REDIRECT_URL = "landing"
 LOGOUT_REDIRECT_URL = "landing"
 
-MEDIA_URL = "/media/"                       # pylint: disable=invalid-name
-MEDIA_ROOT = os.path.join(BASE_DIR, "media")# pylint: disable=invalid-name
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 CACHES = {
     "default": {
