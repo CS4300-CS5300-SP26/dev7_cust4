@@ -2,7 +2,10 @@ from openai import OpenAI
 from django.conf import settings
 import json
 
-def get_movie_recommendation(genres, era, person, awards=None, excluded_titles=None, liked_movies=None):
+
+def get_movie_recommendation(
+    genres, era, person, awards=None, excluded_titles=None, liked_movies=None
+):
     prompt_parts = []
     if genres:
         prompt_parts.append(f"Mood/Genre: {', '.join(genres)}")
@@ -41,7 +44,7 @@ def get_movie_recommendation(genres, era, person, awards=None, excluded_titles=N
                     "You only recommend real, well-known movies. "
                     "Always reply with a valid JSON array and nothing else. "
                     "Do not wrap your response in markdown or code fences."
-                )
+                ),
             },
             {
                 "role": "user",
@@ -49,14 +52,22 @@ def get_movie_recommendation(genres, era, person, awards=None, excluded_titles=N
                     f"Recommend exactly 3 perfect movies for someone with these preferences: {preferences}.{liked_note}{exclusion_note}"
                     "Reply with ONLY a JSON array in this format, no extra text, no code fences: "
                     '[{"title": "...", "year": "...", "reason": "..."}, {"title": "...", "year": "...", "reason": "1 sentence max"}]'
-                )
-            }
-        ]
+                ),
+            },
+        ],
     )
 
     raw = message.choices[0].message.content
     try:
-        raw = raw.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
+        raw = (
+            raw.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
+        )
         return json.loads(raw)
     except Exception as e:
-        return [{"title": "Could not generate recommendation", "year": "", "reason": "Please try again."}]
+        return [
+            {
+                "title": "Could not generate recommendation",
+                "year": "",
+                "reason": "Please try again.",
+            }
+        ]

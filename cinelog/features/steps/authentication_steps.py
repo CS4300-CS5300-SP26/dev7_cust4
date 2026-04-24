@@ -1,11 +1,8 @@
-from behave import given, when, then
-from django.contrib.auth import authenticate
-from django.contrib.auth.models import User
-from django.urls import reverse
+# pylint: disable=missing-module-docstring,missing-function-docstring,function-redefined,not-callable
 from unittest.mock import patch
+from behave import given, when, then
+from django.urls import reverse
 from django.http import HttpResponseRedirect
-from home.services import supabase
-from django.test import Client
 
 
 @given('I have an account with "{email}", "{username}", and "{password}"')
@@ -15,6 +12,7 @@ def step_impl(context, email, username, password):
     session["supabase_user_id"] = "user123"
     session["supabase_user_email"] = email
     session["supabase_username"] = username
+    session["supabase_password"] = password
     session.save()
 
 
@@ -68,9 +66,9 @@ def step_impl(context, password):
 
 
 @when(
-    'I fill in the "Password" field with the wrong password "{password}" instead of "{wrong_password}"'
+    'I fill in the "Password" field with the wrong password "{wrong_password}"'
 )
-def step_impl(context, password, wrong_password):
+def step_impl(context, wrong_password):
     context.password = wrong_password
 
 
@@ -80,8 +78,9 @@ def step_impl(context):
 
         def fake_log_in(request, email, password):
             request.session["access_token"] = "111111-111111"
-            request.session["supabase_user_email"] = context.email
+            request.session["supabase_user_email"] = email
             request.session["supabase_username"] = "user5678"
+            request.session["password"] = password
             return True
 
         mock_log_in.side_effect = fake_log_in
@@ -107,11 +106,11 @@ def step_impl(context):
     with patch("home.views.supabase.supabase_sign_up") as mock_sign_up:
 
         def fake_sign_up(request, email, username, password):
-            session = context.test.client.session
-            session["access_token"] = "111111-111111"
-            session["supabase_user_email"] = context.email
-            session["supabase_username"] = "user5678"
-            session.save()
+            request.session["access_token"] = "111111-111111"
+            request.session["supabase_user_email"] = email
+            request.session["supabase_username"] = username
+            request.session["password"] = password
+            request.session.save()
             return HttpResponseRedirect(reverse("movies"))
 
         mock_sign_up.side_effect = fake_sign_up
@@ -129,7 +128,6 @@ def step_impl(context):
 
 @then('I should be on the "movies" page')
 def step_impl(context):
-    url = reverse("movies")
     # Redirect
     assert context.response.status_code == 302
 

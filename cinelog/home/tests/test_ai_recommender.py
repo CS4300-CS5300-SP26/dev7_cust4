@@ -2,6 +2,7 @@ from django.test import TestCase
 from unittest.mock import patch, MagicMock
 from home.services.ai_rec import get_movie_recommendation
 
+
 class AIRecommendationTest(TestCase):
     def setUp(self):
         """Set up reusable test data."""
@@ -30,8 +31,12 @@ class AIRecommendationTest(TestCase):
         """
         Test that a valid OpenAI response returns a list of movie dicts.
         """
-        fake_response = '[{"title": "Zodiac", "year": "2007", "reason": "Great thriller."}]'
-        mock_openai.return_value.chat.completions.create.return_value = self._mock_openai_response(fake_response)
+        fake_response = (
+            '[{"title": "Zodiac", "year": "2007", "reason": "Great thriller."}]'
+        )
+        mock_openai.return_value.chat.completions.create.return_value = (
+            self._mock_openai_response(fake_response)
+        )
 
         result = get_movie_recommendation(self.genres, self.era, self.person)
 
@@ -45,7 +50,9 @@ class AIRecommendationTest(TestCase):
         Test that multiple movies are returned when AI gives a full list.
         """
         fake_response = '[{"title": "Zodiac", "year": "2007", "reason": "..."}, {"title": "Se7en", "year": "1995", "reason": "..."}]'
-        mock_openai.return_value.chat.completions.create.return_value = self._mock_openai_response(fake_response)
+        mock_openai.return_value.chat.completions.create.return_value = (
+            self._mock_openai_response(fake_response)
+        )
 
         result = get_movie_recommendation(self.genres, self.era, self.person)
 
@@ -56,7 +63,9 @@ class AIRecommendationTest(TestCase):
         """
         Test that a fallback error movie is returned when AI returns invalid JSON.
         """
-        mock_openai.return_value.chat.completions.create.return_value = self._mock_openai_response("not valid json at all")
+        mock_openai.return_value.chat.completions.create.return_value = (
+            self._mock_openai_response("not valid json at all")
+        )
 
         result = get_movie_recommendation(self.genres, self.era, self.person)
 
@@ -68,7 +77,9 @@ class AIRecommendationTest(TestCase):
         """
         Test fallback when AI returns an empty string.
         """
-        mock_openai.return_value.chat.completions.create.return_value = self._mock_openai_response("")
+        mock_openai.return_value.chat.completions.create.return_value = (
+            self._mock_openai_response("")
+        )
 
         result = get_movie_recommendation(self.genres, self.era, self.person)
 
@@ -79,8 +90,12 @@ class AIRecommendationTest(TestCase):
         """
         Test that markdown code fences are stripped before parsing.
         """
-        fake_response = '```json\n[{"title": "Zodiac", "year": "2007", "reason": "..."}]\n```'
-        mock_openai.return_value.chat.completions.create.return_value = self._mock_openai_response(fake_response)
+        fake_response = (
+            '```json\n[{"title": "Zodiac", "year": "2007", "reason": "..."}]\n```'
+        )
+        mock_openai.return_value.chat.completions.create.return_value = (
+            self._mock_openai_response(fake_response)
+        )
 
         result = get_movie_recommendation(self.genres, self.era, self.person)
 
@@ -93,9 +108,13 @@ class AIRecommendationTest(TestCase):
         """
         fake_response = '[{"title": "Zodiac", "year": "2007", "reason": "..."}]'
         mock_client = mock_openai.return_value
-        mock_client.chat.completions.create.return_value = self._mock_openai_response(fake_response)
+        mock_client.chat.completions.create.return_value = self._mock_openai_response(
+            fake_response
+        )
 
-        get_movie_recommendation(self.genres, self.era, self.person, excluded_titles=self.excluded_titles)
+        get_movie_recommendation(
+            self.genres, self.era, self.person, excluded_titles=self.excluded_titles
+        )
 
         # check the prompt sent to OpenAI contains the excluded titles
         call_args = mock_client.chat.completions.create.call_args
@@ -110,7 +129,9 @@ class AIRecommendationTest(TestCase):
         """
         fake_response = '[{"title": "Zodiac", "year": "2007", "reason": "..."}]'
         mock_client = mock_openai.return_value
-        mock_client.chat.completions.create.return_value = self._mock_openai_response(fake_response)
+        mock_client.chat.completions.create.return_value = self._mock_openai_response(
+            fake_response
+        )
 
         get_movie_recommendation([], "", "", liked_movies=self.liked_movies)
 
@@ -126,7 +147,9 @@ class AIRecommendationTest(TestCase):
         """
         fake_response = '[{"title": "Zodiac", "year": "2007", "reason": "..."}]'
         mock_client = mock_openai.return_value
-        mock_client.chat.completions.create.return_value = self._mock_openai_response(fake_response)
+        mock_client.chat.completions.create.return_value = self._mock_openai_response(
+            fake_response
+        )
 
         get_movie_recommendation([], "", "")
 
@@ -140,7 +163,9 @@ class AIRecommendationTest(TestCase):
         Test that every movie in the result has title, year, and reason keys.
         """
         fake_response = '[{"title": "Zodiac", "year": "2007", "reason": "Great film."}]'
-        mock_openai.return_value.chat.completions.create.return_value = self._mock_openai_response(fake_response)
+        mock_openai.return_value.chat.completions.create.return_value = (
+            self._mock_openai_response(fake_response)
+        )
 
         result = get_movie_recommendation(self.genres, self.era, self.person)
 
