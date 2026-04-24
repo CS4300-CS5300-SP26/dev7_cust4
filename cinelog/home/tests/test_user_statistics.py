@@ -1,3 +1,4 @@
+# pylint: disable=no-member
 from django.test import TestCase
 from unittest.mock import patch
 from django.utils.timezone import now
