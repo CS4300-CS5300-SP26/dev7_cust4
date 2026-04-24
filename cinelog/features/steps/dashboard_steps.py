@@ -1,8 +1,8 @@
 # pylint: disable=missing-module-docstring,missing-function-docstring,function-redefined,not-callable
-from behave import given, when, then
-from django.urls import reverse
 from unittest.mock import patch
 from contextlib import contextmanager
+from behave import given, when, then
+from django.urls import reverse
 
 TEST_USER_ID = "550e8400-e29b-41d4-a716-446655440000"
 
@@ -25,7 +25,7 @@ def patched_dashboard_context(user_id, stats_overrides=None):
         stats.update(stats_overrides)
 
     with (
-        patch("home.views.supabase.get_user_id", return_value=TEST_USER_ID),
+        patch("home.views.supabase.get_user_id", return_value=user_id),
         patch("home.views.supabase.get_hidden_movies", return_value=[]),
         patch("home.views.fetch_movies", return_value={"id": 1}),
         patch(

@@ -1,3 +1,4 @@
+# pylint: disable=no-member
 from . import supabase, tmdb
 from home.models import Movie
 from django.db.models.functions import TruncMonth
