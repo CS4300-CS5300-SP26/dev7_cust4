@@ -1,4 +1,3 @@
-# pylint: disable=missing-module-docstring,missing-function-docstring,function-redefined
 from behave import given, when, then
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User

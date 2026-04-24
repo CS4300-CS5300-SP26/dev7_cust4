@@ -1,9 +1,7 @@
-# pylint: disable=missing-module-docstring,missing-function-docstring,function-redefined
 from behave import given, when, then
 from django.urls import reverse
 from unittest.mock import patch
 from contextlib import contextmanager
-from unittest.mock import patch
 
 TEST_USER_ID = "550e8400-e29b-41d4-a716-446655440000"
 
