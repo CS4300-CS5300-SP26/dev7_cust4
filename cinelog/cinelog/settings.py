@@ -33,6 +33,7 @@ TMDB_API_KEY = config("TMDB_API_KEY", default="")
 
 SUPABASE_URL = config("SUPABASE_URL", default="")
 SUPABASE_KEY = config("SUPABASE_KEY", default="")
+SERVER_KEY = config("SUPABASE_SERVER_ROLE", default="")
 
 OPENAI_API_KEY = config("OPENAI_API_KEY", default="")
 

@@ -7,6 +7,7 @@ from django.core.cache import cache
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from home.models import Movie
+import warnings
 
 # Set a max for number of links user can recieve.
 MAX_EMAILS_1_HOUR = 4
@@ -41,6 +42,9 @@ def get_supabase_admin():
     key = getattr(settings, "SERVER_KEY", None)
 
     if not url or not key:
+        warnings.warn(
+            "SERVER_KEY not set — account deletion will not work", RuntimeWarning
+        )
         client = MagicMock()
 
     else:
@@ -149,8 +153,11 @@ def supabase_log_in(request, email, password):
                 response.session.access_token,
                 response.session.refresh_token,
             )
+            return True
 
-        return True
+        # Error if no session.
+        messages.error(request, "Login failed. Please try again.")
+        return False
 
     except Exception as e:
         messages.error(request, f"Error: {e}")
