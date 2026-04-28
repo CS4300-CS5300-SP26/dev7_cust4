@@ -153,8 +153,11 @@ def supabase_log_in(request, email, password):
                 response.session.access_token,
                 response.session.refresh_token,
             )
-
-        return True
+            return True
+        # Error if no session.
+        else:
+            messages.error(request, "Login failed. Please try again.")
+            return False
 
     except Exception as e:
         messages.error(request, f"Error: {e}")
