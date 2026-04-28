@@ -10,6 +10,7 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
+
 from pathlib import Path
 import os
 from django.core.exceptions import ImproperlyConfigured
@@ -37,8 +38,7 @@ OPENAI_API_KEY = config("OPENAI_API_KEY", default="")
 
 if not OPENAI_API_KEY and not os.environ.get("CI"):
     raise ImproperlyConfigured(
-        "OPENAI_API_KEY not set."\
-        "Add to your .env file and restart server."
+        "OPENAI_API_KEY not set.Add to your .env file and restart server."
     )
 
 # Quick-start development settings - unsuitable for production
@@ -46,8 +46,7 @@ if not OPENAI_API_KEY and not os.environ.get("CI"):
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get(
-    "SECRET_KEY", 
-    "django-insecure-bd*mrkv-p!rdl6^0dfeb=na9nxd3a1u!l%3og+w$3tlx2)#5w8"
+    "SECRET_KEY", "django-insecure-bd*mrkv-p!rdl6^0dfeb=na9nxd3a1u!l%3og+w$3tlx2)#5w8"
 )
 
 # SECURITY WARNING: don't run with debug turned on in production!

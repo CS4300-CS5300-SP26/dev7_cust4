@@ -31,6 +31,7 @@ class AuthenticationTesting(TestCase):
     """
     Testing for authentication.
     """
+
     def setUp(self):
         self.factory = RequestFactory()
         self.request = self.factory.post("/")
@@ -238,6 +239,7 @@ class SupabaseWatchlistTest(TestCase):
     """
     Testing the watchlist feature that is implemented in Supabase storage.
     """
+
     def setUp(self):
         self.factory = RequestFactory()
         self.request = self.factory.get("/")
@@ -318,7 +320,9 @@ class SupabaseWatchlistTest(TestCase):
         mock_table = mock_client.table.return_value
         mock_response = MagicMock()
         mock_response.data = [{"movie_id": self.movie_id}]
-        select_chain = mock_table.select.return_value.eq.return_value.eq.return_value.execute
+        select_chain = (
+            mock_table.select.return_value.eq.return_value.eq.return_value.execute
+        )
         select_chain.return_value = mock_response
 
         movies = supabase.get_watchlist(self.user_id, movie_id=self.movie_id)
@@ -354,6 +358,7 @@ class SupabaseAccountsTests(TestCase):
     """
     Testing for supabase accounts through integreation and unit tests.
     """
+
     def setUp(self):
         self.request = MagicMock()
         self.request.session = {

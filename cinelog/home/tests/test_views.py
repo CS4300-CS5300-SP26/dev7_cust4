@@ -22,6 +22,7 @@ class SignupTest(TestCase):
     """
     Test the ability to sign up.
     """
+
     def setUp(self):
         self.client = Client()
         self.url = reverse("signup")
@@ -59,7 +60,9 @@ class SignupTest(TestCase):
     @patch("home.views.supabase.supabase_sign_up")
     @patch("home.views.supabase.supabase_client.auth.get_user")
     @patch("home.views.UserCreationForm.is_valid", return_value=True)
-    def test_signup_view_successful(self, _mock_form_valid, mock_get_user, mock_sign_up):
+    def test_signup_view_successful(
+        self, _mock_form_valid, mock_get_user, mock_sign_up
+    ):
         """
         Test post request when information is valid and user can sign up.
         """
@@ -86,7 +89,7 @@ class SignupTest(TestCase):
     @patch("home.views.supabase.supabase_sign_up")
     def test_signup_with_existing_username(self, mock_sign_up):
         """
-        Test that user cannot sign up if username is same as another user or 
+        Test that user cannot sign up if username is same as another user or
         already have an account.
         """
         # Create user with same username.
@@ -169,6 +172,7 @@ class LoginTest(TestCase):
     """
     Test the ability to login.
     """
+
     def setUp(self):
         self.client = Client()
         self.url = reverse("login")
@@ -239,6 +243,7 @@ class MagicLogin(TestCase):
     """
     Test the magic link login feature.
     """
+
     def setUp(self):
         self.client = Client()
         self.url = reverse("magic_login")
@@ -295,6 +300,7 @@ class MagicCallback(TestCase):
     """
     Test correct redirection of magic link.
     """
+
     def setUp(self):
         self.client = Client()
         self.url = reverse("callback")
@@ -322,6 +328,7 @@ class Logout(TestCase):
     """
     Test the functionality of logging out.
     """
+
     def setUp(self):
         self.client = Client()
         self.url = reverse("logout")
@@ -538,6 +545,7 @@ class WatchlistTest(TestCase):
     """
     Test the watchlist feature.
     """
+
     VALID_USER_ID = "11111111-1111-1111-1111-111111111111"
 
     def setUp(self):
@@ -574,7 +582,9 @@ class WatchlistTest(TestCase):
         return_value=(False, "Error: Movie is already in watchlist."),
     )
     @patch("home.services.supabase.get_supabase_client", return_value=MagicMock())
-    def test_add_to_watchlist_not_success(self, _mock_client, mock_insert, _mock_user_id):
+    def test_add_to_watchlist_not_success(
+        self, _mock_client, mock_insert, _mock_user_id
+    ):
         """
         Test adding a movie is inserted unsccessfully.
         """
@@ -736,6 +746,7 @@ class HiddenMoviesTest(TestCase):
     """
     Test hidden movies feature.
     """
+
     def setUp(self):
         self.client = Client()
         self.mock_user_id = "11111111-1111-1111-1111-111111111111"
@@ -1185,6 +1196,7 @@ class AccountInformationViewTest(TestCase):
     """
     Test accounts page shows correct information for hidden movies.
     """
+
     def setUp(self):
         self.client = Client()
         self.url = reverse("account")
@@ -1275,9 +1287,10 @@ class AccountInformationViewTest(TestCase):
 
 class AccountViewTests(TestCase):
     """
-    Tests for user accounts and handling changing user information or 
+    Tests for user accounts and handling changing user information or
     deleting accounts.
     """
+
     VALID_USER_ID = "11111111-1111-1111-1111-111111111111"
 
     def setUp(self):

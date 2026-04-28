@@ -65,9 +65,7 @@ def step_impl(context, password):
     context.confirm_password = password
 
 
-@when(
-    'I fill in the "Password" field with the wrong password "{wrong_password}"'
-)
+@when('I fill in the "Password" field with the wrong password "{wrong_password}"')
 def step_impl(context, wrong_password):
     context.password = wrong_password
 

@@ -396,7 +396,7 @@ def get_watchlist(user_id, movie_id=None, order=False, descending=False):
 
     Args:
         user_id (str): Unique id that can be used to reference a user.
-        movie_id (int, optional): If provided, specifies a certain movie to 
+        movie_id (int, optional): If provided, specifies a certain movie to
             check if is in watchlist.
 
     Returns:
@@ -458,7 +458,9 @@ def insert_hidden_movie(user_id, movie_id):
             return False, "Movie is already hidden."
         logging.error(
             "insert_hidden_movie exception for user %s, movie %s: %s",
-            user_id, movie_id, e
+            user_id,
+            movie_id,
+            e,
         )
         return False, "An error occurred while hiding the movie."
 
@@ -492,7 +494,9 @@ def delete_hidden_movie(user_id, movie_id):
     except Exception as e:
         logging.error(
             "delete_hidden_movie exception for user %s, movie %s: %s",
-            user_id, movie_id, e
+            user_id,
+            movie_id,
+            e,
         )
         return False
 
@@ -519,7 +523,8 @@ def get_hidden_movies(user_id, movie_id=None):
         if hasattr(response, "error") and response.error:
             logging.error(
                 "get_hidden_movies supabase error for user %s: %s",
-                user_id, response.error
+                user_id,
+                response.error,
             )
             return []
 
@@ -530,9 +535,7 @@ def get_hidden_movies(user_id, movie_id=None):
         return movie_ids
 
     except Exception as e:
-        logging.error("get_hidden_movies exception for user %s: %s",
-            user_id, e
-        )
+        logging.error("get_hidden_movies exception for user %s: %s", user_id, e)
         return []
 
 

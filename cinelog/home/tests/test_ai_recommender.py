@@ -7,6 +7,7 @@ class AIRecommendationTest(TestCase):
     """
     Tests for the AI recommender feature.
     """
+
     def setUp(self):
         """Set up reusable test data."""
         self.genres = ["Thriller", "Drama"]

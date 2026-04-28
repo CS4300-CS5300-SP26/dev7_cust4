@@ -11,6 +11,7 @@ class StatsServiceTest(TestCase):
     """
     Testing for user statistics shown on account.
     """
+
     def setUp(self):
         self.user_id = "11111111-1111-1111-1111-111111111111"
 
@@ -133,7 +134,7 @@ class StatsServiceTest(TestCase):
 
     def test_days_logged_counts_one_day(self):
         """
-        Test days logged returns total number of days a movie was added to 
+        Test days logged returns total number of days a movie was added to
         logger if only have 1 day added movies.
         """
         Movie.objects.create(user=self.user_id, tmdb_id=1, created_at=now())
@@ -142,7 +143,7 @@ class StatsServiceTest(TestCase):
 
     def test_days_logged_counts_multiple_days(self):
         """
-        Test days logged returns correct number of unique days when movies are 
+        Test days logged returns correct number of unique days when movies are
         logged on different dates.
         """
         Movie.objects.create(user=self.user_id, tmdb_id=1, created_at=now())
