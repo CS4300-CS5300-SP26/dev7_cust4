@@ -520,11 +520,15 @@ def safe_redirect(request, url, default):
     Args:
         request (HTTP request): Contains information about the request.
         url (str): The url obtained from the post request.
-        default (str): The fallback redirect if url is not specified.
+        default (str): The fallback redirect if url is not specified or is not
+            allowed.
 
     Returns:
         HTTPResponse: A rendering of the correct page based on outcome of change.
     """
+    if not isinstance(url, str) or not url:
+        return redirect(default)
+
     if url_has_allowed_host_and_scheme(url, allowed_hosts={request.get_host()}):
         return redirect(url)
     else:
