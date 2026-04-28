@@ -8,10 +8,10 @@ from home.models import Movie
 
 
 class CalendarViewTest(TestCase):
+    """
+    Test for calendar views and API behavior.
+    """
     def setUp(self):
-        """
-        Set up test client and user ID.
-        """
         self.client = Client()
         self.user_id = str(uuid.uuid4())
 
@@ -36,6 +36,9 @@ class CalendarViewTest(TestCase):
 
     @patch("home.views.supabase.get_user_id")
     def test_calendar_events_api_returns_json(self, mock_get_user_id):
+        """
+        Test calendar events API returns a JSON response.
+        """
         mock_get_user_id.return_value = self.user_id
         response = self.client.get(reverse("calendar_events"))
         self.assertEqual(response.status_code, 200)
@@ -44,7 +47,7 @@ class CalendarViewTest(TestCase):
     @patch("home.views.supabase.get_user_id")
     def test_calendar_events_api_redirects_if_not_logged_in(self, mock_get_user_id):
         """
-        Test calendar events API returns a JSON response.
+        Test calendar events API returns empty list if user is not logged in.
         """
         mock_get_user_id.return_value = None
         response = self.client.get(reverse("calendar_events"))
@@ -55,7 +58,7 @@ class CalendarViewTest(TestCase):
     @patch("home.views.supabase.get_user_id")
     def test_calendar_events_only_shows_movies_with_dates(self, mock_get_user_id):
         """
-        Test calendar events API returns empty list if user is not logged in.
+        Test only movies with watched date are returned in calendar events.
         """
         mock_get_user_id.return_value = self.user_id
 
@@ -84,10 +87,11 @@ class CalendarViewTest(TestCase):
 
 
 class WatchedDateTest(TestCase):
+    """
+    Test for watched date functionality.
+    """
+
     def setUp(self):
-        """
-        Set up test client and user ID.
-        """
         self.client = Client()
         self.user_id = str(uuid.uuid4())
 
