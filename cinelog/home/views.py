@@ -115,6 +115,7 @@ def signup_view(request):
     Returns:
         HTTP Response: Redirects the user to the home page after successful signup.
     """
+
     # If form has been submitted, create the user if form is valid. 
     # Using the django UserCreationForm to handle creating accounts.
     if request.method == "POST":

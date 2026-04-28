@@ -3,6 +3,8 @@ from django.urls import reverse
 from unittest.mock import patch
 import uuid
 import json
+import datetime
+from home.models import Movie
 
 
 class CalendarViewTest(TestCase):
@@ -40,9 +42,6 @@ class CalendarViewTest(TestCase):
 
     @patch("home.views.supabase.get_user_id")
     def test_calendar_events_only_shows_movies_with_dates(self, mock_get_user_id):
-        from home.models import Movie
-        import datetime
-
         mock_get_user_id.return_value = self.user_id
 
         # Movie with a watch date
@@ -76,8 +75,6 @@ class WatchedDateTest(TestCase):
 
     @patch("home.views.supabase.get_user_id")
     def test_edit_movie_saves_watched_date(self, mock_get_user_id):
-        from home.models import Movie
-        import datetime
 
         mock_get_user_id.return_value = self.user_id
 
@@ -104,9 +101,6 @@ class WatchedDateTest(TestCase):
 
     @patch("home.views.supabase.get_user_id")
     def test_edit_movie_clears_watched_date(self, mock_get_user_id):
-        from home.models import Movie
-        import datetime
-
         mock_get_user_id.return_value = self.user_id
 
         movie = Movie.objects.create(
