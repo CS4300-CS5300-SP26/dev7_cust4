@@ -49,7 +49,8 @@ class AIRecommendationTest(TestCase):
         """
         Test that multiple movies are returned when AI gives a full list.
         """
-        fake_response = '[{"title": "Zodiac", "year": "2007", "reason": "..."}, {"title": "Se7en", "year": "1995", "reason": "..."}]'
+        fake_response = 
+        '[{"title": "Zodiac", "year": "2007", "reason": "..."}, {"title": "Se7en", "year": "1995", "reason": "..."}]'
         mock_openai.return_value.chat.completions.create.return_value = (
             self._mock_openai_response(fake_response)
         )
