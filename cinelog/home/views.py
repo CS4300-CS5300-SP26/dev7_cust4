@@ -4,6 +4,8 @@ from django.contrib import messages
 from django.contrib.auth.forms import UserCreationForm
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.core.cache import cache
 from .models import Movie
 from .services import supabase, user_statistics
 from .services.tmdb import (
@@ -19,7 +21,6 @@ from .services.tmdb import (
     discover_movies_by_filters_only,
 )
 from .services.ai_rec import get_movie_recommendation
-from django.core.cache import cache
 import hashlib
 
 
@@ -513,6 +514,27 @@ def hide_movie(request, movie_id):
         return redirect("movie_detail", movie_id=movie_id)
 
 
+def safe_redirect(request, url, default):
+    """
+    Used for redirects within the accounts page to stay on current tab.
+    Args:
+        request (HTTP request): Contains information about the request.
+        url (str): The url obtained from the post request.
+        default (str): The fallback redirect if url is not specified or is not
+            allowed.
+
+    Returns:
+        HTTPResponse: A rendering of the correct page based on outcome of change.
+    """
+    if not isinstance(url, str) or not url:
+        return redirect(default)
+
+    if url_has_allowed_host_and_scheme(url, allowed_hosts={request.get_host()}):
+        return redirect(url)
+    else:
+        return redirect(default)
+
+
 def unhide_movie(request, movie_id):
     """
     Restores a hidden movie back to the user's browsing experience.
@@ -536,11 +558,8 @@ def unhide_movie(request, movie_id):
         else:
             messages.error(request, "Unable to unhide movie. Please try again.")
 
-        next_url = request.POST.get("next")
-        if next_url:
-            return redirect(next_url)
-
-        return redirect("account")
+        next_url = request.POST.get("next", "")
+        return safe_redirect(request, next_url, "account")
 
 
 def search_movies_view(request):
@@ -729,16 +748,13 @@ def update_user_information(request):
         return redirect("account")
 
     update_field = request.POST.get("type")
-    next_url = request.POST.get("next")
+    next_url = request.POST.get("next", "")
 
     if update_field == "username":
         new_username = request.POST.get("username")
         if not new_username:
             messages.error(request, "Must enter at least 1 character for username.")
-            if next_url:
-                return redirect(next_url)
-            else:
-                return redirect("account")
+            return safe_redirect(request, next_url, "account")
         info_for_supabase = {
             "data": {"username": new_username},
         }
@@ -750,10 +766,7 @@ def update_user_information(request):
         # Check the passwords match.
         if password1 != password2:
             messages.error(request, "Passwords do not match.")
-            if next_url:
-                return redirect(next_url)
-            else:
-                return redirect("account")
+            return safe_redirect(request, next_url, "account")
 
         info_for_supabase = {"password": password1}
 
@@ -769,10 +782,7 @@ def update_user_information(request):
     else:
         messages.error(request, "Failed to update account.")
 
-    if next_url:
-        return redirect(next_url)
-
-    return redirect(request.path)
+    return safe_redirect(request, next_url, "account")
 
 
 def delete_user(request):

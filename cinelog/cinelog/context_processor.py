@@ -10,8 +10,8 @@ def supabase_context_processor(request):
         request (HTTP request): Contains information about the request.
 
     Return:
-        dict: Contains the users's authentication status, username, and email
-        (which are empty if they are not authenticated).
+        dict: Contains the user's authentication status, username, and email
+            (which are empty if they are not authenticated).
     """
     is_authenticated = supabase.is_authenticated(request)
     username = ""
