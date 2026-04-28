@@ -1124,7 +1124,7 @@ class SearchTemplateContentTests(TestCase):
         response = self.client.get(self.search_url)
 
         self.assertContains(response, "Enter a movie title above to search")
- 
+
 
     @patch("home.views.search_movies")
     def test_template_does_not_show_examples_after_search(self, mock_search):

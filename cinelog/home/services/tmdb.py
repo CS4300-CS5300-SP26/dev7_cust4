@@ -247,7 +247,7 @@ def search_person_id(person_name):
         "language": "en-US",
         "page": 1
     }
-      
+
     try:
         response = requests.get(url, params=params, timeout=5)
         data = response.json()

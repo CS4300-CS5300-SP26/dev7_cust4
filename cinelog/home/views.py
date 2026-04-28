@@ -1,4 +1,5 @@
 """Views for the Cinelog home app."""
+
 from django.contrib import messages
 from django.contrib.auth.forms import UserCreationForm
 from django.http import JsonResponse
@@ -130,9 +131,7 @@ def signup_view(request):
             return redirect("signup")
 
         if password1 != password2:
-            messages.error(
-                request, "Passwords do not match."
-            )
+            messages.error(request, "Passwords do not match.")
             return redirect("signup")
 
         # User Django to validate other fields and ensure they meet requirements.
@@ -170,9 +169,7 @@ def login_view(request):
             return redirect("login")
 
         if not email or not password:
-            messages.error(
-                request, "Please enter fill in each field."
-            )
+            messages.error(request, "Please enter fill in each field.")
             return redirect("login")
 
         if supabase.supabase_log_in(request, email, password):
@@ -553,41 +550,45 @@ def search_movies_view(request):
     Search for movies by title OR by filters only.
     Supports both simple search (for tests) and advanced filters.
     """
-    query = request.GET.get('q', '').strip()
-    
+    query = request.GET.get("q", "").strip()
+
     # Collect filters from request
     filters = {
-        'genres': request.GET.getlist('genres'),
-        'actor': request.GET.get('actor', '').strip(),
-        'rating_min': request.GET.get('rating_min'),
-        'rating_max': request.GET.get('rating_max'),
-        'year': request.GET.get('year'),
+        "genres": request.GET.getlist("genres"),
+        "actor": request.GET.get("actor", "").strip(),
+        "rating_min": request.GET.get("rating_min"),
+        "rating_max": request.GET.get("rating_max"),
+        "year": request.GET.get("year"),
     }
     # Remove empty filters
     filters = {k: v for k, v in filters.items() if v}
-    
+
     # Check if user has provided ANY search criteria (title OR filters)
     has_search_criteria = bool(query) or bool(filters)
-    
+
     if not has_search_criteria:
         # No search criteria - show empty state with filter UI
         genres = get_genre_list()
         current_year = 2026
         years = range(current_year - 20, current_year + 1)
-        
-        return render(request, 'search_results.html', {
-            'movies': [],
-            'search_query': '',
-            'has_search_criteria': False,
-            'genres': genres,
-            'years': years,
-            'filters': filters,
-            'is_filter_only': False,
-            # Add these for test compatibility
-            'result_count': 0,
-            'is_search': False,
-        })
-    
+
+        return render(
+            request,
+            "search_results.html",
+            {
+                "movies": [],
+                "search_query": "",
+                "has_search_criteria": False,
+                "genres": genres,
+                "years": years,
+                "filters": filters,
+                "is_filter_only": False,
+                # Add these for test compatibility
+                "result_count": 0,
+                "is_search": False,
+            },
+        )
+
     # Search with filters (with or without title query)
     if query and filters:
         # Both title and filters
@@ -598,25 +599,30 @@ def search_movies_view(request):
     else:
         # Filter-only search: discover movies without title
         search_results = discover_movies_by_filters_only(filters)
-    
+
     # Get genre list for filter UI
     genres = get_genre_list()
     current_year = 2026
     years = range(current_year - 20, current_year + 1)
-    
+
     # For test compatibility, add 'is_search' flag and 'result_count'
-    return render(request, 'search_results.html', {
-        'movies': search_results,
-        'search_query': query,
-        'has_search_criteria': True,
-        'result_count': len(search_results),
-        'genres': genres,
-        'years': years,
-        'filters': filters,
-        'is_filter_only': not bool(query) and bool(filters),
-        # Add these for test compatibility
-        'is_search': bool(query),  # True when there's a search query
-    })
+    return render(
+        request,
+        "search_results.html",
+        {
+            "movies": search_results,
+            "search_query": query,
+            "has_search_criteria": True,
+            "result_count": len(search_results),
+            "genres": genres,
+            "years": years,
+            "filters": filters,
+            "is_filter_only": not bool(query) and bool(filters),
+            # Add these for test compatibility
+            "is_search": bool(query),  # True when there's a search query
+        },
+    )
+
 
 def calendar_view(request):
     """
@@ -633,6 +639,7 @@ def calendar_view(request):
         return redirect("login")
 
     return render(request, "calendar.html")
+
 
 def calendar_events_api(request):  # pylint: disable=unused-argument
     """
@@ -658,11 +665,12 @@ def calendar_events_api(request):  # pylint: disable=unused-argument
                 "poster": movie.poster_url,
                 "rating": movie.rating,
                 "notes": movie.notes,
-            }
+            },
         }
         for movie in movies
     ]
     return JsonResponse(events, safe=False)
+
 
 def account_view(request):
     """
@@ -702,6 +710,7 @@ def account_view(request):
         "movies": movies,
     }
     return render(request, "account.html", context)
+
 
 def update_user_information(request):
     """
@@ -794,6 +803,7 @@ def delete_user(request):
         messages.error(request, "Failed to update account.")
         return redirect(request.path)
 
+
 def where_to_watch_view(request, movie_id):
     """
     Return streaming, rental, and purchase options for a movie as JSON.
@@ -808,19 +818,22 @@ def where_to_watch_view(request, movie_id):
     providers = get_watch_providers(movie_id)
     return JsonResponse(providers)
 
+
 def recommendations(request):
     user_id = supabase.get_user_id(request)
     if not user_id:
         messages.error(request, "Must be logged in to generate recommendations.")
-        return redirect('signup')
-    return render(request, 'rec.html')
+        return redirect("signup")
+    return render(request, "rec.html")
+
 
 def recommendations_surprise(request):
     user_id = supabase.get_user_id(request)
     if not user_id:
         messages.error(request, "Must be logged in to generate recommendations.")
-        return redirect('signup')
-    return render(request, 'rec_surprise.html')
+        return redirect("signup")
+    return render(request, "rec_surprise.html")
+
 
 def recommendations_result(request):
     """
@@ -829,46 +842,51 @@ def recommendations_result(request):
     or a GET request with ?mode=surprise for no preferences.
     """
     user_id = supabase.get_user_id(request)
-    
+
     if not user_id:
         messages.error(request, "Must be logged in to generate recommendations.")
-        return redirect('signup')
+        return redirect("signup")
 
-    ai_results = [] # this stores raw AI output
+    ai_results = []  # this stores raw AI output
     excluded_titles = []
     liked_movies = []
-        
+
     # rate limiting (5 requests/hr per user)
     if user_id:
         cache_key = f"rec_rate_limit_{user_id}"
         request_count = cache.get(cache_key, 0)
 
         if request_count >= 5:
-            messages.error(request, "You've reached the recommendation limit (5 per hour). Please try again later.")
-            return redirect('recommendations')
+            messages.error(
+                request,
+                "You've reached the recommendation limit (5 per hour). Please try again later.",
+            )
+            return redirect("recommendations")
 
-        # resets after 1 hour 
-        cache.set(cache_key, request_count + 1, timeout=200) # change back to 3600 after demo
+        # resets after 1 hour
+        cache.set(
+            cache_key, request_count + 1, timeout=200
+        )  # change back to 3600 after demo
 
     if user_id:
-        # library movies  excluded but also used for AI context 
+        # library movies  excluded but also used for AI context
         library_movies = Movie.objects.filter(user=user_id)
         for m in library_movies:
             excluded_titles.append(m.title)
-            liked_movies.append({'title': m.title, 'rating': m.rating})
+            liked_movies.append({"title": m.title, "rating": m.rating})
 
         # movies in watchlist will be excluded
         watchlist_ids = supabase.get_watchlist(user_id)
         for movie_id in watchlist_ids:
             movie = fetch_movies(movie_id, single=True)
-            if movie.get('title'):
-                excluded_titles.append(movie['title'])
+            if movie.get("title"):
+                excluded_titles.append(movie["title"])
 
-    if request.method == 'POST':
-        genres = request.POST.getlist('genres')
-        era    = request.POST.get('era', '')
-        person = request.POST.get('person', '')
-        awards = request.POST.getlist('awards') 
+    if request.method == "POST":
+        genres = request.POST.getlist("genres")
+        era = request.POST.get("era", "")
+        person = request.POST.get("person", "")
+        awards = request.POST.getlist("awards")
 
         # skip API call if same preferences were used for the same user (caching)
         prefs = f"{user_id}{sorted(genres)}{era}{person}{sorted(awards)}"
@@ -876,28 +894,32 @@ def recommendations_result(request):
 
         ai_results = cache.get(cache_key)
         if not ai_results:
-            ai_results = get_movie_recommendation(genres, era, person, awards, excluded_titles)
+            ai_results = get_movie_recommendation(
+                genres, era, person, awards, excluded_titles
+            )
             cache.set(cache_key, ai_results, timeout=3600)
             print("RESULT FROM AI:", ai_results)
         else:
             print("RESULT FROM CACHE:", ai_results)
 
-    elif request.GET.get('mode') == 'surprise':
-        ai_results = get_movie_recommendation([], '', '', [], excluded_titles, liked_movies)
+    elif request.GET.get("mode") == "surprise":
+        ai_results = get_movie_recommendation(
+            [], "", "", [], excluded_titles, liked_movies
+        )
         print("SURPRISE RESULT:", ai_results)
 
     else:
-        return redirect('recommendations')
-    
+        return redirect("recommendations")
+
     # loop through AI recommended movies
     for movie in ai_results:
         # search TMDB using the title the AI returned
-        results = search_movies(movie['title'])
+        results = search_movies(movie["title"])
         if results:
-            tmdb = results[0] # this grabs the first result
-            movie['poster'] = tmdb.get('poster_path', '')
-            movie['tmdb_id'] = tmdb.get('id', '')
-            movie['overview'] = tmdb.get('overview', '')
-            movie['vote_average'] = tmdb.get('vote_average', '')
+            tmdb = results[0]  # this grabs the first result
+            movie["poster"] = tmdb.get("poster_path", "")
+            movie["tmdb_id"] = tmdb.get("id", "")
+            movie["overview"] = tmdb.get("overview", "")
+            movie["vote_average"] = tmdb.get("vote_average", "")
 
-    return render(request, 'rec_result.html', {'movies': ai_results})
+    return render(request, "rec_result.html", {"movies": ai_results})

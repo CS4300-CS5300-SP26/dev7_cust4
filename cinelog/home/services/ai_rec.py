@@ -3,6 +3,7 @@ from openai import OpenAI
 from django.conf import settings
 import json
 
+
 def get_movie_recommendation(
     genres, era, person, awards=None, excluded_titles=None, liked_movies=None
 ):
