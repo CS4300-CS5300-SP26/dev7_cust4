@@ -1,6 +1,7 @@
+# pylint: disable=missing-module-docstring,missing-function-docstring,function-redefined,not-callable
+from unittest.mock import patch
 from behave import given, when, then
 from django.urls import reverse
-from unittest.mock import patch
 from django.contrib.messages import get_messages
 
 TEST_USER_ID = "550e8400-e29b-41d4-a716-446655440000"
@@ -91,12 +92,8 @@ def step_impl(context):
 
 @when("I select the remove from list button")
 def step_impl(context):
-    with patch(
-        "home.views.supabase.get_user_id", return_value="user123"
-    ) as mock_user_id:
-        with patch(
-            "home.views.supabase.delete_in_watchlist", return_value=True
-        ) as mock_delete:
+    with patch("home.views.supabase.get_user_id", return_value="user123"):
+        with patch("home.views.supabase.delete_in_watchlist", return_value=True):
             context.response = context.test.client.post(
                 reverse("remove_from_watchlist", args=[context.movie_id]),
                 HTTP_REFERER="/watchlist/",
@@ -105,9 +102,7 @@ def step_impl(context):
 
 @when("I select add to watchlist")
 def step_impl(context):
-    with patch(
-        "home.views.supabase.get_user_id", return_value="user123"
-    ) as mock_user_id:
+    with patch("home.views.supabase.get_user_id", return_value="user123"):
         with patch(
             "home.views.supabase.insert_in_watchlist",
             return_value=(False, "Error: Movie is already in watchlist."),
@@ -128,9 +123,7 @@ def step_impl(context, criteria):
 
 @then('I can view "{movie}" in my watchlist')
 def step_impl(context, movie):
-    with patch(
-        "home.views.supabase.get_user_id", return_value="user123"
-    ) as mock_user_id:
+    with patch("home.views.supabase.get_user_id", return_value="user123"):
         with patch("home.views.supabase.get_watchlist", return_value=[550]):
             with patch(
                 "home.views.fetch_movies", return_value={"id": 550, "title": movie}
@@ -146,6 +139,7 @@ def step_impl(context, movie):
 def step_impl(context, movie):
     assert context.response.status_code == 200
     assert "movie" in context.response.context
+    assert context.movie_name == movie
 
 
 @then('"Black Panther" is no longer in my watchlist')

@@ -36,11 +36,13 @@ jobs:
       - name: Generate Pylint Report
         id: pylint
         continue-on-error: true
+        working-directory: cinelog
         run: |
-          python -m pylint --recursive=y --output=pylint-report.txt cinelog/
+          python -m pylint --recursive=y . | tee pylint-report.txt
 
       - name: Always post-process report
         if: always()
+        working-directory: cinelog
         run: |
           sed -i '1i ```' pylint-report.txt
           sed -i '$a ```' pylint-report.txt
@@ -51,10 +53,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: pylint-results
-          path: pylint-report.txt
+          path: cinelog/pylint-report.txt
 
       - name: Comment linter results on PR
         if: github.event_name == 'pull_request'
         uses: thollander/actions-comment-pull-request@v3.0.1
         with:
-          file-path: pylint-report.txt
+          file-path: cinelog/pylint-report.txt
