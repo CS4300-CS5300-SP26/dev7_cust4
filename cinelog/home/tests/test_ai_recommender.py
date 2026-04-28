@@ -1,9 +1,13 @@
-from django.test import TestCase
 from unittest.mock import patch, MagicMock
+from django.test import TestCase
 from home.services.ai_rec import get_movie_recommendation
 
 
 class AIRecommendationTest(TestCase):
+    """
+    Tests for the AI recommender feature.
+    """
+
     def setUp(self):
         """Set up reusable test data."""
         self.genres = ["Thriller", "Drama"]
@@ -49,7 +53,10 @@ class AIRecommendationTest(TestCase):
         """
         Test that multiple movies are returned when AI gives a full list.
         """
-        fake_response = '[{"title": "Zodiac", "year": "2007", "reason": "..."}, {"title": "Se7en", "year": "1995", "reason": "..."}]'
+        fake_response = (
+            '[{"title": "Zodiac", "year": "2007", "reason": "..."},'
+            '{"title": "Se7en", "year": "1995", "reason": "..."}]'
+        )
         mock_openai.return_value.chat.completions.create.return_value = (
             self._mock_openai_response(fake_response)
         )

@@ -8,7 +8,6 @@ from home.models import Movie
 from . import supabase, tmdb
 
 
-
 def get_size_of_watchlist(user_id):
     """
     Returns the number of movies in user's the watchlist.
