@@ -220,6 +220,7 @@ def send_magic_link_login(request, email):
 
         if not response:
             messages.error(request, "Error occured.")
+            return
 
         messages.success(request, f"Link sent to {email}!")
 
