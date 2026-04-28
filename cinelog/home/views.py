@@ -113,9 +113,10 @@ def signup_view(request):
         request (HTTP request): Contains information about the request.
 
     Returns:
-        HTTP Response: Contains the signup form or redirects user to home page if they successfully created an account.
+        HTTP Response: Redirects the user to the home page after successful signup.
     """
-    # If form has been submitted, create the user if form is valid. Using the django UserCreationForm to handle creating accounts.
+    # If form has been submitted, create the user if form is valid. 
+    # Using the django UserCreationForm to handle creating accounts.
     if request.method == "POST":
         # Get the email and username from the form.
         email = request.POST.get("email")
@@ -157,9 +158,10 @@ def login_view(request):
         request (HTTP request): Contains information about the request.
 
     Returns:
-        HTTP Response: Contains the login form or redirects user to movies page if they successfully logged in.
+        HTTP Response: Login form/redirects to movies page upon successful login.
     """
-    # If form has been submitted, create the user if form is valid. Using the django UserCreationForm to handle creating accounts.
+    # If form has been submitted, create the user if form is valid.
+    #  Using the django UserCreationForm to handle creating accounts.
     if request.method == "POST":
         email = request.POST.get("email")
         password = request.POST.get("password")
@@ -185,7 +187,7 @@ def magic_login(request):
         request (HTTP request): Contains information about the request.
 
     Returns:
-        HTTPResponse: Contains the login form or redirects user if they successfully logged in (or redirects user).
+        HTTPResponse: Displays the login form or redirects upon successful login.
     """
     # If form has been submitted, create the user if form is valid.
     if request.method == "POST":
