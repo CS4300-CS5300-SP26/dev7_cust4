@@ -46,10 +46,12 @@ if not OPENAI_API_KEY and not os.environ.get("CI"):
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get(
-    "SECRET_KEY", "django-insecure-bd*mrkv-p!rdl6^0dfeb=na9nxd3a1u!l%3og+w$3tlx2)#5w8"
-)
-
+SECRET_KEY = os.environ.get('SECRET_KEY')
+if not SECRET_KEY:
+    raise ImproperlyConfigured(
+        "SECRET_KEY environment variable is not set. "
+        "Set it in your .env file or environment before starting the server."
+    )
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
