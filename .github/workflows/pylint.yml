@@ -38,8 +38,7 @@ jobs:
         continue-on-error: true
         working-directory: cinelog
         run: |
-          python -m pylint . --recursive=y --score=y --output-format=text | tee pylint-report.txt 
-          cat pylint-report.txt
+          python -m pylint --recursive=y . | tee pylint-report.txt
 
       - name: Always post-process report
         if: always()
