@@ -1,5 +1,3 @@
-
-{% include "components/alerts.html" %}
 {% if not request.session.supabase_user_id %}
     <p style="color: #9ca3af;" class="mx-8">You must be logged in to manage hidden movies.</p>
 {% elif movies %}

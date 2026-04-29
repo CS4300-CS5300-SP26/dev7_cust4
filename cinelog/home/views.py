@@ -286,8 +286,10 @@ def remove_from_watchlist(request, movie_id):
         success = supabase.delete_in_watchlist(user_id, movie_id)
         if not success:
             messages.error(request, "Unable to remove movie. Please try again.")
-
-        return redirect("movie_detail", movie_id=movie_id)
+        else:
+            messages.error(request, "Unable to remove movie. Please try again.")
+        next_url = request.POST.get("next", "")
+        return safe_redirect(request, next_url, "watchlist")
 
 
 def watchlist_view(request):
