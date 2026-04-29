@@ -48,12 +48,12 @@ if not OPENAI_API_KEY and not os.environ.get("CI"):
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config("SECRET_KEY", default="")
-if not SECRET_KEY:
+if not SECRET_KEY and not os.environ.get("CI"):
     raise ImproperlyConfigured(
         "SECRET_KEY environment variable is not set. "
         "Set it in your .env file or environment before starting the server."
     )
-# SECURITY WARNING: don't run with debug turned on in production!# SECURITY WARNING: don't run with debug turned on in production!# SECURITY WARNING: don't run with debug turned on in production!
+# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
 ALLOWED_HOSTS = [
