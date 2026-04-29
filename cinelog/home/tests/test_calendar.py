@@ -1,23 +1,34 @@
-from django.test import TestCase, Client
-from django.urls import reverse
-from unittest.mock import patch
 import uuid
 import json
+import datetime
+from unittest.mock import patch
+from django.test import TestCase, Client
+from django.urls import reverse
+from home.models import Movie
 
 
 class CalendarViewTest(TestCase):
+    """
+    Test for calendar views and API behavior.
+    """
     def setUp(self):
         self.client = Client()
         self.user_id = str(uuid.uuid4())
 
     @patch("home.views.supabase.get_user_id")
     def test_calendar_view_redirects_if_not_logged_in(self, mock_get_user_id):
+        """
+        Test calendar view redirects to login if user is not authenticated.
+        """
         mock_get_user_id.return_value = None
         response = self.client.get(reverse("calendar"))
         self.assertRedirects(response, reverse("login"))
 
     @patch("home.views.supabase.get_user_id")
     def test_calendar_view_loads_for_logged_in_user(self, mock_get_user_id):
+        """
+        Test calendar page loads successfully for logged-in users
+        """
         mock_get_user_id.return_value = self.user_id
         response = self.client.get(reverse("calendar"))
         self.assertEqual(response.status_code, 200)
@@ -25,6 +36,9 @@ class CalendarViewTest(TestCase):
 
     @patch("home.views.supabase.get_user_id")
     def test_calendar_events_api_returns_json(self, mock_get_user_id):
+        """
+        Test calendar events API returns a JSON response.
+        """
         mock_get_user_id.return_value = self.user_id
         response = self.client.get(reverse("calendar_events"))
         self.assertEqual(response.status_code, 200)
@@ -32,6 +46,9 @@ class CalendarViewTest(TestCase):
 
     @patch("home.views.supabase.get_user_id")
     def test_calendar_events_api_redirects_if_not_logged_in(self, mock_get_user_id):
+        """
+        Test calendar events API returns empty list if user is not logged in.
+        """
         mock_get_user_id.return_value = None
         response = self.client.get(reverse("calendar_events"))
         self.assertEqual(response.status_code, 200)
@@ -40,9 +57,9 @@ class CalendarViewTest(TestCase):
 
     @patch("home.views.supabase.get_user_id")
     def test_calendar_events_only_shows_movies_with_dates(self, mock_get_user_id):
-        from home.models import Movie
-        import datetime
-
+        """
+        Test only movies with watched date are returned in calendar events.
+        """
         mock_get_user_id.return_value = self.user_id
 
         # Movie with a watch date
@@ -70,14 +87,19 @@ class CalendarViewTest(TestCase):
 
 
 class WatchedDateTest(TestCase):
+    """
+    Test for watched date functionality.
+    """
+
     def setUp(self):
         self.client = Client()
         self.user_id = str(uuid.uuid4())
 
     @patch("home.views.supabase.get_user_id")
     def test_edit_movie_saves_watched_date(self, mock_get_user_id):
-        from home.models import Movie
-        import datetime
+        """
+        Test editing a movie correctly saves the watched date.
+        """
 
         mock_get_user_id.return_value = self.user_id
 
@@ -104,9 +126,9 @@ class WatchedDateTest(TestCase):
 
     @patch("home.views.supabase.get_user_id")
     def test_edit_movie_clears_watched_date(self, mock_get_user_id):
-        from home.models import Movie
-        import datetime
-
+        """
+        Test editing a movie clears the watched date when empty.
+        """
         mock_get_user_id.return_value = self.user_id
 
         movie = Movie.objects.create(

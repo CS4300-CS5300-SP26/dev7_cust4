@@ -113,9 +113,11 @@ def signup_view(request):
         request (HTTP request): Contains information about the request.
 
     Returns:
-        HTTP Response: Contains the signup form or redirects user to home page if they successfully created an account.
+        HTTP Response: Redirects the user to the home page after successful signup.
     """
-    # If form has been submitted, create the user if form is valid. Using the django UserCreationForm to handle creating accounts.
+
+    # If form has been submitted, create the user if form is valid. 
+    # Using the django UserCreationForm to handle creating accounts.
     if request.method == "POST":
         # Get the email and username from the form.
         email = request.POST.get("email")
@@ -157,9 +159,10 @@ def login_view(request):
         request (HTTP request): Contains information about the request.
 
     Returns:
-        HTTP Response: Contains the login form or redirects user to movies page if they successfully logged in.
+        HTTP Response: Login form/redirects to movies page upon successful login.
     """
-    # If form has been submitted, create the user if form is valid. Using the django UserCreationForm to handle creating accounts.
+    # If form has been submitted, create the user if form is valid.
+    #  Using the django UserCreationForm to handle creating accounts.
     if request.method == "POST":
         email = request.POST.get("email")
         password = request.POST.get("password")
@@ -185,7 +188,7 @@ def magic_login(request):
         request (HTTP request): Contains information about the request.
 
     Returns:
-        HTTPResponse: Contains the login form or redirects user if they successfully logged in (or redirects user).
+        HTTPResponse: Displays the login form or redirects upon successful login.
     """
     # If form has been submitted, create the user if form is valid.
     if request.method == "POST":
@@ -218,7 +221,7 @@ def magic_callback(request):
         request (HTTP request): Contains information about the request.
 
     Returns:
-        HTTPResponseRedirect: Redirects user to login page if unsuccesful, movies page if successful.
+        HTTPResponseRedirect: Redirects user to login if unsuccesful, movies if successful.
     """
     if supabase.get_user_magic_link(request):
         return redirect("movies")
@@ -531,8 +534,8 @@ def safe_redirect(request, url, default):
 
     if url_has_allowed_host_and_scheme(url, allowed_hosts={request.get_host()}):
         return redirect(url)
-    else:
-        return redirect(default)
+    
+    return redirect(default)
 
 
 def unhide_movie(request, movie_id):
@@ -807,9 +810,9 @@ def delete_user(request):
     if updated:
         messages.success(request, "Your account has been deleted.")
         return redirect("landing")
-    else:
-        messages.error(request, "Failed to update account.")
-        return redirect(request.path)
+    
+    messages.error(request, "Failed to update account.")
+    return redirect(request.path)
 
 
 def where_to_watch_view(request, movie_id):
@@ -828,6 +831,9 @@ def where_to_watch_view(request, movie_id):
 
 
 def recommendations(request):
+    """
+    Render recommendations page for authenticated users.
+    """
     user_id = supabase.get_user_id(request)
     if not user_id:
         messages.error(request, "Must be logged in to generate recommendations.")
@@ -836,6 +842,9 @@ def recommendations(request):
 
 
 def recommendations_surprise(request):
+    """
+    Render surprise recommendations page for authenticated users.
+    """
     user_id = supabase.get_user_id(request)
     if not user_id:
         messages.error(request, "Must be logged in to generate recommendations.")
@@ -850,6 +859,7 @@ def recommendations_result(request):
     or a GET request with ?mode=surprise for no preferences.
     """
     user_id = supabase.get_user_id(request)
+
     if not user_id:
         messages.error(request, "Must be logged in to generate recommendations.")
         return redirect("signup")
@@ -871,7 +881,9 @@ def recommendations_result(request):
             return redirect("recommendations")
 
         # resets after 1 hour
-        cache.set(cache_key, request_count + 1, timeout=3600)
+        cache.set(
+            cache_key, request_count + 1, timeout=200
+        )  # change back to 3600 after demo
 
     if user_id:
         # library movies  excluded but also used for AI context
