@@ -44,7 +44,7 @@ fail-on=
 # Interpret the stdin as a python script, whose filename needs to be passed as
 # the module_or_package argument.
 #from-stdin=
-
+django-settings-module=cinelog.settings
 # Files or directories to be skipped. They should be base names, not paths.
 ignore=CVS
 
