@@ -58,3 +58,7 @@ npx railway up
 ### Run migrations after first deploy:
 
 npx railway run python manage.py migrate
+
+### Cache Setup
+
+railway run python manage.py createcachetable django_cache_table
