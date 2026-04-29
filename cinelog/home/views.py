@@ -221,7 +221,7 @@ def magic_callback(request):
         request (HTTP request): Contains information about the request.
 
     Returns:
-        HTTPResponseRedirect: Redirects user to login page if unsuccesful, movies page if successful.
+        HTTPResponseRedirect: Redirects user to login if unsuccesful, movies if successful.
     """
     if supabase.get_user_magic_link(request):
         return redirect("movies")
@@ -534,8 +534,8 @@ def safe_redirect(request, url, default):
 
     if url_has_allowed_host_and_scheme(url, allowed_hosts={request.get_host()}):
         return redirect(url)
-    else:
-        return redirect(default)
+    
+    return redirect(default)
 
 
 def unhide_movie(request, movie_id):
@@ -810,9 +810,9 @@ def delete_user(request):
     if updated:
         messages.success(request, "Your account has been deleted.")
         return redirect("landing")
-    else:
-        messages.error(request, "Failed to update account.")
-        return redirect(request.path)
+    
+    messages.error(request, "Failed to update account.")
+    return redirect(request.path)
 
 
 def where_to_watch_view(request, movie_id):
@@ -831,6 +831,9 @@ def where_to_watch_view(request, movie_id):
 
 
 def recommendations(request):
+    """
+    Render recommendations page for authenticated users.
+    """
     user_id = supabase.get_user_id(request)
     if not user_id:
         messages.error(request, "Must be logged in to generate recommendations.")
@@ -839,6 +842,9 @@ def recommendations(request):
 
 
 def recommendations_surprise(request):
+    """
+    Render surprise recommendations page for authenticated users.
+    """
     user_id = supabase.get_user_id(request)
     if not user_id:
         messages.error(request, "Must be logged in to generate recommendations.")

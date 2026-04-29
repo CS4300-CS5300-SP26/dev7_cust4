@@ -1,12 +1,15 @@
-""" Talks to OpenAI and prompts AI recommended movie results """
+import json
 from openai import OpenAI
 from django.conf import settings
-import json
 
 
 def get_movie_recommendation(
     genres, era, person, awards=None, excluded_titles=None, liked_movies=None
 ):
+    """ 
+    Talks to OpenAI and prompts AI recommended movie results. 
+    """
+
     prompt_parts = []
     if genres:
         prompt_parts.append(f"Mood/Genre: {', '.join(genres)}")
@@ -73,7 +76,7 @@ def get_movie_recommendation(
             raw.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
         )
         return json.loads(raw)
-    except Exception as e:
+    except Exception:
         return [
             {
                 "title": "Could not generate recommendation",
