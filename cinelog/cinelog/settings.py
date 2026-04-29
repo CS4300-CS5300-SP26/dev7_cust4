@@ -53,7 +53,7 @@ if not SECRET_KEY:
         "SECRET_KEY environment variable is not set. "
         "Set it in your .env file or environment before starting the server."
     )
-# SECURITY WARNING: don't run with debug turned on in production!
+# SECURITY WARNING: don't run with debug turned on in production!# SECURITY WARNING: don't run with debug turned on in production!# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
 ALLOWED_HOSTS = [
