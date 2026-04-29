@@ -287,7 +287,7 @@ def remove_from_watchlist(request, movie_id):
         if not success:
             messages.error(request, "Unable to remove movie. Please try again.")
 
-        return redirect(request.META.get("HTTP_REFERER", f"/movies/{movie_id}/"))
+        return redirect("movie_detail", movie_id=movie_id)
 
 
 def watchlist_view(request):
