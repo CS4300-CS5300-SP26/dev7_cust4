@@ -606,9 +606,9 @@ class WatchlistTest(TestCase):
     @patch("home.views.supabase.delete_in_watchlist", return_value=False)
     def test_remove_from_watchlist_not_success(self, mock_delete, _mock_user_id):
         """Test that error is shown if there is an error."""
-        response = self.client.post(self.remove_url, HTTP_REFERER="/watchlist/")
+        response = self.client.post(self.remove_url)
         mock_delete.assert_called_once_with(self.user_id, self.movie_id)
-        self.assertRedirects(response, "/watchlist/")
+        self.assertRedirects(response, reverse("watchlist"))
         messages = list(get_messages(response.wsgi_request))
         self.assertTrue(
             any("Unable to remove movie. Please try again." in str(m) for m in messages)

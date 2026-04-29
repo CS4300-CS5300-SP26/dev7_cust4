@@ -4,10 +4,15 @@
 {% block content %}
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="{% static 'css/movies.css' %}" rel="stylesheet">
+
 <div class="hero-container relative">
     <!-- Decorative teal blob — (just for design) -->
     <div aria-hidden="true" class="hero-blob hero-blob--top absolute z-0">
         <div class="hero-blob__shape hero-blob__shape--top"></div>
+    </div>
+
+    <div class="px-6">
+        {% include "components/alerts.html" %}
     </div>
 
     <div class="hero-content">
@@ -110,6 +115,7 @@
                     <div class="absolute inset-0 flex flex-col items-center justify-center text-white">
                         <form action="{% url 'remove_from_watchlist' movie.id %}" method="POST">
                             {% csrf_token %}
+                            <input type="hidden" name="next" value="{% url 'watchlist' %}">
                             <button class="group/edit invisible text-white border group-hover/item:visible hover:bg-gray-300 transition cursor-pointer px-6 py-1 rounded-full mt-5">
                                 <p class="group-hover/edit:text-gray-700">Remove from List</p> 
                             </button>

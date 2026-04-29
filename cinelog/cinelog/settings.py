@@ -47,7 +47,7 @@ if not OPENAI_API_KEY and not os.environ.get("CI"):
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY')
+SECRET_KEY = config("SECRET_KEY", default="")
 if not SECRET_KEY:
     raise ImproperlyConfigured(
         "SECRET_KEY environment variable is not set. "
@@ -210,6 +210,7 @@ LOGOUT_REDIRECT_URL = "landing"
 
 CACHES = {
     "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+        "LOCATION": "django_cache_table",
     }
 }
