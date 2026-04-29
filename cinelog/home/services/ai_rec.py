@@ -6,8 +6,8 @@ from django.conf import settings
 def get_movie_recommendation(
     genres, era, person, awards=None, excluded_titles=None, liked_movies=None
 ):
-    """ 
-    Talks to OpenAI and prompts AI recommended movie results. 
+    """
+    Talks to OpenAI and prompts AI recommended movie results.
     """
 
     prompt_parts = []
@@ -34,11 +34,11 @@ def get_movie_recommendation(
         liked_parts = []
         for m in liked_movies:
             liked_parts.append(f"{m['title']} (rated {m['rating']}/5)")
-        liked_note = ( 
-        f" The user has already watched and logged these movies: "
-        f"{', '.join(liked_parts)}. " 
-        "Use this to inform your recommendations and mention relevant ones "
-        "in your reason using phrasing like 'because you watched X'." 
+        liked_note = (
+            f" The user has already watched and logged these movies: "
+            f"{', '.join(liked_parts)}. "
+            "Use this to inform your recommendations and mention relevant ones "
+            "in your reason using phrasing like 'because you watched X'."
         )
 
     client = OpenAI(api_key=settings.OPENAI_API_KEY)

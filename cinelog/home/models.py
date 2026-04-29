@@ -6,6 +6,7 @@ class Movie(models.Model):
     """
     Represents a user's movie entry.
     """
+
     user = models.UUIDField()
     title = models.CharField(max_length=255)
     poster_url = models.URLField(max_length=500, null=True, blank=True)

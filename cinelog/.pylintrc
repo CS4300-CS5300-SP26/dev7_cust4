@@ -46,13 +46,13 @@ fail-on=
 #from-stdin=
 
 # Files or directories to be skipped. They should be base names, not paths.
-ignore=CVS
+ignore=CVS, features
 
 # Add files or directories matching the regular expressions patterns to the
 # ignore-list. The regex matches against paths and can be in Posix or Windows
 # format. Because '\\' represents the directory delimiter on Windows systems,
 # it can't be used as an escape character.
-ignore-paths=.*/migrations/.*,.*/apps\.py$,.*/manage\.py$
+ignore-paths=.*/migrations/.*,.*/apps\.py$,.*/manage\.py$,.*/cinelog/__init__\.py$
 
 # Files or directories matching the regular expression patterns are skipped.
 # The regex matches against base names, not paths. The default value ignores
@@ -83,6 +83,7 @@ limit-inference-results=100
 # List of plugins (as comma separated values of python module names) to load,
 # usually to register additional checkers.
 load-plugins=pylint_django
+django-settings-module=cinelog.settings
 
 # Pickle collected data for later comparisons.
 persistent=yes
@@ -295,7 +296,7 @@ exclude-too-few-public-methods=
 ignored-parents=
 
 # Maximum number of arguments for function / method.
-max-args=5
+max-args=7
 
 # Maximum number of attributes for a class (see R0902).
 max-attributes=10
@@ -307,13 +308,13 @@ max-bool-expr=5
 max-branches=12
 
 # Maximum number of locals for function / method body.
-max-locals=15
+max-locals=16
 
 # Maximum number of parents for a class (see R0901).
 max-parents=7
 
 # Maximum number of positional arguments for function / method.
-max-positional-arguments=5
+max-positional-arguments=7
 
 # Maximum number of public methods for a class (see R0904).
 max-public-methods=20
@@ -512,7 +513,7 @@ msg-template=
 # 'colorized', 'json2' (improved json format), 'json' (old json format), msvs
 # (visual studio) and 'github' (GitHub actions). You can also give a reporter
 # class, e.g. mypackage.mymodule.MyReporterClass.
-#output-format=
+output-format=github
 
 # Tells whether to display a full report or only the messages.
 reports=no

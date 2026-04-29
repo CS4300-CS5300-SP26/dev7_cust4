@@ -1,4 +1,4 @@
-# pylint: disable=missing-module-docstring,missing-function-docstring,function-redefined,not-callable
+# pylint: disable=missing-module-docstring,missing-function-docstring,function-redefined,not-callable,django-not-configured
 from unittest.mock import patch
 from behave import given, when, then
 from django.urls import reverse
