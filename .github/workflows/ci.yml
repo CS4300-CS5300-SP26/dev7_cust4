@@ -12,6 +12,10 @@ jobs:
 
     env:
       DJANGO_SETTINGS_MODULE: cinelog.settings
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+      OMBD_API_KEY: ${{ secrets.OMBD_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
     steps:
       - name: Checkout code
