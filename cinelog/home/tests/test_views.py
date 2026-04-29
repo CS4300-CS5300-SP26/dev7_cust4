@@ -608,8 +608,9 @@ class WatchlistTest(TestCase):
         """Test that error is shown if there is an error."""
         response = self.client.post(self.remove_url)
         mock_delete.assert_called_once_with(self.user_id, self.movie_id)
-        self.assertRedirects(response, 
-            reverse("movie_detail", kwargs={"movie_id": self.movie_id}))
+        self.assertRedirects(
+            response, reverse("movie_detail", kwargs={"movie_id": self.movie_id})
+        )
         messages = list(get_messages(response.wsgi_request))
         self.assertTrue(
             any("Unable to remove movie. Please try again." in str(m) for m in messages)
