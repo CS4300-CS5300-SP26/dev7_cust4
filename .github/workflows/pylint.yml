@@ -38,11 +38,7 @@ jobs:
         continue-on-error: true
         working-directory: cinelog
         run: |
-          python -m pylint --recursive=y . | tee pylint-report.txt
-
-          if [ ! -s pylint-report.txt ]; then
-            echo "Passed with no issues." > pylint-report.txt
-          fi
+          python -m pylint --recursive=y --output=pylint-report.txt . 
 
       - name: Always post-process report
         if: always()
