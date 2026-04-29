@@ -1,4 +1,5 @@
 import logging
+import warnings
 from unittest.mock import MagicMock
 from supabase import create_client
 from django.conf import settings
@@ -7,7 +8,6 @@ from django.core.cache import cache
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from home.models import Movie
-import warnings
 
 # Set a max for number of links user can recieve.
 MAX_EMAILS_1_HOUR = 4

@@ -1,5 +1,6 @@
 """Views for the Cinelog home app."""
 
+import hashlib
 from django.contrib import messages
 from django.contrib.auth.forms import UserCreationForm
 from django.http import JsonResponse
@@ -21,7 +22,6 @@ from .services.tmdb import (
     discover_movies_by_filters_only,
 )
 from .services.ai_rec import get_movie_recommendation
-import hashlib
 
 
 def landing_page(request):
@@ -116,7 +116,7 @@ def signup_view(request):
         HTTP Response: Redirects the user to the home page after successful signup.
     """
 
-    # If form has been submitted, create the user if form is valid. 
+    # If form has been submitted, create the user if form is valid.
     # Using the django UserCreationForm to handle creating accounts.
     if request.method == "POST":
         # Get the email and username from the form.
@@ -265,7 +265,7 @@ def add_to_watchlist(request, movie_id):
         else:
             messages.error(request, message)
 
-        return redirect("movie_detail", movie_id=movie_id)
+    return redirect("movie_detail", movie_id=movie_id)
 
 
 def remove_from_watchlist(request, movie_id):
@@ -293,6 +293,7 @@ def remove_from_watchlist(request, movie_id):
             messages.error(request, "Unable to remove movie. Please try again.")
         next_url = request.POST.get("next", "")
         return safe_redirect(request, next_url, "watchlist")
+    return redirect("watchlist")
 
 
 def watchlist_view(request):
@@ -356,6 +357,7 @@ def sort_movies_date(user_id, sort_method):
     Returns:
         list: Sorted version of passed in movies.
     """
+    movie_ids = []
     if sort_method == "ascending_date":
         movie_ids = supabase.get_watchlist(user_id, order=True, descending=False)
 
@@ -421,7 +423,7 @@ def add_movie_view(request):
             return redirect("library")
 
         # duplicate check to this user only
-        movie, created = Movie.objects.get_or_create(
+        _, created = Movie.objects.get_or_create(
             user=user_id,
             tmdb_id=tmdb_id,
             defaults={
@@ -516,7 +518,7 @@ def hide_movie(request, movie_id):
         else:
             messages.error(request, message)
 
-        return redirect("movie_detail", movie_id=movie_id)
+    return redirect("movie_detail", movie_id=movie_id)
 
 
 def safe_redirect(request, url, default):
@@ -536,7 +538,7 @@ def safe_redirect(request, url, default):
 
     if url_has_allowed_host_and_scheme(url, allowed_hosts={request.get_host()}):
         return redirect(url)
-    
+
     return redirect(default)
 
 
@@ -565,6 +567,7 @@ def unhide_movie(request, movie_id):
 
         next_url = request.POST.get("next", "")
         return safe_redirect(request, next_url, "account")
+    return redirect("account")
 
 
 def search_movies_view(request):
@@ -812,7 +815,7 @@ def delete_user(request):
     if updated:
         messages.success(request, "Your account has been deleted.")
         return redirect("landing")
-    
+
     messages.error(request, "Failed to update account.")
     return redirect(request.path)
 
@@ -872,34 +875,14 @@ def recommendations_result(request):
 
     # rate limiting (5 requests/hr per user)
     if user_id:
-        cache_key = f"rec_rate_limit_{user_id}"
-        request_count = cache.get(cache_key, 0)
-
-        if request_count >= 5:
-            messages.error(
-                request,
-                "You've reached the recommendation limit (5 per hour). Please try again later.",
-            )
+        if not check_rate_limit(request, user_id):
+            messages.error(request, "Limit reached.")
             return redirect("recommendations")
 
-        # resets after 1 hour
-        cache.set(
-            cache_key, request_count + 1, timeout=200
-        )  # change back to 3600 after demo
-
     if user_id:
-        # library movies  excluded but also used for AI context
-        library_movies = Movie.objects.filter(user=user_id)
-        for m in library_movies:
-            excluded_titles.append(m.title)
-            liked_movies.append({"title": m.title, "rating": m.rating})
-
-        # movies in watchlist will be excluded
-        watchlist_ids = supabase.get_watchlist(user_id)
-        for movie_id in watchlist_ids:
-            movie = fetch_movies(movie_id, single=True)
-            if movie.get("title"):
-                excluded_titles.append(movie["title"])
+        excluded_titles, liked_movies = build_user_recommendation_context(
+            user_id, supabase
+        )
 
     if request.method == "POST":
         genres = request.POST.getlist("genres")
@@ -917,15 +900,11 @@ def recommendations_result(request):
                 genres, era, person, awards, excluded_titles
             )
             cache.set(cache_key, ai_results, timeout=3600)
-            print("RESULT FROM AI:", ai_results)
-        else:
-            print("RESULT FROM CACHE:", ai_results)
 
     elif request.GET.get("mode") == "surprise":
         ai_results = get_movie_recommendation(
             [], "", "", [], excluded_titles, liked_movies
         )
-        print("SURPRISE RESULT:", ai_results)
 
     else:
         return redirect("recommendations")
@@ -942,3 +921,56 @@ def recommendations_result(request):
             movie["vote_average"] = tmdb.get("vote_average", "")
 
     return render(request, "rec_result.html", {"movies": ai_results})
+
+
+def build_user_recommendation_context(user_id, supabase_client):
+    """
+    Builds excluded titles and liked movies for AI recommendations.
+
+    Args:
+        user_id (UUID): UUID for current user.
+        supabase_client (Client): Supabase client to get user's watchlist.
+    Returns:
+        tuple: Lists with the title to exclude from library and watchlist.
+    """
+    excluded_titles = []
+    liked_movies = []
+    # library movies  excluded but also used for AI context
+    library_movies = Movie.objects.filter(user=user_id)
+    for m in library_movies:
+        excluded_titles.append(m.title)
+        liked_movies.append({"title": m.title, "rating": m.rating})
+
+    # movies in watchlist will be excluded
+    watchlist_ids = supabase_client.get_watchlist(user_id)
+    for movie_id in watchlist_ids:
+        movie = fetch_movies(movie_id, single=True)
+        if movie.get("title"):
+            excluded_titles.append(movie["title"])
+
+    return excluded_titles, liked_movies
+
+
+def check_rate_limit(request, user_id):
+    """
+    Uses cache to limit recommendation requests to 5 times per hour for a user.
+
+    Args:
+        request (HTTP request): Contains information about the request.
+        user_id (UUID): UUID for current user.
+    Returns:
+        boolean: Represents if limit is reached or not.
+    """
+    cache_key = f"rec_rate_limit_{user_id}"
+    request_count = cache.get(cache_key, 0)
+
+    if request_count >= 5:
+        messages.error(
+            request,
+            "You've reached the recommendation limit (5 per hour). Please try again later.",
+        )
+        return False
+
+    # resets after 1 hour
+    cache.set(cache_key, request_count + 1, timeout=200)
+    return True

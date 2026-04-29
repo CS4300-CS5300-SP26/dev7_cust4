@@ -216,6 +216,7 @@ def discover_movies_by_filters_only(filters):
     except:
         return []
 
+
 # ========== HELPER FUNCTIONS FOR ADVANCED SEARCH ==========
 
 
@@ -234,6 +235,7 @@ def get_genre_list():
     except:
         return []
 
+
 def search_person_id(person_name):
     """
     Search for a person (actor/director) and return their TMDB ID.
@@ -242,12 +244,7 @@ def search_person_id(person_name):
         return None
 
     url = f"{BASE_URL}/search/person"
-    params = {
-        "api_key": TMDB_KEY,
-        "query": person_name,
-        "language": "en-US",
-        "page": 1
-    }
+    params = {"api_key": TMDB_KEY, "query": person_name, "language": "en-US", "page": 1}
 
     try:
         response = requests.get(url, params=params, timeout=5)
@@ -258,6 +255,7 @@ def search_person_id(person_name):
     except:
         pass
     return None
+
 
 def search_movies_with_filters(query, filters=None):
     """

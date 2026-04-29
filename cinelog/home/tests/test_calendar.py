@@ -11,6 +11,7 @@ class CalendarViewTest(TestCase):
     """
     Test for calendar views and API behavior.
     """
+
     def setUp(self):
         self.client = Client()
         self.user_id = str(uuid.uuid4())
