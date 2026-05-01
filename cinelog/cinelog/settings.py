@@ -38,6 +38,8 @@ SERVER_KEY = config("SUPABASE_SERVER_ROLE", default="")
 
 OPENAI_API_KEY = config("OPENAI_API_KEY", default="")
 
+SITE_URL = "https://cine-log.app"
+
 if not OPENAI_API_KEY and not os.environ.get("CI"):
     raise ImproperlyConfigured(
         "OPENAI_API_KEY not set.Add to your .env file and restart server."
