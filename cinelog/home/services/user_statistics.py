@@ -207,10 +207,11 @@ def get_genre_statistics(user_id):
         )
         top_five_percent += round((genre[1] / total) * 100)
 
+    other_percent = 0
     if top_five_percent != 100:
-        other_percent = 100 - top_five_percent
+        other_percent = max(0, 100 - top_five_percent)
 
-        genre_data.append({"genre_name": "Other", "percent": other_percent})
+    genre_data.append({"genre_name": "Other", "percent": other_percent})
 
     return sorted_genres[0][0], genre_data
 
