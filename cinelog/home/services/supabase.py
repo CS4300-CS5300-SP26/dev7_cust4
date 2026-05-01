@@ -213,8 +213,7 @@ def send_magic_link_login(request, email):
         request (HTTP request): Contains information about the request.
         email (str): Email submitted in form by user.
     """
-    BASE_URL = getattr(settings, "SITE_URL", "https://cine-log.app")
-    redirect_url = f"{BASE_URL}/callback/"
+    redirect_url = "https://cine-log.app/callback/"
     try:
         response = supabase_client.auth.sign_in_with_otp(
             {
@@ -280,10 +279,6 @@ def get_user_magic_link(request):
                 "type": "email",
             }
         )
-        if not response or not response.session:
-            messages.error(request, "Invalid or expired login link.")
-            return False
-
         access_token = response.session.access_token
         user = response.user
 
