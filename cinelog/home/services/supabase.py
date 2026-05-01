@@ -213,7 +213,8 @@ def send_magic_link_login(request, email):
         request (HTTP request): Contains information about the request.
         email (str): Email submitted in form by user.
     """
-    redirect_url = request.build_absolute_uri("/callback/")
+    BASE_URL = getattr(settings, "SITE_URL", "https://cine-log.app")
+    redirect_url = f"{BASE_URL}/callback/"
     try:
         response = supabase_client.auth.sign_in_with_otp(
             {
