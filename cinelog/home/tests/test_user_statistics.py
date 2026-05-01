@@ -187,7 +187,7 @@ class StatsServiceTest(TestCase):
     @patch("home.services.user_statistics.tmdb.fetch_movie_detail")
     def test_genre_statistics_no_other_when_exact_100(self, mock_tmdb):
         """
-        Test no other category when percent is 100.
+        Test other category is 0 when percent is 100.
         """
         Movie.objects.create(user=self.user_id, tmdb_id=1)
         Movie.objects.create(user=self.user_id, tmdb_id=2)
@@ -199,12 +199,14 @@ class StatsServiceTest(TestCase):
 
         top, data = user_statistics.get_genre_statistics(self.user_id)
         self.assertEqual(top, "Action")
-        self.assertEqual(len(data), 2)
+        self.assertEqual(len(data), 3)
 
         genre_names = [g["genre_name"] for g in data]
         self.assertIn("Action", genre_names)
         self.assertIn("Drama", genre_names)
-        self.assertNotIn("Other", genre_names)
+        self.assertIn("Other", genre_names)
+        genre_map = {g["genre_name"]: g for g in data}
+        self.assertEqual(genre_map["Other"]["percent"], 0)
 
     @patch(
         "home.services.user_statistics.tmdb.fetch_movie_detail",
