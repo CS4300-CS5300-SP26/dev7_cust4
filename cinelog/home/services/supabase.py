@@ -279,6 +279,10 @@ def get_user_magic_link(request):
                 "type": "email",
             }
         )
+        if not response or not response.session:
+            messages.error(request, "Invalid or expired login link.")
+            return False
+
         access_token = response.session.access_token
         user = response.user
 
