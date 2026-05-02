@@ -3,7 +3,9 @@
 {% block content %}
 
 <link href="{% static 'css/movie_detail.css' %}" rel="stylesheet">
-
+<div class="px-6">
+    {% include "components/alerts.html" %}
+</div>
 <!-- Backdrop Banner -->
 <div class="detail-banner"
     style="background-image: url('https://image.tmdb.org/t/p/original{{ movie.backdrop_path }}');">
@@ -47,6 +49,7 @@
                     {% if in_watchlist %}
                         <form action="{% url 'remove_from_watchlist' movie.id %}" method="POST">
                             {% csrf_token %}
+                            <input type="hidden" name="next" value="{% url 'movie_detail' movie.id %}">
                             <button class="btn-add-log">- Remove from Watchlist</button>
                         </form>
                     {% else %}
@@ -64,6 +67,7 @@
                     {% if is_hidden %}
                         <form action="{% url 'unhide_movie' movie.id %}" method="POST">
                             {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
                             <button type="submit" class="btn-dislike">Unhide Movie</button>
                         </form>
                     {% else %}

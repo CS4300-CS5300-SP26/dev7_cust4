@@ -1,7 +1,7 @@
 # dev7_cust4
 Group project repo — dev7 → cust4
 
-## Website Link: https://cinelog-service-production.up.railway.app/
+## Website Link: https://cine-log.app/
 
 ## AI Usage: 
 
@@ -59,5 +59,6 @@ npx railway up
 
 npx railway run python manage.py migrate
 
+### Cache Setup
 
-Test change to test CD
+railway run python manage.py createcachetable django_cache_table

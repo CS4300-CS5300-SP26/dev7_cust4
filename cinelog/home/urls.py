@@ -1,5 +1,5 @@
 """URL configuration for the Cinelog home app."""
-from django.contrib import admin
+
 from django.urls import path
 from . import views
 
@@ -27,7 +27,6 @@ urlpatterns = [
     path("watchlist/", views.watchlist_view, name="watchlist"),
     path("library/", views.library_view, name="library"),
     path("add-movie/", views.add_movie_view, name="add_movie"),
-    path("admin/", admin.site.urls),
     path("library/edit/", views.edit_movie_view, name="edit_movie"),
     path(
         "library/remove/<int:movie_id>/", views.remove_movie_view, name="remove_movie"
@@ -37,8 +36,23 @@ urlpatterns = [
     path("account/", views.account_view, name="account"),
     path("account/update_user/", views.update_user_information, name="update_user"),
     path("account/delete_user/", views.delete_user, name="delete_user"),
-    path('calendar/', views.calendar_view, name='calendar'),
-    path('calendar/events/', views.calendar_events_api, name='calendar_events'),
-    path('movies/<int:movie_id>/where-to-watch/', views.where_to_watch_view, name='where_to_watch'),
-    path('movies/set-rating-mode/', views.set_rating_mode, name='set_rating_mode'),
+    path("calendar/", views.calendar_view, name="calendar"),
+    path("calendar/events/", views.calendar_events_api, name="calendar_events"),
+    path(
+        "movies/<int:movie_id>/where-to-watch/",
+        views.where_to_watch_view,
+        name="where_to_watch",
+    ),
+    path("movies/set-rating-mode/", views.set_rating_mode, name="set_rating_mode"),
+    path("recommendations/", views.recommendations, name="recommendations"),
+    path(
+        "recommendations/surprise/",
+        views.recommendations_surprise,
+        name="recommendations_surprise",
+    ),
+    path(
+        "recommendations/result/",
+        views.recommendations_result,
+        name="recommendations_result",
+    ),
 ]

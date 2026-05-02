@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('home', '0005_alter_movie_user'),
+        ("home", "0005_alter_movie_user"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='movie',
-            name='watched_date',
+            model_name="movie",
+            name="watched_date",
             field=models.DateField(blank=True, null=True),
         ),
     ]

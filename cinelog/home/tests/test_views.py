@@ -1,20 +1,28 @@
 """Tests for Cinelog home app views."""
+
 from unittest.mock import patch, MagicMock
 import requests as req_module
 from django.contrib.auth import get_user_model
 from django.contrib.messages import get_messages
 from django.test import TestCase, Client
 from django.urls import reverse, resolve
+from django.http import HttpRequest
 from home import views
 from home.services import supabase
+from home.services.tmdb import search_movies
 from home.services.tmdb import get_watch_providers
-from django.http import HttpRequest
+from home.services.tmdb import search_movies_with_filters
+from home.services.tmdb import discover_movies_by_filters_only
 
 User = get_user_model()
 supabase = supabase.get_supabase_client()
 
 
 class SignupTest(TestCase):
+    """
+    Test the ability to sign up.
+    """
+
     def setUp(self):
         self.client = Client()
         self.url = reverse("signup")
@@ -52,7 +60,9 @@ class SignupTest(TestCase):
     @patch("home.views.supabase.supabase_sign_up")
     @patch("home.views.supabase.supabase_client.auth.get_user")
     @patch("home.views.UserCreationForm.is_valid", return_value=True)
-    def test_signup_view_successful(self, mock_form_valid, mock_get_user, mock_sign_up):
+    def test_signup_view_successful(
+        self, _mock_form_valid, mock_get_user, mock_sign_up
+    ):
         """
         Test post request when information is valid and user can sign up.
         """
@@ -79,7 +89,8 @@ class SignupTest(TestCase):
     @patch("home.views.supabase.supabase_sign_up")
     def test_signup_with_existing_username(self, mock_sign_up):
         """
-        Test that user cannot sign up if username is same as another user or already have an account.
+        Test that user cannot sign up if username is same as another user or
+        already have an account.
         """
         # Create user with same username.
         same_data = {
@@ -158,6 +169,10 @@ class SignupTest(TestCase):
 
 
 class LoginTest(TestCase):
+    """
+    Test the ability to login.
+    """
+
     def setUp(self):
         self.client = Client()
         self.url = reverse("login")
@@ -225,6 +240,10 @@ class LoginTest(TestCase):
 
 
 class MagicLogin(TestCase):
+    """
+    Test the magic link login feature.
+    """
+
     def setUp(self):
         self.client = Client()
         self.url = reverse("magic_login")
@@ -240,7 +259,7 @@ class MagicLogin(TestCase):
 
     @patch("home.views.supabase.send_magic_link_login")
     @patch("home.views.supabase.reached_limit_magic_login", return_value=False)
-    def test_magic_login_successful(self, mock_reached_limit, mock_send_magic_link):
+    def test_magic_login_successful(self, _mock_reached_limit, mock_send_magic_link):
         """
         Test that link can be sent.
         """
@@ -251,7 +270,7 @@ class MagicLogin(TestCase):
     @patch("home.views.supabase.send_magic_link_login")
     @patch("home.views.supabase.reached_limit_magic_login", return_value=False)
     def test_magic_failed_no_email_entered(
-        self, mock_reached_limit, mock_send_magic_link
+        self, _mock_reached_limit, _mock_send_magic_link
     ):
         """
         Test that no link sent if no email is entered.
@@ -261,7 +280,7 @@ class MagicLogin(TestCase):
         self.assertRedirects(response, reverse("magic_login"))
 
     @patch("home.views.supabase.reached_limit_magic_login", return_value=True)
-    def test_magic_failed_reached_limit_of_links(self, mock_reached_limit):
+    def test_magic_failed_reached_limit_of_links(self, _mock_reached_limit):
         """
         Test that no link is sent if user reaches limit of sending links.
         """
@@ -278,6 +297,10 @@ class MagicLogin(TestCase):
 
 
 class MagicCallback(TestCase):
+    """
+    Test correct redirection of magic link.
+    """
+
     def setUp(self):
         self.client = Client()
         self.url = reverse("callback")
@@ -302,6 +325,10 @@ class MagicCallback(TestCase):
 
 
 class Logout(TestCase):
+    """
+    Test the functionality of logging out.
+    """
+
     def setUp(self):
         self.client = Client()
         self.url = reverse("logout")
@@ -515,6 +542,10 @@ class MovieDetailViewTest(TestCase):
 
 
 class WatchlistTest(TestCase):
+    """
+    Test the watchlist feature.
+    """
+
     VALID_USER_ID = "11111111-1111-1111-1111-111111111111"
 
     def setUp(self):
@@ -537,7 +568,7 @@ class WatchlistTest(TestCase):
         "home.views.supabase.insert_in_watchlist",
         return_value=(True, "Added successfully"),
     )
-    def test_add_to_watchlist_success(self, mock_insert, mock_user_id):
+    def test_add_to_watchlist_success(self, mock_insert, _mock_user_id):
         """Test adding a movie is inserted successfully."""
         response = self.client.post(self.add_url)
         mock_insert.assert_called_once_with(self.user_id, self.movie_id)
@@ -551,7 +582,9 @@ class WatchlistTest(TestCase):
         return_value=(False, "Error: Movie is already in watchlist."),
     )
     @patch("home.services.supabase.get_supabase_client", return_value=MagicMock())
-    def test_add_to_watchlist_not_success(self, mock_client, mock_insert, mock_user_id):
+    def test_add_to_watchlist_not_success(
+        self, _mock_client, mock_insert, _mock_user_id
+    ):
         """
         Test adding a movie is inserted unsccessfully.
         """
@@ -562,7 +595,7 @@ class WatchlistTest(TestCase):
         self.assertTrue(any("Error:" in str(m) for m in messages))
 
     @patch("home.views.supabase.get_user_id", return_value=None)
-    def test_add_to_watchlist_not_logged_in(self, mock_user_id):
+    def test_add_to_watchlist_not_logged_in(self, _mock_user_id):
         """
         Test a movie cannot be added if user is not logged in.
         """
@@ -571,18 +604,18 @@ class WatchlistTest(TestCase):
 
     @patch("home.views.supabase.get_user_id", return_value=VALID_USER_ID)
     @patch("home.views.supabase.delete_in_watchlist", return_value=False)
-    def test_remove_from_watchlist_not_success(self, mock_delete, mock_user_id):
+    def test_remove_from_watchlist_not_success(self, mock_delete, _mock_user_id):
         """Test that error is shown if there is an error."""
-        response = self.client.post(self.remove_url, HTTP_REFERER="/watchlist/")
+        response = self.client.post(self.remove_url)
         mock_delete.assert_called_once_with(self.user_id, self.movie_id)
-        self.assertRedirects(response, "/watchlist/")
+        self.assertRedirects(response, reverse("watchlist"))
         messages = list(get_messages(response.wsgi_request))
         self.assertTrue(
             any("Unable to remove movie. Please try again." in str(m) for m in messages)
         )
 
     @patch("home.views.supabase.get_user_id", return_value=None)
-    def test_remove_from_watchlist_not_logged_in(self, mock_user_id):
+    def test_remove_from_watchlist_not_logged_in(self, _mock_user_id):
         """Test that a user cannot remove if they are not logged in."""
         response = self.client.post(self.remove_url)
         self.assertRedirects(response, reverse("login"))
@@ -591,15 +624,18 @@ class WatchlistTest(TestCase):
     @patch("home.views.fetch_movies", return_value={"id": 550, "title": "Fight Club"})
     @patch("home.views.supabase.get_user_id", return_value=VALID_USER_ID)
     def test_watchlist_view_logged_in(
-        self, mock_get_user, mock_fetch, mock_get_watchlist
+        self, _mock_get_user, _mock_fetch, _mock_get_watchlist
     ):
+        """
+        Test if a user can view their movies if they are logged in.
+        """
         response = self.client.get(reverse("watchlist"))
         self.assertTemplateUsed(response, "watchlist.html")
         self.assertIn("movies", response.context)
         self.assertEqual(response.context["movies"][0]["title"], "Fight Club")
 
     @patch("home.views.supabase.get_user_id", return_value=None)
-    def test_watchlist_view_not_logged_in(self, mock_user_id):
+    def test_watchlist_view_not_logged_in(self, _mock_user_id):
         """Test watchlist page if shown worrectly if user not logged in."""
         response = self.client.get(self.watchlist_url)
         self.assertTemplateUsed(response, "watchlist.html")
@@ -707,6 +743,10 @@ class WatchlistTest(TestCase):
 
 
 class HiddenMoviesTest(TestCase):
+    """
+    Test hidden movies feature.
+    """
+
     def setUp(self):
         self.client = Client()
         self.mock_user_id = "11111111-1111-1111-1111-111111111111"
@@ -723,14 +763,14 @@ class HiddenMoviesTest(TestCase):
         "home.views.supabase.insert_hidden_movie",
         return_value=(True, "Movie hidden successfully."),
     )
-    def test_hide_movie_success(self, mock_insert, mock_get_user):
+    def test_hide_movie_success(self, mock_insert, _mock_get_user):
         """Test that a logged-in user can hide a movie."""
         response = self.client.post(reverse("hide_movie", args=[278]))
         mock_insert.assert_called_once_with("11111111-1111-1111-1111-111111111111", 278)
         self.assertRedirects(response, reverse("movie_detail", args=[278]))
 
     @patch("home.views.supabase.get_user_id", return_value=None)
-    def test_hide_movie_requires_login(self, mock_get_user):
+    def test_hide_movie_requires_login(self, _mock_get_user):
         """Test that an unauthenticated user is redirected to login when trying to hide."""
         response = self.client.post(reverse("hide_movie", args=[278]))
         self.assertRedirects(response, reverse("login"))
@@ -740,14 +780,14 @@ class HiddenMoviesTest(TestCase):
         "home.views.supabase.get_user_id",
         return_value="11111111-1111-1111-1111-111111111111",
     )
-    def test_unhide_movie_success(self, mock_get_user, mock_delete):
+    def test_unhide_movie_success(self, _mock_get_user, mock_delete):
         """Test that a logged-in user can unhide a movie."""
         response = self.client.post(reverse("unhide_movie", args=[278]))
         self.assertEqual(response.status_code, 302)
         mock_delete.assert_called_once_with("11111111-1111-1111-1111-111111111111", 278)
 
     @patch("home.views.supabase.get_user_id", return_value=None)
-    def test_unhide_movie_requires_login(self, mock_get_user):
+    def test_unhide_movie_requires_login(self, _mock_get_user):
         """Test that an unauthenticated user is redirected to login when trying to unhide."""
         response = self.client.post(reverse("unhide_movie", args=[278]))
         self.assertRedirects(response, reverse("login"))
@@ -767,7 +807,7 @@ class HiddenMoviesTest(TestCase):
         return_value="11111111-1111-1111-1111-111111111111",
     )
     def test_hidden_movies_page_renders(
-        self, mock_get_user, mock_fetch, mock_get_hidden
+        self, _mock_get_user, _mock_fetch, _mock_get_hidden
     ):
         """Test that the hidden movies page loads and shows hidden movies."""
         response = self.client.get(reverse("account"))
@@ -780,7 +820,7 @@ class HiddenMoviesTest(TestCase):
         "home.views.supabase.get_user_id",
         return_value="11111111-1111-1111-1111-111111111111",
     )
-    def test_hidden_movies_page_empty(self, mock_get_user, mock_get_hidden):
+    def test_hidden_movies_page_empty(self, _mock_get_user, _mock_get_hidden):
         """Test that the hidden movies page renders with no movies."""
         response = self.client.get(reverse("account"))
         self.assertEqual(response.status_code, 200)
@@ -800,7 +840,7 @@ class HiddenMoviesTest(TestCase):
         return_value="11111111-1111-1111-1111-111111111111",
     )
     def test_hidden_movie_filtered_from_movies_view(
-        self, mock_get_user, mock_fetch, mock_get_hidden
+        self, _mock_get_user, _mock_fetch, _mock_get_hidden
     ):
         """Test that hidden movies do not appear on the main movies page."""
         response = self.client.get(reverse("movies"))
@@ -1035,8 +1075,6 @@ class SearchAPIIntegrationTest(TestCase):
     @patch("home.services.tmdb.requests.get")
     def test_search_movies_successful_api_call(self, mock_get):
         """Test search_movies successfully calls TMDB API."""
-        from home.services.tmdb import search_movies
-
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = self.mock_movie_data
@@ -1056,8 +1094,6 @@ class SearchAPIIntegrationTest(TestCase):
     @patch("home.services.tmdb.requests.get")
     def test_search_movies_empty_results(self, mock_get):
         """Test search_movies handles empty results from API."""
-        from home.services.tmdb import search_movies
-
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = {"results": []}
@@ -1104,7 +1140,7 @@ class SearchTemplateContentTests(TestCase):
         self.assertContains(response, "<form")
         self.assertContains(response, 'method="GET"')
         self.assertContains(response, 'name="q"')
-        self.assertContains(response, 'placeholder="Search for any movie by title"')
+        self.assertContains(response, 'placeholder="Search for any movie by title..."')
 
     @patch("home.views.search_movies")
     def test_template_contains_search_button(self, mock_search):
@@ -1123,10 +1159,7 @@ class SearchTemplateContentTests(TestCase):
 
         response = self.client.get(self.search_url)
 
-        self.assertContains(response, "Examples:")
-        self.assertContains(response, '"Inception"')
-        self.assertContains(response, '"The Matrix"')
-        self.assertContains(response, '"Toy Story"')
+        self.assertContains(response, "Enter a movie title above to search")
 
     @patch("home.views.search_movies")
     def test_template_does_not_show_examples_after_search(self, mock_search):
@@ -1159,14 +1192,21 @@ class SearchTemplateContentTests(TestCase):
         self.assertContains(response, 'href="/movies/"')
 
 
-class AccountViewTest(TestCase):
+class AccountInformationViewTest(TestCase):
+    """
+    Test accounts page shows correct information for hidden movies.
+    """
+
     def setUp(self):
         self.client = Client()
         self.url = reverse("account")
         self.user_id = "11111111-1111-1111-1111-111111111111"
 
     @patch("home.views.supabase.get_user_id", return_value=None)
-    def test_account_redirects_when_not_logged_in(self, mock_user):
+    def test_account_redirects_when_not_logged_in(self, _mock_user):
+        """
+        Test user is correctly redirected to movies page if not logged in.
+        """
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "movies.html")
@@ -1176,7 +1216,7 @@ class AccountViewTest(TestCase):
     @patch("home.views.user_statistics")
     @patch("home.views.render")
     def test_account_view_no_hidden_movies(
-        self, mock_render, mock_stats, mock_hidden, mock_user_id
+        self, mock_render, mock_stats, _mock_hidden, _mock_user_id
     ):
         """
         Test if user has no hidden movies.
@@ -1208,7 +1248,7 @@ class AccountViewTest(TestCase):
     @patch("home.views.user_statistics")
     @patch("home.views.render")
     def test_account_view_filters_invalid_movies(
-        self, mock_render, mock_stats, mock_fetch, mock_hidden, mock_user_id
+        self, mock_render, mock_stats, mock_fetch, _mock_hidden, _mock_user_id
     ):
         """
         Test correct results if given movies missing id or have none for id.
@@ -1230,7 +1270,7 @@ class AccountViewTest(TestCase):
     @patch("home.views.user_statistics")
     @patch("home.views.render")
     def test_account_view_hidden_movies_none(
-        self, mock_render, mock_stats, mock_hidden, mock_user_id
+        self, mock_render, mock_stats, _mock_hidden, _mock_user_id
     ):
         """
         Test if there are no hidden movies.
@@ -1246,6 +1286,11 @@ class AccountViewTest(TestCase):
 
 
 class AccountViewTests(TestCase):
+    """
+    Tests for user accounts and handling changing user information or
+    deleting accounts.
+    """
+
     VALID_USER_ID = "11111111-1111-1111-1111-111111111111"
 
     def setUp(self):
@@ -1255,7 +1300,7 @@ class AccountViewTests(TestCase):
 
     @patch("home.views.supabase.get_user_id", return_value=VALID_USER_ID)
     @patch("home.views.supabase.change_user_information", return_value=True)
-    def test_update_username_success(self, mock_change, mock_user):
+    def test_update_username_success(self, mock_change, _mock_user):
         """
         Test that user's username can be updated.
         """
@@ -1274,7 +1319,7 @@ class AccountViewTests(TestCase):
 
     @patch("home.views.supabase.get_user_id", return_value=VALID_USER_ID)
     @patch("home.views.supabase.change_user_information", return_value=True)
-    def test_update_password_success(self, mock_change, mock_user):
+    def test_update_password_success(self, mock_change, _mock_user):
         """
         Test that user's password can be updated.
         """
@@ -1293,7 +1338,7 @@ class AccountViewTests(TestCase):
 
     @patch("home.views.supabase.get_user_id", return_value=VALID_USER_ID)
     @patch("home.views.supabase.change_user_information")
-    def test_password_mismatch(self, mock_change, mock_user):
+    def test_password_mismatch(self, mock_change, _mock_user):
         """
         Test error if the passwords do not match.
         """
@@ -1314,7 +1359,7 @@ class AccountViewTests(TestCase):
         self.assertTrue(any("Passwords do not match" in str(m) for m in messages))
 
     @patch("home.views.supabase.get_user_id", return_value=None)
-    def test_update_not_logged_in(self, mock_user):
+    def test_update_not_logged_in(self, _mock_user):
         """
         Test failure if user tries to update account, but not logged in.
         """
@@ -1329,7 +1374,7 @@ class AccountViewTests(TestCase):
 
     @patch("home.views.supabase.get_user_id", return_value=VALID_USER_ID)
     @patch("home.views.supabase.change_user_information")
-    def test_invalid_update_type(self, mock_change, mock_user):
+    def test_invalid_update_type(self, mock_change, _mock_user):
         """
         Test failure if update type is invalid.
         """
@@ -1344,7 +1389,7 @@ class AccountViewTests(TestCase):
 
     @patch("home.views.supabase.get_user_id", return_value=VALID_USER_ID)
     @patch("home.views.supabase.delete_user_from_supabase", return_value=True)
-    def test_delete_user_success(self, mock_delete, mock_user):
+    def test_delete_user_success(self, mock_delete, _mock_user):
         """
         Test that user can delete their account.
         """
@@ -1360,7 +1405,7 @@ class AccountViewTests(TestCase):
 
     @patch("home.views.supabase.get_user_id", return_value=VALID_USER_ID)
     @patch("home.views.supabase.delete_user_from_supabase", return_value=False)
-    def test_delete_user_failure(self, mock_delete, mock_user):
+    def test_delete_user_failure(self, mock_delete, _mock_user):
         """
         Test correct handling if account fails to be deleted.
         """
@@ -1373,7 +1418,7 @@ class AccountViewTests(TestCase):
         self.assertTrue(any("failed" in str(m).lower() for m in messages))
 
     @patch("home.views.supabase.get_user_id", return_value=None)
-    def test_delete_user_not_logged_in(self, mock_user):
+    def test_delete_user_not_logged_in(self, _mock_user):
         """
         Test user cannot delete account if they are not logged in.
         """
@@ -1383,6 +1428,8 @@ class AccountViewTests(TestCase):
 
         messages = list(get_messages(response.wsgi_request))
         self.assertTrue(any("Must be logged in" in str(m) for m in messages))
+
+
 class WhereToWatchTest(TestCase):
     """Tests for the where_to_watch_view endpoint."""
 
@@ -1396,7 +1443,8 @@ class WhereToWatchTest(TestCase):
         """Where to watch endpoint should return HTTP 200."""
         mock_providers.return_value = {
             "streaming": [{"provider_name": "Netflix", "logo_path": "/abc.jpg"}],
-            "rent": [], "buy": [],
+            "rent": [],
+            "buy": [],
             "link": "https://www.themoviedb.org/movie/550/watch",
         }
         response = self.client.get(reverse("where_to_watch", args=[self.movie_id]))
@@ -1405,7 +1453,12 @@ class WhereToWatchTest(TestCase):
     @patch("home.views.get_watch_providers")
     def test_where_to_watch_returns_json(self, mock_providers):
         """Where to watch endpoint should return application/json content type."""
-        mock_providers.return_value = {"streaming": [], "rent": [], "buy": [], "link": ""}
+        mock_providers.return_value = {
+            "streaming": [],
+            "rent": [],
+            "buy": [],
+            "link": "",
+        }
         response = self.client.get(reverse("where_to_watch", args=[self.movie_id]))
         self.assertEqual(response["Content-Type"], "application/json")
         data = response.json()
@@ -1446,7 +1499,8 @@ class WatchProvidersServiceTest(TestCase):
             "results": {
                 "US": {
                     "flatrate": [{"provider_name": "Netflix", "logo_path": "/n.jpg"}],
-                    "rent": [], "buy": [],
+                    "rent": [],
+                    "buy": [],
                     "link": "https://example.com",
                 }
             }
@@ -1615,3 +1669,120 @@ class FetchRatingsTests(TestCase):
         with self.settings(OMDB_API_KEY="testkey"):
             result = fetch_ratings({"title": "Test", "vote_average": 5.0, "release_date": None})
         self.assertEqual(result["audience_score"], 5.0)
+class SearchMoviesWithFiltersTest(TestCase):
+    """Tests for the search_movies_with_filters service function."""
+
+    def setUp(self):
+        self.mock_movie_data = {
+            "results": [{"id": 1, "title": "Test Movie", "vote_average": 8.5}]
+        }
+
+    @patch("home.services.tmdb.requests.get")
+    @patch("home.services.tmdb.get_genre_list")
+    @patch("home.services.tmdb.search_person_id")
+    def test_search_with_genre_filter(self, _mock_person, mock_genres, mock_get):
+        """Test search_movies_with_filters with genre filter."""
+        mock_genres.return_value = [{"id": 28, "name": "Action"}]
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = self.mock_movie_data
+        mock_get.return_value = mock_response
+
+        results = search_movies_with_filters("test", {"genres": ["Action"]})
+
+        self.assertEqual(len(results), 1)
+        # Verify API was called with genre parameter
+        args, kwargs = mock_get.call_args
+        self.assertEqual(kwargs["params"]["with_genres"], "28")
+
+    @patch("home.services.tmdb.requests.get")
+    @patch("home.services.tmdb.search_person_id")
+    def test_search_with_actor_filter(self, mock_person, mock_get):
+        """Test search_movies_with_filters with actor filter."""
+        mock_person.return_value = 287  # Brad Pitt's ID
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = self.mock_movie_data
+        mock_get.return_value = mock_response
+
+        results = search_movies_with_filters("fight club", {"actor": "Brad Pitt"})
+
+        self.assertEqual(len(results), 1)
+        args, kwargs = mock_get.call_args
+        self.assertEqual(kwargs["params"]["with_cast"], 287)
+
+    @patch("home.services.tmdb.requests.get")
+    def test_search_with_empty_query(self, mock_get):
+        """Test search_movies_with_filters with empty query returns empty list."""
+        results = search_movies_with_filters("", {})
+
+        self.assertEqual(results, [])
+        mock_get.assert_not_called()
+
+
+class DiscoverMoviesByFiltersOnlyTest(TestCase):
+    """Tests for the discover_movies_by_filters_only service function."""
+
+    def setUp(self):
+        self.mock_movie_data = {
+            "results": [{"id": 1, "title": "Action Movie 2024", "vote_average": 7.5}]
+        }
+
+    @patch("home.services.tmdb.requests.get")
+    @patch("home.services.tmdb.get_genre_list")
+    def test_discover_by_genre_and_year(self, mock_genres, mock_get):
+        """Test discovering movies by genre and year only."""
+        mock_genres.return_value = [{"id": 28, "name": "Action"}]
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = self.mock_movie_data
+        mock_get.return_value = mock_response
+
+        results = discover_movies_by_filters_only(
+            {"genres": ["Action"], "year": "2024"}
+        )
+
+        self.assertEqual(len(results), 1)
+        args, kwargs = mock_get.call_args
+        self.assertEqual(kwargs["params"]["primary_release_year"], 2024)
+
+    @patch("home.services.tmdb.requests.get")
+    def test_discover_by_rating_range(self, mock_get):
+        """Test discovering movies by rating range."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = self.mock_movie_data
+        mock_get.return_value = mock_response
+
+        results = discover_movies_by_filters_only(
+            {"rating_min": "7", "rating_max": "9"}
+        )
+
+        self.assertEqual(len(results), 1)
+        args, kwargs = mock_get.call_args
+        self.assertEqual(kwargs["params"]["vote_average.gte"], 7.0)
+        self.assertEqual(kwargs["params"]["vote_average.lte"], 9.0)
+
+    @patch("home.services.tmdb.requests.get")
+    def test_discover_empty_filters(self, mock_get):
+        """Test discover_movies_by_filters_only with empty filters."""
+        # Mock a successful response
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"results": []}
+        mock_get.return_value = mock_response
+
+        results = discover_movies_by_filters_only({})
+
+        # Should return a list (empty or with results)
+        self.assertIsInstance(results, list)
+
+    @patch("home.services.tmdb.requests.get")
+    def test_discover_api_failure(self, mock_get):
+        """Test discover_movies_by_filters_only handles API failure."""
+        mock_get.side_effect = Exception("API Error")
+
+        results = discover_movies_by_filters_only({"genres": ["Action"]})
+
+        self.assertEqual(results, [])
+

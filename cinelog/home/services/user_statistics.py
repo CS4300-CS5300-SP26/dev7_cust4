@@ -1,10 +1,11 @@
-from . import supabase, tmdb
-from home.models import Movie
+# pylint: disable=no-member
+from collections import defaultdict
 from django.db.models.functions import TruncMonth
 from django.db.models import Count
 from django.utils.timezone import now
 from django.db.models import Avg
-from collections import defaultdict
+from home.models import Movie
+from . import supabase, tmdb
 
 
 def get_size_of_watchlist(user_id):
@@ -136,8 +137,8 @@ def get_logged_monthly_average(user_id):
     months = get_library_months_for_year(user_id)
     if months:
         return sum(months) // len(months)
-    else:
-        return 0
+
+    return 0
 
 
 def get_days_logged(user_id):
@@ -206,10 +207,11 @@ def get_genre_statistics(user_id):
         )
         top_five_percent += round((genre[1] / total) * 100)
 
+    other_percent = 0
     if top_five_percent != 100:
-        other_percent = 100 - top_five_percent
+        other_percent = max(0, 100 - top_five_percent)
 
-        genre_data.append({"genre_name": "Other", "percent": other_percent})
+    genre_data.append({"genre_name": "Other", "percent": other_percent})
 
     return sorted_genres[0][0], genre_data
 

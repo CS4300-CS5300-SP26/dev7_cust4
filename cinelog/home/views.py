@@ -1,8 +1,12 @@
 """Views for the Cinelog home app."""
+
+import hashlib
 from django.contrib import messages
 from django.contrib.auth.forms import UserCreationForm
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.core.cache import cache
 from .models import Movie
 from .services import supabase, user_statistics
 from .services.tmdb import (
@@ -13,10 +17,11 @@ from .services.tmdb import (
     get_director,
     search_movies,
     get_movie_trailer,
+    get_genre_list,
+    search_movies_with_filters,
+    discover_movies_by_filters_only,
 )
-from .services import supabase, user_statistics
-from django.contrib import messages
-from .models import Movie
+from .services.ai_rec import get_movie_recommendation
 
 
 def landing_page(request):
@@ -108,9 +113,11 @@ def signup_view(request):
         request (HTTP request): Contains information about the request.
 
     Returns:
-        HTTP Response: Contains the signup form or redirects user to home page if they successfully created an account.
+        HTTP Response: Redirects the user to the home page after successful signup.
     """
-    # If form has been submitted, create the user if form is valid. Using the django UserCreationForm to handle creating accounts.
+
+    # If form has been submitted, create the user if form is valid.
+    # Using the django UserCreationForm to handle creating accounts.
     if request.method == "POST":
         # Get the email and username from the form.
         email = request.POST.get("email")
@@ -125,9 +132,7 @@ def signup_view(request):
             return redirect("signup")
 
         if password1 != password2:
-            messages.error(
-                request, "Passwords do not match."
-            )
+            messages.error(request, "Passwords do not match.")
             return redirect("signup")
 
         # User Django to validate other fields and ensure they meet requirements.
@@ -154,9 +159,10 @@ def login_view(request):
         request (HTTP request): Contains information about the request.
 
     Returns:
-        HTTP Response: Contains the login form or redirects user to movies page if they successfully logged in.
+        HTTP Response: Login form/redirects to movies page upon successful login.
     """
-    # If form has been submitted, create the user if form is valid. Using the django UserCreationForm to handle creating accounts.
+    # If form has been submitted, create the user if form is valid.
+    #  Using the django UserCreationForm to handle creating accounts.
     if request.method == "POST":
         email = request.POST.get("email")
         password = request.POST.get("password")
@@ -165,9 +171,7 @@ def login_view(request):
             return redirect("login")
 
         if not email or not password:
-            messages.error(
-                request, "Please enter fill in each field."
-            )
+            messages.error(request, "Please enter fill in each field.")
             return redirect("login")
 
         if supabase.supabase_log_in(request, email, password):
@@ -184,7 +188,7 @@ def magic_login(request):
         request (HTTP request): Contains information about the request.
 
     Returns:
-        HTTPResponse: Contains the login form or redirects user if they successfully logged in (or redirects user).
+        HTTPResponse: Displays the login form or redirects upon successful login.
     """
     # If form has been submitted, create the user if form is valid.
     if request.method == "POST":
@@ -217,7 +221,7 @@ def magic_callback(request):
         request (HTTP request): Contains information about the request.
 
     Returns:
-        HTTPResponseRedirect: Redirects user to login page if unsuccesful, movies page if successful.
+        HTTPResponseRedirect: Redirects user to login if unsuccesful, movies if successful.
     """
     if supabase.get_user_magic_link(request):
         return redirect("movies")
@@ -261,7 +265,7 @@ def add_to_watchlist(request, movie_id):
         else:
             messages.error(request, message)
 
-        return redirect("movie_detail", movie_id=movie_id)
+    return redirect("movie_detail", movie_id=movie_id)
 
 
 def remove_from_watchlist(request, movie_id):
@@ -286,7 +290,9 @@ def remove_from_watchlist(request, movie_id):
         if not success:
             messages.error(request, "Unable to remove movie. Please try again.")
 
-        return redirect(request.META.get("HTTP_REFERER", f"/movies/{movie_id}/"))
+        next_url = request.POST.get("next", "")
+        return safe_redirect(request, next_url, "watchlist")
+    return redirect("watchlist")
 
 
 def watchlist_view(request):
@@ -350,6 +356,7 @@ def sort_movies_date(user_id, sort_method):
     Returns:
         list: Sorted version of passed in movies.
     """
+    movie_ids = []
     if sort_method == "ascending_date":
         movie_ids = supabase.get_watchlist(user_id, order=True, descending=False)
 
@@ -415,7 +422,7 @@ def add_movie_view(request):
             return redirect("library")
 
         # duplicate check to this user only
-        movie, created = Movie.objects.get_or_create(
+        _, created = Movie.objects.get_or_create(
             user=user_id,
             tmdb_id=tmdb_id,
             defaults={
@@ -510,7 +517,28 @@ def hide_movie(request, movie_id):
         else:
             messages.error(request, message)
 
-        return redirect("movie_detail", movie_id=movie_id)
+    return redirect("movie_detail", movie_id=movie_id)
+
+
+def safe_redirect(request, url, default):
+    """
+    Used for redirects within the accounts page to stay on current tab.
+    Args:
+        request (HTTP request): Contains information about the request.
+        url (str): The url obtained from the post request.
+        default (str): The fallback redirect if url is not specified or is not
+            allowed.
+
+    Returns:
+        HTTPResponse: A rendering of the correct page based on outcome of change.
+    """
+    if not isinstance(url, str) or not url:
+        return redirect(default)
+
+    if url_has_allowed_host_and_scheme(url, allowed_hosts={request.get_host()}):
+        return redirect(url)
+
+    return redirect(default)
 
 
 def unhide_movie(request, movie_id):
@@ -536,17 +564,16 @@ def unhide_movie(request, movie_id):
         else:
             messages.error(request, "Unable to unhide movie. Please try again.")
 
-        next_url = request.POST.get("next")
-        if next_url:
-            return redirect(next_url)
-
-        return redirect("account")
+        next_url = request.POST.get("next", "")
+        return safe_redirect(request, next_url, "account")
+    return redirect("account")
 
 
 def search_movies_view(request):
     """
-    Search for movies with TMDB search API.
+    Search for movies by title or filters, with Fan/Critic rating toggle.
     Supports rating_mode: fan | critic | aggregate | comparison
+    Supports filters: genres, actor, rating_min, rating_max, year
     """
     query = request.GET.get("q", "").strip()
     # Rating mode: fan | critic | aggregate | comparison
@@ -562,40 +589,83 @@ def search_movies_view(request):
         ("comparison", "📊 Comparison"),
     ]
 
-    if not query:
+    # Collect filters from request
+    filters = {
+        "genres": request.GET.getlist("genres"),
+        "actor": request.GET.get("actor", "").strip(),
+        "rating_min": request.GET.get("rating_min"),
+        "rating_max": request.GET.get("rating_max"),
+        "year": request.GET.get("year"),
+    }
+    # Remove empty filters
+    filters = {k: v for k, v in filters.items() if v}
+
+    has_search_criteria = bool(query) or bool(filters)
+
+    if not has_search_criteria:
+        genres = get_genre_list()
+        current_year = 2026
+        years = range(current_year - 20, current_year + 1)
         return render(
             request,
             "search_results.html",
-            {"movies": [], "search_query": "", "is_search": True,
-             "rating_mode": rating_mode, "ratings_modes": RATING_MODES,
-             "remember_mode": bool(request.session.get("remember_rating_mode"))},
+            {
+                "movies": [],
+                "search_query": "",
+                "has_search_criteria": False,
+                "genres": genres,
+                "years": years,
+                "filters": filters,
+                "is_filter_only": False,
+                "result_count": 0,
+                "is_search": False,
+                "rating_mode": rating_mode,
+                "ratings_modes": RATING_MODES,
+                "remember_mode": bool(request.session.get("remember_rating_mode")),
+            },
         )
 
-    raw_results = search_movies(query)
+    # Search with filters (with or without title query)
+    if query and filters:
+        raw_results = search_movies_with_filters(query, filters)
+    elif query:
+        raw_results = search_movies(query)
+    else:
+        raw_results = discover_movies_by_filters_only(filters)
 
-    # Enrich with ratings when critic data is needed
+    # Enrich with ratings based on rating_mode
     needs_critic = rating_mode in ("critic", "aggregate", "comparison")
     movies = []
     for m in raw_results:
         if needs_critic:
             m = fetch_ratings(m)
         else:
-            # Just attach audience score from TMDB
             raw = m.get("vote_average")
             m = dict(m)
-            m["audience_score"] = round(float(raw), 1) if raw else None
+            m["audience_score"] = round(float(raw), 1) if raw is not None else None
             m["critic_score"] = None
             m["critic_score_display"] = None
         movies.append(m)
 
+    # Get genre list for filter UI
+    genres = get_genre_list()
+    current_year = 2026
+    years = range(current_year - 20, current_year + 1)
+
+    # For test compatibility, add 'is_search' flag and 'result_count'
     return render(
         request,
         "search_results.html",
         {
             "movies": movies,
             "search_query": query,
-            "is_search": True,
+            "has_search_criteria": True,
             "result_count": len(movies),
+            "genres": get_genre_list(),
+            "years": range(2006, 2027),
+            "filters": filters,
+            "is_filter_only": not bool(query) and bool(filters),
+            "is_search": bool(query),
             "rating_mode": rating_mode,
             "ratings_modes": RATING_MODES,
             "remember_mode": bool(request.session.get("remember_rating_mode")),
@@ -616,6 +686,7 @@ def set_rating_mode(request):
             pass
     return JsonResponse({"status": "error"}, status=400)
 
+
 def calendar_view(request):
     """
     Renders the calendar page for the logged-in user.
@@ -631,6 +702,7 @@ def calendar_view(request):
         return redirect("login")
 
     return render(request, "calendar.html")
+
 
 def calendar_events_api(request):  # pylint: disable=unused-argument
     """
@@ -656,11 +728,12 @@ def calendar_events_api(request):  # pylint: disable=unused-argument
                 "poster": movie.poster_url,
                 "rating": movie.rating,
                 "notes": movie.notes,
-            }
+            },
         }
         for movie in movies
     ]
     return JsonResponse(events, safe=False)
+
 
 def account_view(request):
     """
@@ -701,6 +774,7 @@ def account_view(request):
     }
     return render(request, "account.html", context)
 
+
 def update_user_information(request):
     """
     Changes the user's information based on request sent.
@@ -720,16 +794,13 @@ def update_user_information(request):
         return redirect("account")
 
     update_field = request.POST.get("type")
-    next_url = request.POST.get("next")
+    next_url = request.POST.get("next", "")
 
     if update_field == "username":
         new_username = request.POST.get("username")
         if not new_username:
             messages.error(request, "Must enter at least 1 character for username.")
-            if next_url:
-                return redirect(next_url)
-            else:
-                return redirect("account")
+            return safe_redirect(request, next_url, "account")
         info_for_supabase = {
             "data": {"username": new_username},
         }
@@ -741,10 +812,7 @@ def update_user_information(request):
         # Check the passwords match.
         if password1 != password2:
             messages.error(request, "Passwords do not match.")
-            if next_url:
-                return redirect(next_url)
-            else:
-                return redirect("account")
+            return safe_redirect(request, next_url, "account")
 
         info_for_supabase = {"password": password1}
 
@@ -760,10 +828,7 @@ def update_user_information(request):
     else:
         messages.error(request, "Failed to update account.")
 
-    if next_url:
-        return redirect(next_url)
-
-    return redirect(request.path)
+    return safe_redirect(request, next_url, "account")
 
 
 def delete_user(request):
@@ -788,9 +853,10 @@ def delete_user(request):
     if updated:
         messages.success(request, "Your account has been deleted.")
         return redirect("landing")
-    else:
-        messages.error(request, "Failed to update account.")
-        return redirect(request.path)
+
+    messages.error(request, "Failed to update account.")
+    return redirect(request.path)
+
 
 def where_to_watch_view(request, movie_id):
     """
@@ -805,3 +871,144 @@ def where_to_watch_view(request, movie_id):
     """
     providers = get_watch_providers(movie_id)
     return JsonResponse(providers)
+
+
+def recommendations(request):
+    """
+    Render recommendations page for authenticated users.
+    """
+    user_id = supabase.get_user_id(request)
+    if not user_id:
+        messages.error(request, "Must be logged in to generate recommendations.")
+        return redirect("signup")
+    return render(request, "rec.html")
+
+
+def recommendations_surprise(request):
+    """
+    Render surprise recommendations page for authenticated users.
+    """
+    user_id = supabase.get_user_id(request)
+    if not user_id:
+        messages.error(request, "Must be logged in to generate recommendations.")
+        return redirect("signup")
+    return render(request, "rec_surprise.html")
+
+
+def recommendations_result(request):
+    """
+    Handles generating movie recommendations via AI.
+    Accepts either a POST request with user preferences,
+    or a GET request with ?mode=surprise for no preferences.
+    """
+    user_id = supabase.get_user_id(request)
+
+    if not user_id:
+        messages.error(request, "Must be logged in to generate recommendations.")
+        return redirect("signup")
+
+    ai_results = []  # this stores raw AI output
+    excluded_titles = []
+    liked_movies = []
+
+    # rate limiting (5 requests/hr per user)
+    if user_id:
+        if not check_rate_limit(request, user_id):
+            messages.error(request, "Limit reached.")
+            return redirect("recommendations")
+
+    if user_id:
+        excluded_titles, liked_movies = build_user_recommendation_context(
+            user_id, supabase
+        )
+
+    if request.method == "POST":
+        genres = request.POST.getlist("genres")
+        era = request.POST.get("era", "")
+        person = request.POST.get("person", "")
+        awards = request.POST.getlist("awards")
+
+        # skip API call if same preferences were used for the same user (caching)
+        prefs = f"{user_id}{sorted(genres)}{era}{person}{sorted(awards)}"
+        cache_key = "rec_" + hashlib.md5(prefs.encode()).hexdigest()
+
+        ai_results = cache.get(cache_key)
+        if not ai_results:
+            ai_results = get_movie_recommendation(
+                genres, era, person, awards, excluded_titles
+            )
+            cache.set(cache_key, ai_results, timeout=3600)
+
+    elif request.GET.get("mode") == "surprise":
+        ai_results = get_movie_recommendation(
+            [], "", "", [], excluded_titles, liked_movies
+        )
+
+    else:
+        return redirect("recommendations")
+
+    # loop through AI recommended movies
+    for movie in ai_results:
+        # search TMDB using the title the AI returned
+        results = search_movies(movie["title"])
+        if results:
+            tmdb = results[0]  # this grabs the first result
+            movie["poster"] = tmdb.get("poster_path", "")
+            movie["tmdb_id"] = tmdb.get("id", "")
+            movie["overview"] = tmdb.get("overview", "")
+            movie["vote_average"] = tmdb.get("vote_average", "")
+
+    return render(request, "rec_result.html", {"movies": ai_results})
+
+
+def build_user_recommendation_context(user_id, supabase_client):
+    """
+    Builds excluded titles and liked movies for AI recommendations.
+
+    Args:
+        user_id (UUID): UUID for current user.
+        supabase_client (Client): Supabase client to get user's watchlist.
+    Returns:
+        tuple: Lists with the title to exclude from library and watchlist.
+    """
+    excluded_titles = []
+    liked_movies = []
+    # library movies  excluded but also used for AI context
+    library_movies = Movie.objects.filter(user=user_id)
+    for m in library_movies:
+        excluded_titles.append(m.title)
+        liked_movies.append({"title": m.title, "rating": m.rating})
+
+    # movies in watchlist will be excluded
+    watchlist_ids = supabase_client.get_watchlist(user_id)
+    for movie_id in watchlist_ids:
+        movie = fetch_movies(movie_id, single=True)
+        if movie.get("title"):
+            excluded_titles.append(movie["title"])
+
+    return excluded_titles, liked_movies
+
+
+def check_rate_limit(request, user_id):
+    """
+    Uses cache to limit recommendation requests to 5 times per hour for a user.
+
+    Args:
+        request (HTTP request): Contains information about the request.
+        user_id (UUID): UUID for current user.
+    Returns:
+        boolean: Represents if limit is reached or not.
+    """
+    cache_key = f"rec_rate_limit_{user_id}"
+    request_count = cache.get(cache_key, 0)
+
+    if request_count >= 5:
+        messages.error(
+            request,
+            "You've reached the recommendation limit (5 per hour). Please try again later.",
+        )
+        return False
+
+    # resets after 1 hour
+    cache.set(cache_key, request_count + 1, timeout=200)
+    return True

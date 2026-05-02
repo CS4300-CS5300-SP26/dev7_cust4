@@ -1,12 +1,17 @@
-from django.test import TestCase
+# pylint: disable=no-member
 from unittest.mock import patch
-from django.utils.timezone import now
 from datetime import timedelta
+from django.test import TestCase
+from django.utils.timezone import now
 from home.models import Movie
 from home.services import user_statistics
 
 
 class StatsServiceTest(TestCase):
+    """
+    Testing for user statistics shown on account.
+    """
+
     def setUp(self):
         self.user_id = "11111111-1111-1111-1111-111111111111"
 
@@ -21,14 +26,14 @@ class StatsServiceTest(TestCase):
         mock_watchlist.assert_called_once_with(self.user_id)
 
     @patch("home.services.user_statistics.supabase.get_watchlist", return_value=[])
-    def test_watchlist_size_empty(self, mock_watchlist):
+    def test_watchlist_size_empty(self, _mock_watchlist):
         """
         Test 0 is returned if no movies in watchlist
         """
         self.assertEqual(user_statistics.get_size_of_watchlist(self.user_id), 0)
 
     @patch("home.services.user_statistics.supabase.get_watchlist", return_value=None)
-    def test_watchlist_size_none_handling(self, mock_watchlist):
+    def test_watchlist_size_none_handling(self, _mock_watchlist):
         """
         Test if supabase returns None instead of list with movie ids.
         """
@@ -129,7 +134,8 @@ class StatsServiceTest(TestCase):
 
     def test_days_logged_counts_one_day(self):
         """
-        Test days logged returns total number of days a movie was added to logger if only have 1 day added movies.
+        Test days logged returns total number of days a movie was added to
+        logger if only have 1 day added movies.
         """
         Movie.objects.create(user=self.user_id, tmdb_id=1, created_at=now())
         Movie.objects.create(user=self.user_id, tmdb_id=2, created_at=now())
@@ -137,7 +143,8 @@ class StatsServiceTest(TestCase):
 
     def test_days_logged_counts_multiple_days(self):
         """
-        Test days logged returns correct number of unique days when movies are logged on different dates.
+        Test days logged returns correct number of unique days when movies are
+        logged on different dates.
         """
         Movie.objects.create(user=self.user_id, tmdb_id=1, created_at=now())
         Movie.objects.create(
@@ -180,7 +187,7 @@ class StatsServiceTest(TestCase):
     @patch("home.services.user_statistics.tmdb.fetch_movie_detail")
     def test_genre_statistics_no_other_when_exact_100(self, mock_tmdb):
         """
-        Test no other category when percent is 100.
+        Test other category is 0 when percent is 100.
         """
         Movie.objects.create(user=self.user_id, tmdb_id=1)
         Movie.objects.create(user=self.user_id, tmdb_id=2)
@@ -192,18 +199,20 @@ class StatsServiceTest(TestCase):
 
         top, data = user_statistics.get_genre_statistics(self.user_id)
         self.assertEqual(top, "Action")
-        self.assertEqual(len(data), 2)
+        self.assertEqual(len(data), 3)
 
         genre_names = [g["genre_name"] for g in data]
         self.assertIn("Action", genre_names)
         self.assertIn("Drama", genre_names)
-        self.assertNotIn("Other", genre_names)
+        self.assertIn("Other", genre_names)
+        genre_map = {g["genre_name"]: g for g in data}
+        self.assertEqual(genre_map["Other"]["percent"], 0)
 
     @patch(
         "home.services.user_statistics.tmdb.fetch_movie_detail",
         return_value={"genres": []},
     )
-    def test_genre_statistics_no_genres(self, mock_tmdb):
+    def test_genre_statistics_no_genres(self, _mock_tmdb):
         """
         Test if no generes for the movies.
         """
