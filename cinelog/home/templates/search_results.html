@@ -547,7 +547,7 @@
                                 <div class="movie-rating">🎬 {{ movie.audience_score|default:"N/A" }}</div>
                                 <div class="movie-rating" style="color:#fa320a;">🍅 {{ movie.critic_score_display|default:"N/A" }}</div>
                             {% else %}
-                                <div class="movie-rating">★ {{ movie.audience_score|default:movie.vote_average|floatformat:1 }}</div>
+                                <div class="movie-rating">★ {{ movie.audience_score|floatformat:1|default:"N/A" }}</div>
                             {% endif %}
                             {% if movie.release_date %}
                                 <div class="movie-year">{{ movie.release_date|slice:":4" }}</div>
