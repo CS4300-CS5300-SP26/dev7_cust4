@@ -58,7 +58,6 @@ if not SECRET_KEY and not os.environ.get("CI"):
 DEBUG = False
 
 ALLOWED_HOSTS = [
-    ".devedu.io",
     "localhost",
     "127.0.0.1",
     "cinelog-service-production.up.railway.app",
