@@ -4,6 +4,7 @@ import copy
 import logging
 import requests
 from django.conf import settings
+from django.core.cache import cache
 
 BASE_URL = "https://api.themoviedb.org/3"
 logger = logging.getLogger(__name__)
@@ -174,6 +175,15 @@ def _fetch_omdb_ratings(movie, omdb_key):
     title = movie.get("title", "")
     release_date = movie.get("release_date")
     year = str(release_date)[:4] if release_date else ""
+
+    # Check cache first to avoid redundant OMDB calls
+    cache_key = f"omdb_{title}_{year}".replace(" ", "_").lower()
+    cached = cache.get(cache_key)
+    if cached is not None:
+        movie["critic_score"] = cached.get("critic_score")
+        movie["critic_score_display"] = cached.get("critic_score_display")
+        return
+
     params = {"apikey": omdb_key, "t": title, "type": "movie"}
     if year:
         params["y"] = year
@@ -189,6 +199,17 @@ def _fetch_omdb_ratings(movie, omdb_key):
             score, display = _parse_rt_score(data.get("Ratings", []))
             movie["critic_score"] = score
             movie["critic_score_display"] = display
+            # Cache for 24 hours
+            cache.set(cache_key, {
+                "critic_score": score,
+                "critic_score_display": display
+            }, timeout=86400)
+        else:
+            # Cache negative result for 1 hour to avoid hammering OMDB
+            cache.set(cache_key, {
+                "critic_score": None,
+                "critic_score_display": None
+            }, timeout=3600)
     except requests.RequestException as exc:
         logger.error("OMDB fetch failed for '%s': %s", title, exc)
 
