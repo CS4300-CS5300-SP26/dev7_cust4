@@ -13,6 +13,7 @@ from home.services.tmdb import search_movies
 from home.services.tmdb import get_watch_providers
 from home.services.tmdb import search_movies_with_filters
 from home.services.tmdb import discover_movies_by_filters_only
+import json
 
 User = get_user_model()
 supabase = supabase.get_supabase_client()
