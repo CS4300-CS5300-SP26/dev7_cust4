@@ -10,13 +10,12 @@ from django.urls import reverse, resolve
 from django.http import HttpRequest
 from home import views
 from home.services import supabase
-from home.services.tmdb import search_movies
+from home.services.tmdb import search_movies, fetch_ratings
 from home.services.tmdb import get_watch_providers
 from home.services.tmdb import search_movies_with_filters
 from home.services.tmdb import discover_movies_by_filters_only
 User = get_user_model()
 supabase = supabase.get_supabase_client()
-
 
 class SignupTest(TestCase):
     """
