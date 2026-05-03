@@ -1,8 +1,10 @@
 """Service functions for interacting with the TMDB API."""
 
+import copy
 import logging
 import requests
 from django.conf import settings
+from django.core.cache import cache
 
 BASE_URL = "https://api.themoviedb.org/3"
 logger = logging.getLogger(__name__)
@@ -155,6 +157,97 @@ def get_watch_providers(movie_id, country="US"):
     except requests.RequestException as exc:
         logger.error("Failed to fetch movie detail for movie %s: %s", movie_id, exc)
         return {}
+
+def _parse_rt_score(ratings):
+    """Extract Rotten Tomatoes score from OMDB ratings list."""
+    for rating in ratings:
+        if rating.get("Source") == "Rotten Tomatoes":
+            raw_val = rating["Value"].replace("%", "").strip()
+            numeric = raw_val.split("/")[0].strip()
+            if numeric.isdigit():
+                return int(numeric), f"{numeric}%"
+            break
+    return None, None
+
+
+def _fetch_omdb_ratings(movie, omdb_key):
+    """Fetch critic score from OMDB and add to movie dict."""
+    title = movie.get("title", "")
+    release_date = movie.get("release_date")
+    year = str(release_date)[:4] if release_date else ""
+
+    # Check cache first to avoid redundant OMDB calls
+    cache_key = f"omdb_{title}_{year}".replace(" ", "_").lower()
+    cached = cache.get(cache_key)
+    if cached is not None:
+        movie["critic_score"] = cached.get("critic_score")
+        movie["critic_score_display"] = cached.get("critic_score_display")
+        return
+
+    params = {"apikey": omdb_key, "t": title, "type": "movie"}
+    if year:
+        params["y"] = year
+    try:
+        resp = requests.get("https://www.omdbapi.com/", params=params, timeout=5)
+        resp.raise_for_status()
+        try:
+            data = resp.json()
+        except ValueError as exc:
+            logger.error("OMDB returned non-JSON for '%s': %s", title, exc)
+            return
+        if data.get("Response") == "True":
+            score, display = _parse_rt_score(data.get("Ratings", []))
+            movie["critic_score"] = score
+            movie["critic_score_display"] = display
+            # Cache for 24 hours
+            cache.set(cache_key, {
+                "critic_score": score,
+                "critic_score_display": display
+            }, timeout=86400)
+        else:
+            # Cache negative result for 1 hour to avoid hammering OMDB
+            cache.set(cache_key, {
+                "critic_score": None,
+                "critic_score_display": None
+            }, timeout=3600)
+    except requests.RequestException as exc:
+        logger.error("OMDB fetch failed for '%s': %s", title, exc)
+
+def fetch_ratings(tmdb_movie):
+    """
+    Fetch audience (TMDB) and critic (Rotten Tomatoes via OMDB) ratings
+    for a movie.
+
+    Adds the following keys to a copy of the input dict:
+      - audience_score (float | None): TMDB vote_average on a 0-10 scale.
+      - critic_score (int | None): Rotten Tomatoes score as an integer 0-100.
+      - critic_score_display (str | None): Human-readable RT score, e.g. "74%".
+
+    Args:
+        tmdb_movie (dict): A TMDB movie result dict (must have 'title' and
+            optionally 'release_date').
+
+    Returns:
+        dict: A new dict (shallow copy) with rating keys added.
+    """
+
+
+    movie = copy.copy(tmdb_movie)
+
+    # Audience score from TMDB (0-10). Explicitly check for None so a
+    # legitimate score of 0 is preserved rather than treated as falsy.
+    raw = movie.get("vote_average")
+    movie["audience_score"] = round(float(raw), 1) if raw is not None else None
+
+    # Critic score from OMDB (Rotten Tomatoes %)
+    omdb_key = getattr(settings, "OMDB_API_KEY", "")
+    movie["critic_score"] = None
+    movie["critic_score_display"] = None
+
+    if omdb_key:
+        _fetch_omdb_ratings(movie, omdb_key)
+
+    return movie
 
 
 def discover_movies_by_filters_only(filters):

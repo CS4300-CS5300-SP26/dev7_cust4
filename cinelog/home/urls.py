@@ -43,6 +43,7 @@ urlpatterns = [
         views.where_to_watch_view,
         name="where_to_watch",
     ),
+    path("movies/set-rating-mode/", views.set_rating_mode, name="set_rating_mode"),
     path("recommendations/", views.recommendations, name="recommendations"),
     path(
         "recommendations/surprise/",

@@ -1,6 +1,7 @@
 """Views for the Cinelog home app."""
 
 import hashlib
+import json
 from django.contrib import messages
 from django.contrib.auth.forms import UserCreationForm
 from django.http import JsonResponse
@@ -20,6 +21,7 @@ from .services.tmdb import (
     get_genre_list,
     search_movies_with_filters,
     discover_movies_by_filters_only,
+    fetch_ratings,
 )
 from .services.ai_rec import get_movie_recommendation
 
@@ -571,10 +573,23 @@ def unhide_movie(request, movie_id):
 
 def search_movies_view(request):
     """
-    Search for movies by title OR by filters only.
-    Supports both simple search (for tests) and advanced filters.
+    Search for movies by title or filters, with Fan/Critic rating toggle.
+    Supports rating_mode: fan | critic | aggregate | comparison
+    Supports filters: genres, actor, rating_min, rating_max, year
     """
     query = request.GET.get("q", "").strip()
+    # Rating mode: fan | critic | aggregate | comparison
+    # Priority: GET param > session > default 'fan'
+    rating_mode = request.GET.get("rating_mode") or request.session.get("rating_mode", "fan")
+    # Persist in session
+    request.session["rating_mode"] = rating_mode
+
+    rating_modes = [
+        ("fan", "🎬 Fan Favorites"),
+        ("critic", "🍅 Critic's Choice"),
+        ("aggregate", "⭐ Both / Aggregate"),
+        ("comparison", "📊 Comparison"),
+    ]
 
     # Collect filters from request
     filters = {
@@ -587,15 +602,12 @@ def search_movies_view(request):
     # Remove empty filters
     filters = {k: v for k, v in filters.items() if v}
 
-    # Check if user has provided ANY search criteria (title OR filters)
     has_search_criteria = bool(query) or bool(filters)
 
     if not has_search_criteria:
-        # No search criteria - show empty state with filter UI
         genres = get_genre_list()
         current_year = 2026
         years = range(current_year - 20, current_year + 1)
-
         return render(
             request,
             "search_results.html",
@@ -607,22 +619,35 @@ def search_movies_view(request):
                 "years": years,
                 "filters": filters,
                 "is_filter_only": False,
-                # Add these for test compatibility
                 "result_count": 0,
                 "is_search": False,
+                "rating_mode": rating_mode,
+                "ratings_modes": rating_modes,
+                "remember_mode": bool(request.session.get("remember_rating_mode")),
             },
         )
 
     # Search with filters (with or without title query)
     if query and filters:
-        # Both title and filters
-        search_results = search_movies_with_filters(query, filters)
+        raw_results = search_movies_with_filters(query, filters)
     elif query:
-        # Just title search (matches original search_movies behavior)
-        search_results = search_movies(query)
+        raw_results = search_movies(query)
     else:
-        # Filter-only search: discover movies without title
-        search_results = discover_movies_by_filters_only(filters)
+        raw_results = discover_movies_by_filters_only(filters)
+
+    # Enrich with ratings based on rating_mode
+    needs_critic = rating_mode in ("critic", "aggregate", "comparison")
+    movies = []
+    for m in raw_results:
+        if needs_critic:
+            m = fetch_ratings(m)
+        else:
+            raw = m.get("vote_average")
+            m = dict(m)
+            m["audience_score"] = round(float(raw), 1) if raw is not None else None
+            m["critic_score"] = None
+            m["critic_score_display"] = None
+        movies.append(m)
 
     # Get genre list for filter UI
     genres = get_genre_list()
@@ -634,18 +659,34 @@ def search_movies_view(request):
         request,
         "search_results.html",
         {
-            "movies": search_results,
+            "movies": movies,
             "search_query": query,
             "has_search_criteria": True,
-            "result_count": len(search_results),
-            "genres": genres,
-            "years": years,
+            "result_count": len(movies),
+            "genres": get_genre_list(),
+            "years": range(2006, 2027),
             "filters": filters,
             "is_filter_only": not bool(query) and bool(filters),
-            # Add these for test compatibility
-            "is_search": bool(query),  # True when there's a search query
+            "is_search": bool(query),
+            "rating_mode": rating_mode,
+            "ratings_modes": rating_modes,
+            "remember_mode": bool(request.session.get("remember_rating_mode")),
         },
     )
+
+
+def set_rating_mode(request):
+    """AJAX endpoint to persist rating mode preference in session."""
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            mode = data.get("rating_mode", "fan")
+            if mode in ("fan", "critic", "aggregate", "comparison"):
+                request.session["rating_mode"] = mode
+                return JsonResponse({"status": "ok", "rating_mode": mode})
+        except (ValueError, KeyError):
+            pass
+    return JsonResponse({"status": "error"}, status=400)
 
 
 def calendar_view(request):

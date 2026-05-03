@@ -1,5 +1,6 @@
 """Tests for Cinelog home app views."""
 
+import json
 from unittest.mock import patch, MagicMock
 import requests as req_module
 from django.contrib.auth import get_user_model
@@ -9,14 +10,12 @@ from django.urls import reverse, resolve
 from django.http import HttpRequest
 from home import views
 from home.services import supabase
-from home.services.tmdb import search_movies
+from home.services.tmdb import search_movies, fetch_ratings
 from home.services.tmdb import get_watch_providers
 from home.services.tmdb import search_movies_with_filters
 from home.services.tmdb import discover_movies_by_filters_only
-
 User = get_user_model()
 supabase = supabase.get_supabase_client()
-
 
 class SignupTest(TestCase):
     """
@@ -1531,6 +1530,142 @@ class WatchProvidersServiceTest(TestCase):
         self.assertEqual(result["buy"], [])
 
 
+class SearchRatingModeTests(TestCase):
+    """Tests for Fan Favorite vs Critic's Choice rating toggle feature."""
+
+    @patch("home.views.search_movies")
+    @patch("home.views.fetch_ratings")
+    def test_search_fan_mode_does_not_call_fetch_ratings(self, mock_fetch_ratings, mock_search):
+        """Fan mode should use audience score only, not call fetch_ratings."""
+        mock_search.return_value = [
+            {"id": 1, "title": "Test Movie", "vote_average": 7.5,
+            "poster_path": None, "release_date": "2023-01-01"}
+        ]
+        response = self.client.get("/movies/search/?q=test&rating_mode=fan")
+        self.assertEqual(response.status_code, 200)
+        mock_fetch_ratings.assert_not_called()
+
+    @patch("home.views.search_movies")
+    @patch("home.views.fetch_ratings")
+    def test_search_critic_mode_calls_fetch_ratings(self, mock_fetch_ratings, mock_search):
+        """Critic mode should call fetch_ratings to get RT scores."""
+        mock_search.return_value = [
+            {"id": 1, "title": "Test Movie", "vote_average": 7.5,
+            "poster_path": None, "release_date": "2023-01-01"}
+        ]
+        mock_fetch_ratings.return_value = {
+            "id": 1, "title": "Test Movie", "vote_average": 7.5,
+            "audience_score": 7.5, "critic_score": 85, "critic_score_display": "85%",
+            "poster_path": None, "release_date": "2023-01-01"
+        }
+        response = self.client.get("/movies/search/?q=test&rating_mode=critic")
+        self.assertEqual(response.status_code, 200)
+        mock_fetch_ratings.assert_called_once()
+
+    @patch("home.views.search_movies")
+    def test_search_no_query_returns_empty(self, mock_search):
+        """Empty query should return empty results without calling search."""
+        response = self.client.get("/movies/search/")
+        self.assertEqual(response.status_code, 200)
+        mock_search.assert_not_called()
+
+    @patch("home.views.search_movies")
+    def test_rating_mode_stored_in_session(self, mock_search):
+        """Chosen rating_mode should be persisted in the session."""
+        mock_search.return_value = []
+        self.client.get("/movies/search/?q=test&rating_mode=comparison")
+        self.assertEqual(self.client.session.get("rating_mode"), "comparison")
+
+    def test_set_rating_mode_valid(self):
+        """POST to set_rating_mode with valid mode returns 200 and saves to session."""
+        response = self.client.post(
+            "/movies/set-rating-mode/",
+            data=json.dumps({"rating_mode": "aggregate"}),
+            content_type="application/json"
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.client.session.get("rating_mode"), "aggregate")
+
+    def test_set_rating_mode_invalid(self):
+        """POST to set_rating_mode with invalid mode returns 400."""
+        response = self.client.post(
+            "/movies/set-rating-mode/",
+            data=json.dumps({"rating_mode": "invalid_mode"}),
+            content_type="application/json"
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_set_rating_mode_get_not_allowed(self):
+        """GET request to set_rating_mode should return 400."""
+        response = self.client.get("/movies/set-rating-mode/")
+        self.assertEqual(response.status_code, 400)
+
+
+class FetchRatingsTests(TestCase):
+    """Unit tests for tmdb.fetch_ratings()."""
+
+    @patch("home.services.tmdb.requests.get")
+    def test_zero_vote_average_preserved(self, mock_get):
+        """A vote_average of 0 should produce audience_score of 0.0, not None."""
+        mock_get.return_value.raise_for_status = lambda: None
+        mock_get.return_value.json.return_value = {"Response": "False"}
+        result = fetch_ratings({"title": "Test", "vote_average": 0, "release_date": "2020-01-01"})
+        self.assertEqual(result["audience_score"], 0.0)
+
+    @patch("home.services.tmdb.requests.get")
+    def test_critic_score_parsed_correctly(self, mock_get):
+        """Rotten Tomatoes score should be parsed from OMDB Ratings list."""
+        mock_get.return_value.raise_for_status = lambda: None
+        mock_get.return_value.json.return_value = {
+            "Response": "True",
+            "Ratings": [{"Source": "Rotten Tomatoes", "Value": "85%"}]
+        }
+        with self.settings(OMDB_API_KEY="testkey"):
+            result = fetch_ratings({"title": "Test", "vote_average": 7.0,
+            "release_date": "2020-01-01"})
+        self.assertEqual(result["critic_score"], 85)
+        self.assertEqual(result["critic_score_display"], "85%")
+
+    @patch("home.services.tmdb.requests.get")
+    def test_critic_score_slash_format(self, mock_get):
+        """RT score in '85/100' format should still parse correctly."""
+        mock_get.return_value.raise_for_status = lambda: None
+        mock_get.return_value.json.return_value = {
+            "Response": "True",
+            "Ratings": [{"Source": "Rotten Tomatoes", "Value": "85/100"}]
+        }
+        with self.settings(OMDB_API_KEY="testkey"):
+            result = fetch_ratings({"title": "Test",
+            "vote_average": 7.0, "release_date": "2020-01-01"})
+        self.assertEqual(result["critic_score"], 85)
+
+    @patch("home.services.tmdb.requests.get")
+    def test_malformed_json_handled_gracefully(self, mock_get):
+        """Non-JSON OMDB response should not crash; critic_score stays None."""
+        mock_get.return_value.raise_for_status = lambda: None
+        mock_get.return_value.json.side_effect = ValueError("No JSON")
+        with self.settings(OMDB_API_KEY="testkey"):
+            result = fetch_ratings({"title": "Test", "vote_average": 7.0,
+            "release_date": "2020-01-01"})
+        self.assertIsNone(result["critic_score"])
+
+    @patch("home.services.tmdb.requests.get")
+    def test_no_omdb_key_skips_critic_fetch(self, mock_get):
+        """Without an OMDB key, no request should be made and critic_score is None."""
+        with self.settings(OMDB_API_KEY=""):
+            result = fetch_ratings({"title": "Test", "vote_average": 6.5,
+            "release_date": "2020-01-01"})
+        mock_get.assert_not_called()
+        self.assertIsNone(result["critic_score"])
+
+    @patch("home.services.tmdb.requests.get")
+    def test_none_release_date_handled(self, mock_get):
+        """None release_date should not raise an error."""
+        mock_get.return_value.raise_for_status = lambda: None
+        mock_get.return_value.json.return_value = {"Response": "False"}
+        with self.settings(OMDB_API_KEY="testkey"):
+            result = fetch_ratings({"title": "Test", "vote_average": 5.0, "release_date": None})
+        self.assertEqual(result["audience_score"], 5.0)
 class SearchMoviesWithFiltersTest(TestCase):
     """Tests for the search_movies_with_filters service function."""
 

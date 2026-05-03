@@ -361,19 +361,13 @@
     <div aria-hidden="true" class="hero-blob hero-blob--top">
         <div class="hero-blob__shape hero-blob__shape--top"></div>
     </div>
-
     <div class="hero-content">
         <div class="hero-text">
             <h1 class="hero-heading">
-                {% if search_query %}
-                    Search Results
-                {% else %}
-                    Search Movies
-                {% endif %}
+                {% if search_query %}Search Results{% else %}Search Movies{% endif %}
             </h1>
         </div>
     </div>
-
     <div aria-hidden="true" class="hero-blob hero-blob--bottom">
         <div class="hero-blob__shape hero-blob__shape--bottom"></div>
     </div>
@@ -385,6 +379,26 @@
         <input type="text" name="q" placeholder="Search for any movie by title..." value="{{ search_query }}">
         <button type="submit">Search</button>
     </form>
+</div>
+
+
+<!-- Rating Mode Toggle -->
+<div id="rating-toggle" style="max-width:700px;margin:16px auto 0;padding:0 20px;text-align:center;">
+    <p style="color:#aaa;font-size:13px;margin-bottom:10px;letter-spacing:.05em;">SHOW RATINGS AS</p>
+    <div style="display:inline-flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+        {% for mode, label in ratings_modes %}
+        <button
+            class="rating-mode-btn {% if rating_mode == mode %}active{% endif %}"
+            data-mode="{{ mode }}"
+            style="padding:8px 18px;border-radius:20px;border:2px solid #367588;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;{% if rating_mode == mode %}background:#367588;color:white;{% else %}background:transparent;color:#367588;{% endif %}">
+            {{ label }}
+        </button>
+        {% endfor %}
+    </div>
+    <p style="color:#888;font-size:11px;margin-top:8px;">
+        <input type="checkbox" id="remember-mode" style="cursor:pointer;margin-right:4px;" {% if remember_mode %}checked{% endif %}>
+        <label for="remember-mode" style="cursor:pointer;">Remember my choice</label>
+    </p>
 </div>
 
 <!-- Main Content -->
@@ -556,4 +570,88 @@
     </div>
 </div>
 
+
+<script>
+(function() {
+    const STORAGE_KEY = "cinelog_rating_mode";
+
+    // On load: if remember is set, restore from localStorage
+    const saved = localStorage.getItem(STORAGE_KEY);
+    const rememberBox = document.getElementById("remember-mode");
+    const formMode = document.getElementById("form-rating-mode");
+    const currentMode = formMode ? formMode.value : "fan";
+
+    if (rememberBox) {
+        // If localStorage has a saved mode and it differs from current, it will
+        // have already been applied via session on page load — just sync checkbox
+        rememberBox.checked = !!saved;
+
+        rememberBox.addEventListener("change", function() {
+            if (this.checked) {
+                localStorage.setItem(STORAGE_KEY, currentMode);
+            } else {
+                localStorage.removeItem(STORAGE_KEY);
+            }
+        });
+    }
+
+    // Rating mode button clicks
+    document.querySelectorAll(".rating-mode-btn").forEach(function(btn) {
+        btn.addEventListener("click", function() {
+            const mode = this.dataset.mode;
+
+            // Update hidden form field so next search uses this mode
+            if (formMode) formMode.value = mode;
+
+            // Visual feedback
+            document.querySelectorAll(".rating-mode-btn").forEach(function(b) {
+                b.style.background = "transparent";
+                b.style.color = "#367588";
+            });
+            this.style.background = "#367588";
+            this.style.color = "white";
+
+            // Persist to session via AJAX
+            fetch("{% url 'set_rating_mode' %}", {
+                method: "POST",
+                headers: {"Content-Type": "application/json", "X-CSRFToken": getCookie("csrftoken")},
+                body: JSON.stringify({rating_mode: mode})
+            });
+
+            // Persist to localStorage if remember is checked
+            if (rememberBox && rememberBox.checked) {
+                localStorage.setItem(STORAGE_KEY, mode);
+            }
+
+            // Re-run the current search with the new mode if there's a query
+            const urlParams = new URLSearchParams(window.location.search);
+            const q = urlParams.get("q");
+            if (q) {
+                window.location.href = "{% url 'search_movies' %}?q=" + encodeURIComponent(q) + "&rating_mode=" + mode;
+            }
+        });
+    });
+
+    // On page load, if remember is checked and localStorage has a mode, use it
+    if (saved && saved !== currentMode) {
+        // Redirect to apply saved mode (only if no explicit mode in URL)
+        const urlParams = new URLSearchParams(window.location.search);
+        if (!urlParams.get("rating_mode")) {
+            const q = urlParams.get("q");
+            if (q) {
+                window.location.replace("{% url 'search_movies' %}?q=" + encodeURIComponent(q) + "&rating_mode=" + saved);
+            }
+        }
+    }
+
+    function getCookie(name) {
+        let v = null;
+        document.cookie.split(";").forEach(function(c) {
+            const [k, val] = c.trim().split("=");
+            if (k === name) v = decodeURIComponent(val);
+        });
+        return v;
+    }
+})();
+</script>
 {% endblock %}
