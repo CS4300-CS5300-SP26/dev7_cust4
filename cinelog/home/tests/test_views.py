@@ -1635,7 +1635,7 @@ class FetchRatingsTests(TestCase):
             "Ratings": [{"Source": "Rotten Tomatoes", "Value": "85/100"}]
         }
         with self.settings(OMDB_API_KEY="testkey"):
-            result = fetch_ratings({"title": "Test", 
+            result = fetch_ratings({"title": "Test",
             "vote_average": 7.0, "release_date": "2020-01-01"})
         self.assertEqual(result["critic_score"], 85)
 

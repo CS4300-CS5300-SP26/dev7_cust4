@@ -1,8 +1,8 @@
 """Service functions for interacting with the TMDB API."""
 
+import copy
 import logging
 import requests
-import copy
 from django.conf import settings
 
 BASE_URL = "https://api.themoviedb.org/3"
@@ -157,6 +157,40 @@ def get_watch_providers(movie_id, country="US"):
         logger.error("Failed to fetch movie detail for movie %s: %s", movie_id, exc)
         return {}
 
+def _parse_rt_score(ratings):
+    """Extract Rotten Tomatoes score from OMDB ratings list."""
+    for rating in ratings:
+        if rating.get("Source") == "Rotten Tomatoes":
+            raw_val = rating["Value"].replace("%", "").strip()
+            numeric = raw_val.split("/")[0].strip()
+            if numeric.isdigit():
+                return int(numeric), f"{numeric}%"
+            break
+    return None, None
+
+
+def _fetch_omdb_ratings(movie, omdb_key):
+    """Fetch critic score from OMDB and add to movie dict."""
+    title = movie.get("title", "")
+    release_date = movie.get("release_date")
+    year = str(release_date)[:4] if release_date else ""
+    params = {"apikey": omdb_key, "t": title, "type": "movie"}
+    if year:
+        params["y"] = year
+    try:
+        resp = requests.get("https://www.omdbapi.com/", params=params, timeout=5)
+        resp.raise_for_status()
+        try:
+            data = resp.json()
+        except ValueError as exc:
+            logger.error("OMDB returned non-JSON for '%s': %s", title, exc)
+            return
+        if data.get("Response") == "True":
+            score, display = _parse_rt_score(data.get("Ratings", []))
+            movie["critic_score"] = score
+            movie["critic_score_display"] = display
+    except requests.RequestException as exc:
+        logger.error("OMDB fetch failed for '%s': %s", title, exc)
 
 def fetch_ratings(tmdb_movie):
     """
@@ -190,32 +224,7 @@ def fetch_ratings(tmdb_movie):
     movie["critic_score_display"] = None
 
     if omdb_key:
-        title = movie.get("title", "")
-        release_date = movie.get("release_date")
-        year = str(release_date)[:4] if release_date else ""
-        params = {"apikey": omdb_key, "t": title, "type": "movie"}
-        if year:
-            params["y"] = year
-        try:
-            resp = requests.get("https://www.omdbapi.com/", params=params, timeout=5)
-            resp.raise_for_status()
-            try:
-                data = resp.json()
-            except ValueError as exc:
-                logger.error("OMDB returned non-JSON for '%s': %s", title, exc)
-                return movie
-            if data.get("Response") == "True":
-                for rating in data.get("Ratings", []):
-                    if rating.get("Source") == "Rotten Tomatoes":
-                        # Normalize "74%", "74/100", or plain "74"
-                        raw_val = rating["Value"].replace("%", "").strip()
-                        numeric = raw_val.split("/")[0].strip()
-                        if numeric.isdigit():
-                            movie["critic_score"] = int(numeric)
-                            movie["critic_score_display"] = f"{numeric}%"
-                        break
-        except requests.RequestException as exc:
-            logger.error("OMDB fetch failed for '%s': %s", title, exc)
+        _fetch_omdb_ratings(movie, omdb_key)
 
     return movie
 
