@@ -176,6 +176,7 @@ def _fetch_omdb_ratings(movie, omdb_key):
     release_date = movie.get("release_date")
     year = str(release_date)[:4] if release_date else ""
 
+    logger.warning("OMDB fetch attempt for '%s' (%s) with key: %s", title, year, omdb_key[:5] if omdb_key else "NONE")
     # Check cache first to avoid redundant OMDB calls
     cache_key = f"omdb_{title}_{year}".replace(" ", "_").lower()
     cached = cache.get(cache_key)
