@@ -2,6 +2,7 @@
 
 import logging
 import requests
+import copy
 from django.conf import settings
 
 BASE_URL = "https://api.themoviedb.org/3"
@@ -174,8 +175,7 @@ def fetch_ratings(tmdb_movie):
     Returns:
         dict: A new dict (shallow copy) with rating keys added.
     """
-    import copy
-    from django.conf import settings as django_settings
+
 
     movie = copy.copy(tmdb_movie)
 
@@ -185,7 +185,7 @@ def fetch_ratings(tmdb_movie):
     movie["audience_score"] = round(float(raw), 1) if raw is not None else None
 
     # Critic score from OMDB (Rotten Tomatoes %)
-    omdb_key = getattr(django_settings, "OMDB_API_KEY", "")
+    omdb_key = getattr(settings, "OMDB_API_KEY", "")
     movie["critic_score"] = None
     movie["critic_score_display"] = None
 

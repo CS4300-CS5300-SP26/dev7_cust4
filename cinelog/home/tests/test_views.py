@@ -1538,7 +1538,7 @@ class SearchRatingModeTests(TestCase):
     def test_search_fan_mode_does_not_call_fetch_ratings(self, mock_fetch_ratings, mock_search):
         """Fan mode should use audience score only, not call fetch_ratings."""
         mock_search.return_value = [
-            {"id": 1, "title": "Test Movie", "vote_average": 7.5, 
+            {"id": 1, "title": "Test Movie", "vote_average": 7.5,
             "poster_path": None, "release_date": "2023-01-01"}
         ]
         response = self.client.get("/movies/search/?q=test&rating_mode=fan")
@@ -1550,7 +1550,7 @@ class SearchRatingModeTests(TestCase):
     def test_search_critic_mode_calls_fetch_ratings(self, mock_fetch_ratings, mock_search):
         """Critic mode should call fetch_ratings to get RT scores."""
         mock_search.return_value = [
-            {"id": 1, "title": "Test Movie", "vote_average": 7.5, 
+            {"id": 1, "title": "Test Movie", "vote_average": 7.5,
             "poster_path": None, "release_date": "2023-01-01"}
         ]
         mock_fetch_ratings.return_value = {
@@ -1621,7 +1621,7 @@ class FetchRatingsTests(TestCase):
             "Ratings": [{"Source": "Rotten Tomatoes", "Value": "85%"}]
         }
         with self.settings(OMDB_API_KEY="testkey"):
-            result = fetch_ratings({"title": "Test", "vote_average": 7.0, 
+            result = fetch_ratings({"title": "Test", "vote_average": 7.0,
             "release_date": "2020-01-01"})
         self.assertEqual(result["critic_score"], 85)
         self.assertEqual(result["critic_score_display"], "85%")
@@ -1645,7 +1645,7 @@ class FetchRatingsTests(TestCase):
         mock_get.return_value.raise_for_status = lambda: None
         mock_get.return_value.json.side_effect = ValueError("No JSON")
         with self.settings(OMDB_API_KEY="testkey"):
-            result = fetch_ratings({"title": "Test", "vote_average": 7.0, 
+            result = fetch_ratings({"title": "Test", "vote_average": 7.0,
             "release_date": "2020-01-01"})
         self.assertIsNone(result["critic_score"])
 
@@ -1653,7 +1653,7 @@ class FetchRatingsTests(TestCase):
     def test_no_omdb_key_skips_critic_fetch(self, mock_get):
         """Without an OMDB key, no request should be made and critic_score is None."""
         with self.settings(OMDB_API_KEY=""):
-            result = fetch_ratings({"title": "Test", "vote_average": 6.5, 
+            result = fetch_ratings({"title": "Test", "vote_average": 6.5,
             "release_date": "2020-01-01"})
         mock_get.assert_not_called()
         self.assertIsNone(result["critic_score"])
