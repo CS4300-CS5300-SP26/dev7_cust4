@@ -1,6 +1,7 @@
 """Views for the Cinelog home app."""
 
 import hashlib
+import json
 from django.contrib import messages
 from django.contrib.auth.forms import UserCreationForm
 from django.http import JsonResponse
@@ -23,7 +24,7 @@ from .services.tmdb import (
     fetch_ratings,
 )
 from .services.ai_rec import get_movie_recommendation
-import json
+
 
 def landing_page(request):
     """
@@ -583,7 +584,7 @@ def search_movies_view(request):
     # Persist in session
     request.session["rating_mode"] = rating_mode
 
-    RATING_MODES = [
+    rating_modes = [
         ("fan", "🎬 Fan Favorites"),
         ("critic", "🍅 Critic's Choice"),
         ("aggregate", "⭐ Both / Aggregate"),
@@ -621,7 +622,7 @@ def search_movies_view(request):
                 "result_count": 0,
                 "is_search": False,
                 "rating_mode": rating_mode,
-                "ratings_modes": RATING_MODES,
+                "ratings_modes": rating_modes,
                 "remember_mode": bool(request.session.get("remember_rating_mode")),
             },
         )
@@ -668,7 +669,7 @@ def search_movies_view(request):
             "is_filter_only": not bool(query) and bool(filters),
             "is_search": bool(query),
             "rating_mode": rating_mode,
-            "ratings_modes": RATING_MODES,
+            "ratings_modes": rating_modes,
             "remember_mode": bool(request.session.get("remember_rating_mode")),
         },
     )
