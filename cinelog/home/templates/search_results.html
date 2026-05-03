@@ -535,7 +535,20 @@
                         {% endif %}
                         <div class="movie-info">
                             <div class="movie-title">{{ movie.title }}</div>
-                            <div class="movie-rating">★ {{ movie.vote_average|floatformat:1 }}</div>
+                            {% if rating_mode == "critic" %}
+                                {% if movie.critic_score_display %}
+                                    <div class="movie-rating" style="color:#fa320a;">🍅 {{ movie.critic_score_display }}</div>
+                                {% else %}
+                                    <div class="movie-rating" style="color:#666;">🍅 N/A</div>
+                                {% endif %}
+                            {% elif rating_mode == "aggregate" %}
+                                <div class="movie-rating">★ {{ movie.audience_score|default:"N/A"|floatformat:1 }} &nbsp; 🍅 {{ movie.critic_score_display|default:"N/A" }}</div>
+                            {% elif rating_mode == "comparison" %}
+                                <div class="movie-rating">🎬 {{ movie.audience_score|default:"N/A"|floatformat:1 }}</div>
+                                <div class="movie-rating" style="color:#fa320a;">🍅 {{ movie.critic_score_display|default:"N/A" }}</div>
+                            {% else %}
+                                <div class="movie-rating">★ {{ movie.audience_score|default:"N/A"|floatformat:1 }}</div>
+                            {% endif %}
                             {% if movie.release_date %}
                                 <div class="movie-year">{{ movie.release_date|slice:":4" }}</div>
                             {% endif %}
@@ -623,12 +636,20 @@
                 localStorage.setItem(STORAGE_KEY, mode);
             }
 
-            // Re-run the current search with the new mode if there's a query
+            // Re-run with new mode, preserving all current URL params
             const urlParams = new URLSearchParams(window.location.search);
-            const q = urlParams.get("q");
-            if (q) {
-                window.location.href = "{% url 'search_movies' %}?q=" + encodeURIComponent(q) + "&rating_mode=" + mode;
-            }
+            const hasQuery = urlParams.get("q") || urlParams.toString().includes("genres") || urlParams.get("actor") || urlParams.get("year");
+            urlParams.set("rating_mode", mode);
+            if (hasQuery) {
+                window.location.href = "{% url 'search_movies' %}?" + urlParams.toString();
+            } else {
+                // Just persist the mode without reloading if no search active
+                fetch("{% url 'set_rating_mode' %}", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json", "X-CSRFToken": getCookie("csrftoken")},
+                    body: JSON.stringify({rating_mode: mode})
+    });
+}
         });
     });
 
