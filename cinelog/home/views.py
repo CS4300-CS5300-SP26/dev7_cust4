@@ -20,9 +20,10 @@ from .services.tmdb import (
     get_genre_list,
     search_movies_with_filters,
     discover_movies_by_filters_only,
+    fetch_ratings,
 )
 from .services.ai_rec import get_movie_recommendation
-
+import json
 
 def landing_page(request):
     """
