@@ -2,6 +2,7 @@
 Group project repo — dev7 → cust4
 
 ## Website Link: https://cine-log.app/
+## YouTube Video Link: https://www.youtube.com/watch?v=g0sKlOdlRlU
 
 ## AI Usage: 
 
