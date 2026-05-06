@@ -30,7 +30,7 @@ hpack==4.1.0
 httpcore==1.0.9
 httpx==0.28.1
 hyperframe==6.1.0
-idna==3.11
+idna==3.13
 iniconfig==2.3.0
 isort==8.0.1
 jiter==0.14.0
